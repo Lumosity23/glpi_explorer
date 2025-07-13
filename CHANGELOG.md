@@ -1,3 +1,17 @@
+## [MISSION 9.8] - 2025-07-14 - par Gemini
+### Objectif de la Phase
+Correction du Débogueur de Cache et de l'Itemtype Socket
+
+### Modifications Apportées
+- **`src/topology_cache.py`**:
+    - Corrigé le nom de l'itemtype 'Glpi\Socket' en 'Glpi\\Socket' pour supprimer le SyntaxWarning et assurer un appel API correct.
+- **`src/commands/debug_command.py`**:
+    - Refonte de la méthode d'affichage de 'debug cache <type> <id>'. Elle n'utilise plus `print_json` qui provoquait une TypeError.
+    - La nouvelle méthode construit une table `rich` qui affiche les attributs de l'objet de manière textuelle et sûre, même pour les attributs qui sont d'autres objets (comme `connected_to` et `parent_item`), évitant ainsi les erreurs de sérialisation.
+
+### Justification Technique
+La commande `debug cache` crashait avec une `TypeError` car `rich.print_json` ne peut pas sérialiser les objets `SimpleNamespace` complexes que nous avons créés. De plus, un avertissement de syntaxe indiquait que l'itemtype pour les sockets était mal formaté. Cette mission corrige ces deux problèmes, rendant le débogueur de cache de nouveau fonctionnel et fiabilisant l'appel à l'API pour les sockets.
+
 fix(cache): Correction majeure de la liaison de topologie via les links
 
 - La méthode `_link_topology` n'utilise plus les champs `sockets_id_endpoint_*` qui contenaient des noms au lieu d'ID.
@@ -42,7 +56,7 @@ Ref: Mission 9.3
 
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
-- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
+- Le cache charge désormais les `Glpi\\Socket` en plus des autres équipements.
 - La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
 - La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
 - Ajout d'une logique de base pour la traversée des équipements passifs.
@@ -62,7 +76,7 @@ Intégration des `Sockets` physiques dans le cache de topologie pour corriger un
 
 - **`src/topology_cache.py`**:
     - Ajout d'un dictionnaire `self.sockets` pour stocker les `Sockets`.
-    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\Socket` depuis l'API.
+    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\\Socket` depuis l'API.
     - Refonte complète de la méthode `_link_topology` pour qu'elle connecte les `Sockets` entre eux en se basant sur les `sockets_id` des `Cables`.
     - Chaque `Socket` est maintenant lié à son équipement parent.
 

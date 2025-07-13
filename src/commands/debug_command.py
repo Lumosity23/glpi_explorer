@@ -2,6 +2,7 @@ from src.commands.base_command import BaseCommand
 from rich.panel import Panel
 from rich.table import Table
 from rich import print_json
+import types
 
 class DebugCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
@@ -78,14 +79,22 @@ class DebugCommand(BaseCommand):
             return
             
         self.console.print(f"[bold blue]Détails pour {itemtype} ID {item_id} depuis le cache :[/bold blue]")
-        # Utilise vars() pour convertir le SimpleNamespace en dictionnaire pour print_json
-        print_json(data=vars(item))
         
-        if hasattr(item, 'parent_item') and item.parent_item:
-            self.console.print(f"[bold cyan]-> Parent Item:[/bold cyan] {item.parent_item.name} (ID: {item.parent_item.id})")
+        # Créer une table pour afficher les attributs de l'objet
+        details_table = Table(title="Attributs de l'Objet", box=None, show_header=False)
+        details_table.add_column("Attribut", style="cyan")
+        details_table.add_column("Valeur")
+
+        # Itérer sur les attributs de l'objet SimpleNamespace
+        for attr, value in vars(item).items():
+            # Afficher des représentations simples pour les objets complexes pour éviter les erreurs
+            if isinstance(value, types.SimpleNamespace):
+                display_value = f"Objet {value.__class__.__name__} (ID: {getattr(value, 'id', 'N/A')})"
+            elif isinstance(value, list) and value and isinstance(value[0], types.SimpleNamespace):
+                 display_value = f"Liste de {len(value)} objet(s) {value[0].__class__.__name__}"
+            else:
+                display_value = str(value)
             
-        if hasattr(item, 'connected_to') and item.connected_to:
-            connected_socket = item.connected_to
-            connected_parent = getattr(connected_socket, 'parent_item', None)
-            parent_name = getattr(connected_parent, 'name', 'Parent Inconnu')
-            self.console.print(f"[bold green]-> Connected To:[/bold green] Socket '{connected_socket.name}' (ID: {connected_socket.id}) sur l'équipement '{parent_name}'")
+            details_table.add_row(attr, display_value)
+            
+        self.console.print(details_table)
