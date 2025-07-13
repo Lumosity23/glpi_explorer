@@ -1,3 +1,12 @@
+feat(debug): Implémentation de la commande 'debug cache'
+
+- Ajout de la sous-commande 'debug cache' pour inspecter le contenu du cache de topologie.
+- Le mode 'debug cache' sans argument affiche un résumé du nombre d'objets de chaque type.
+- Le mode 'debug cache <type> <id>' affiche les détails bruts d'un objet spécifique, y compris ses liens de parenté et de connexion si disponibles.
+- Cette commande est essentielle pour diagnostiquer les problèmes de chargement du cache et de la logique de traçage.
+
+Ref: Mission 9.3
+
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
 - Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.

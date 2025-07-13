@@ -37,8 +37,8 @@ class GLPIExplorerShell:
                     command_name = class_name_snake.replace('_command', '')
 
                     # Special constructor for commands needing the cache
-                    if command_name == 'trace':
-                        instance = command_class(self.cache, self.api_client, self.console)
+                    if command_name in ('trace', 'debug'):
+                        instance = command_class(self.api_client, self.console, self.cache)
                     # Special constructor for help command
                     elif command_name == 'help':
                         instance = command_class(self.api_client, self.console, self.commands)
