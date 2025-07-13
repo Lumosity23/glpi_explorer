@@ -1,0 +1,12 @@
+refactor(cache)!: Refonte de la topologie basée sur les Sockets
+
+- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
+- La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
+- La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
+- Ajout d'une logique de base pour la traversée des équipements passifs.
+
+Cette modification fondamentale corrige la logique de traçage et établit une base de données en mémoire précise et fiable pour les futures fonctionnalités d'analyse réseau.
+
+BREAKING CHANGE: La structure interne du cache a été profondément modifiée.
+
+Ref: Mission 9.2

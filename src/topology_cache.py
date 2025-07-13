@@ -44,8 +44,8 @@ class TopologyCache:
             progress.advance(main_task)
 
             # Load Sockets
-            progress.update(main_task, description="Chargement des Sockets...")
-            self._load_sockets()
+            progress.update(main_task, description="Chargement des Sockets Physiques...")
+            self._load_sockets(progress, progress.add_task("Sockets...", total=1)) # Ajout
             progress.advance(main_task)
 
             # Load Cables
@@ -60,39 +60,37 @@ class TopologyCache:
             self._link_topology()
             progress.advance(main_task)
 
-    def _load_sockets(self):
-        sockets_data = self.api_client.list_items('Glpi\\Socket', "0-9999")
-        for item in sockets_data:
-            self.sockets[item['id']] = types.SimpleNamespace(**item)
+    def _load_sockets(self, progress, task_id):
+        sockets_data = self.api_client.list_items('Glpi\Socket', "0-9999")
+        progress.update(task_id, total=len(sockets_data))
+        for data in sockets_data:
+            self.sockets[data['id']] = types.SimpleNamespace(**data)
+            progress.advance(task_id)
 
     def _link_topology(self):
-        all_devices = {
-            'Computer': self.computers,
-            'NetworkEquipment': self.network_equipments,
-            'PassiveDCEquipment': self.passive_dc_equipments
-        }
+        # Étape 1: Lier chaque socket à son équipement parent
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_dc_equipments}
+        for socket_obj in self.sockets.values():
+            parent_id = getattr(socket_obj, 'items_id', None)
+            if parent_id in all_equipment:
+                socket_obj.parent_item = all_equipment[parent_id]
+            else:
+                socket_obj.parent_item = None
 
-        for socket in self.sockets.values():
-            itemtype = getattr(socket, 'itemtype', None)
-            items_id = getattr(socket, 'items_id', None)
-            if itemtype and items_id is not None and itemtype in all_devices:
-                parent_device_dict = all_devices[itemtype]
-                if items_id in parent_device_dict:
-                    parent_device = parent_device_dict[items_id]
-                    if not hasattr(parent_device, 'sockets'):
-                        parent_device.sockets = []
-                    parent_device.sockets.append(socket)
-                    socket.parent_equipment = parent_device
+        # Étape 2: Lier les sockets entre eux via les câbles
+        for cable_obj in self.cables.values():
+            socket_a_id = getattr(cable_obj, 'sockets_id_endpoint_a', None)
+            socket_b_id = getattr(cable_obj, 'sockets_id_endpoint_b', None)
 
-        for cable in self.cables.values():
-            socket_a_id = getattr(cable, 'sockets_id_endpoint_a', None)
-            socket_b_id = getattr(cable, 'sockets_id_endpoint_b', None)
-
-            if socket_a_id and socket_b_id and socket_a_id in self.sockets and socket_b_id in self.sockets:
+            if socket_a_id in self.sockets and socket_b_id in self.sockets:
                 socket_a = self.sockets[socket_a_id]
                 socket_b = self.sockets[socket_b_id]
+                
                 socket_a.connected_to = socket_b
+                socket_a.via_cable = cable_obj
+                
                 socket_b.connected_to = socket_a
+                socket_b.via_cable = cable_obj
 
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:
