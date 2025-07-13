@@ -1,3 +1,10 @@
+fix(shell): Gestion du cas spécial pour le chargement de HelpCommand
+
+- La méthode _load_commands charge maintenant toutes les commandes standards en premier.
+- La commande 'help' est ensuite instanciée séparément en lui passant le dictionnaire des commandes déjà chargées, résolvant ainsi le TypeError dû à l'argument manquant 'commands_map'.
+
+Ref: Mission 9.5
+
 fix(core): Correction de l'ordre d'instanciation des commandes
 
 - Standardisation des constructeurs __init__ pour toutes les classes de commande afin qu'ils acceptent (api_client, console, cache) dans cet ordre.

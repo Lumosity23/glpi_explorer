@@ -22,30 +22,28 @@ class GLPIExplorerShell:
     def _load_commands(self):
         self.commands = {}
         commands_dir = os.path.join(os.path.dirname(__file__), 'commands')
-
+        
+        # Étape 1: Charger toutes les commandes SAUF 'help'
         for filename in os.listdir(commands_dir):
-            if filename.endswith('_command.py') and not filename.startswith('base_'):
+            if filename.endswith('_command.py') and not filename.startswith('base') and not filename.startswith('help'):
                 module_name = filename[:-3]
                 command_name = module_name.replace('_command', '')
-                
                 try:
                     module = importlib.import_module(f'src.commands.{module_name}')
                     class_name = ''.join(word.capitalize() for word in command_name.replace('_', ' ').split()) + 'Command'
                     command_class = getattr(module, class_name)
                     
-                    # Instanciation de la commande
-                    # Notez l'ordre des arguments: api_client, console, cache
-                    instance = command_class(self.api_client, self.console, self.cache)
-                    self.commands[command_name] = instance
-
+                    # Instancier la commande et la stocker
+                    self.commands[command_name] = command_class(self.api_client, self.console, self.cache)
                 except Exception as e:
-                    self.console.print(f"[bold red]WARNING: Could not load command from {filename}: {e}[/bold red]")
-
-        # APRÈS la boucle de chargement
-        if 'help' in self.commands:
-            # Ré-instancier 'help' avec la map des commandes
+                    self.console.print(Panel(f"Avertissement: Impossible de charger la commande depuis {filename}. Erreur: {e}", title="[yellow]Chargement Commande[/yellow]"))
+        
+        # Étape 2: Maintenant que les autres commandes sont chargées, charger 'help' en lui passant la map
+        try:
             from src.commands.help_command import HelpCommand
             self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.commands)
+        except Exception as e:
+            self.console.print(Panel(f"Avertissement: Impossible de charger la commande 'help'. Erreur: {e}", title="[yellow]Chargement Commande[/yellow]"))
 
     def _is_config_valid(self, config):
         if not isinstance(config, dict):
