@@ -5,9 +5,8 @@ from rich.console import Console
 from rich import box
 
 class TraceCommand(BaseCommand):
-    def __init__(self, cache, api_client, console):
-        super().__init__(api_client, console)
-        self.cache = cache
+    def __init__(self, api_client, console, cache):
+        super().__init__(api_client, console, cache)
         self.name = "trace"
         self.description = "Trace a network path from a starting device through the topology cache."
         self.aliases = ["t"]

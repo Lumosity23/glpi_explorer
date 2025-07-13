@@ -5,6 +5,9 @@ from rich import box
 from src.api_client import ApiClient
 
 class ListCommand(BaseCommand):
+    def __init__(self, api_client, console, cache):
+        super().__init__(api_client, console, cache)
+
     def get_help_message(self):
         return {
             "description": "Liste les objets GLPI d'un type donné.",

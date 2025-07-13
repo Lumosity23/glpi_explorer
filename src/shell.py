@@ -23,43 +23,29 @@ class GLPIExplorerShell:
         self.commands = {}
         commands_dir = os.path.join(os.path.dirname(__file__), 'commands')
 
-        # Dynamically load all command classes from the 'commands' directory
         for filename in os.listdir(commands_dir):
             if filename.endswith('_command.py') and not filename.startswith('base_'):
-                module_name = f"src.commands.{filename[:-3]}"
-                class_name_snake = filename.replace('.py', '')
-                class_name_camel = "".join(word.capitalize() for word in class_name_snake.split('_'))
-
+                module_name = filename[:-3]
+                command_name = module_name.replace('_command', '')
+                
                 try:
-                    module = importlib.import_module(module_name)
-                    command_class = getattr(module, class_name_camel)
+                    module = importlib.import_module(f'src.commands.{module_name}')
+                    class_name = ''.join(word.capitalize() for word in command_name.replace('_', ' ').split()) + 'Command'
+                    command_class = getattr(module, class_name)
                     
-                    command_name = class_name_snake.replace('_command', '')
-
-                    # Special constructor for commands needing the cache
-                    if command_name in ('trace', 'debug'):
-                        instance = command_class(self.api_client, self.console, self.cache)
-                    # Special constructor for help command
-                    elif command_name == 'help':
-                        instance = command_class(self.api_client, self.console, self.commands)
-                    else:
-                        instance = command_class(self.api_client, self.console)
-
+                    # Instanciation de la commande
+                    # Notez l'ordre des arguments: api_client, console, cache
+                    instance = command_class(self.api_client, self.console, self.cache)
                     self.commands[command_name] = instance
-                    
-                    # Add aliases if they exist
-                    if hasattr(instance, 'aliases'):
-                        for alias in instance.aliases:
-                            self.commands[alias] = instance
 
-                except (ImportError, AttributeError) as e:
+                except Exception as e:
                     self.console.print(f"[bold red]WARNING: Could not load command from {filename}: {e}[/bold red]")
 
-        # Post-load processing for commands that need the full command map (like 'help')
+        # APRÈS la boucle de chargement
         if 'help' in self.commands:
-            help_instance = self.commands['help']
-            if hasattr(help_instance, 'set_commands'):
-                help_instance.set_commands(self.commands)
+            # Ré-instancier 'help' avec la map des commandes
+            from src.commands.help_command import HelpCommand
+            self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.commands)
 
     def _is_config_valid(self, config):
         if not isinstance(config, dict):

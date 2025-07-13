@@ -4,8 +4,8 @@ from rich.panel import Panel
 from rich.text import Text
 
 class HelpCommand(BaseCommand):
-    def __init__(self, api_client, console, commands_map):
-        super().__init__(api_client, console)
+    def __init__(self, api_client, console, cache, commands_map):
+        super().__init__(api_client, console, cache)
         self.commands_map = commands_map
 
     def execute(self, args):

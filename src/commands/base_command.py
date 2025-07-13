@@ -10,9 +10,10 @@ from src.api_client import ApiClient
 from src.config_manager import ConfigManager
 
 class BaseCommand:
-    def __init__(self, api_client: ApiClient, console: Console):
+    def __init__(self, api_client, console, cache):
         self.api_client = api_client
         self.console = console
+        self.cache = cache
         self.TYPE_ALIASES = {
             'computer': 'Computer', 'pc': 'Computer',
             'monitor': 'Monitor', 'screen': 'Monitor',
@@ -28,6 +29,7 @@ class BaseCommand:
             'patchpanel': 'PassiveDCEquipment', 'patch': 'PassiveDCEquipment', 'pp': 'PassiveDCEquipment',
             'walloutlet': 'PassiveDCEquipment', 'wo': 'PassiveDCEquipment',
             'cable': 'Cable', 'cb': 'Cable',
+            'socket': 'Glpi\\Socket', 'so': 'Glpi\\Socket',
         }
 
     def execute(self, args):

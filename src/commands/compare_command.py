@@ -6,6 +6,9 @@ from rich.text import Text
 from rich import box
 
 class CompareCommand(BaseCommand):
+    def __init__(self, api_client, console, cache):
+        super().__init__(api_client, console, cache)
+
     def get_help_message(self):
         return {
             "description": "Compare et affiche les détails de deux objets GLPI l'un au-dessus de l'autre.",

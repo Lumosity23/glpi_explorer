@@ -1,3 +1,11 @@
+fix(core): Correction de l'ordre d'instanciation des commandes
+
+- Standardisation des constructeurs __init__ pour toutes les classes de commande afin qu'ils acceptent (api_client, console, cache) dans cet ordre.
+- Correction de la logique dans `shell.py` pour instancier les commandes en passant les dépendances (ApiClient, Console, TopologyCache) dans le bon ordre.
+- Résolution de l'AttributeError qui empêchait la commande 'trace' d'accéder au cache.
+
+Ref: Mission 9.4
+
 feat(debug): Implémentation de la commande 'debug cache'
 
 - Ajout de la sous-commande 'debug cache' pour inspecter le contenu du cache de topologie.

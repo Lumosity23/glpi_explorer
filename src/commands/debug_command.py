@@ -5,8 +5,7 @@ from rich import print_json
 
 class DebugCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console)
-        self.cache = cache
+        super().__init__(api_client, console, cache)
         self.name = "debug"
         self.description = "Inspecte le cache de topologie."
         self.aliases = ["dbg"]

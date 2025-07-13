@@ -7,6 +7,9 @@ from rich import box
 from src.api_client import ApiClient
 
 class GetCommand(BaseCommand):
+    def __init__(self, api_client, console, cache):
+        super().__init__(api_client, console, cache)
+
     def get_help_message(self):
         return {
             "description": "Récupère et affiche les détails d'un objet GLPI spécifique ou d'un port.",
