@@ -49,9 +49,9 @@ class DebugCommand(BaseCommand):
         
         table.add_row("Computers", str(len(self.cache.computers)))
         table.add_row("NetworkEquipments", str(len(self.cache.network_equipments)))
-        table.add_row("PassiveDCEquipments", str(len(self.cache.passive_devices)))
+        table.add_row("PassiveDCEquipments", str(len(self.cache.passive_dc_equipments)))
         table.add_row("Cables", str(len(self.cache.cables)))
-        table.add_row("NetworkPorts", str(len(self.cache.network_ports)))
+        
         table.add_row("Sockets", str(len(self.cache.sockets)))
         
         self.console.print(table)
@@ -61,9 +61,9 @@ class DebugCommand(BaseCommand):
         cache_map = {
             'Computer': self.cache.computers,
             'NetworkEquipment': self.cache.network_equipments,
-            'PassiveDCEquipment': self.cache.passive_devices,
+            'PassiveDCEquipment': self.cache.passive_dc_equipments,
             'Cable': self.cache.cables,
-            'NetworkPort': self.cache.network_ports,
+            
             'Glpi\\Socket': self.cache.sockets
         }
         
