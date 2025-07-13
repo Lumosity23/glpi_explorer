@@ -1,3 +1,12 @@
+fix(cache): Correction majeure de la liaison de topologie via les links
+
+- La méthode `_link_topology` n'utilise plus les champs `sockets_id_endpoint_*` qui contenaient des noms au lieu d'ID.
+- La logique parcourt maintenant le tableau `links` de chaque objet Câble pour extraire les ID de socket corrects depuis les `href`.
+- Cette correction résout la cause racine de l'échec de la commande `trace`.
+- Ajout d'un attribut `itemtype` à chaque objet du cache pour faciliter la navigation.
+
+Ref: Mission 9.7
+
 feat(debug): Implémentation de la commande 'debug cache'
 
 - Ajout de la sous-commande 'debug cache' pour inspecter le contenu du cache de topologie.

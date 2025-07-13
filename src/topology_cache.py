@@ -26,6 +26,7 @@ class TopologyCache:
             progress.update(main_task, description="Chargement des Ordinateurs...")
             computers_data = self.api_client.list_items('Computer', "0-9999")
             for item in computers_data:
+                item['itemtype'] = 'Computer'
                 self.computers[item['id']] = types.SimpleNamespace(**item)
             progress.advance(main_task)
 
@@ -33,6 +34,7 @@ class TopologyCache:
             progress.update(main_task, description="Chargement des Équipements Réseau...")
             network_equipments_data = self.api_client.list_items('NetworkEquipment', "0-9999")
             for item in network_equipments_data:
+                item['itemtype'] = 'NetworkEquipment'
                 self.network_equipments[item['id']] = types.SimpleNamespace(**item)
             progress.advance(main_task)
 
@@ -40,6 +42,7 @@ class TopologyCache:
             progress.update(main_task, description="Chargement des Équipements Passifs...")
             passive_equipments_data = self.api_client.list_items('PassiveDCEquipment', "0-9999")
             for item in passive_equipments_data:
+                item['itemtype'] = 'PassiveDCEquipment'
                 self.passive_dc_equipments[item['id']] = types.SimpleNamespace(**item)
             progress.advance(main_task)
 
@@ -52,6 +55,7 @@ class TopologyCache:
             progress.update(main_task, description="Chargement des Câbles...")
             cables_data = self.api_client.list_items('Cable', "0-9999")
             for item in cables_data:
+                item['itemtype'] = 'Cable'
                 self.cables[item['id']] = types.SimpleNamespace(**item)
             progress.advance(main_task)
 
@@ -68,29 +72,47 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        # Étape 1: Lier chaque socket à son équipement parent
+        # Étape 1: Lier chaque socket à son équipement parent (cette partie est probablement déjà correcte)
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_dc_equipments}
         for socket_obj in self.sockets.values():
             parent_id = getattr(socket_obj, 'items_id', None)
             if parent_id in all_equipment:
+                # Ajoute une référence à l'objet parent directement sur le socket
                 socket_obj.parent_item = all_equipment[parent_id]
+                # Ajoute une référence au type de l'objet parent pour un accès facile
+                socket_obj.parent_itemtype = all_equipment[parent_id].itemtype 
             else:
                 socket_obj.parent_item = None
+                socket_obj.parent_itemtype = None
 
-        # Étape 2: Lier les sockets entre eux via les câbles
+        # Étape 2: Lier les sockets entre eux via les câbles, en utilisant les "links"
         for cable_obj in self.cables.values():
-            socket_a_id = getattr(cable_obj, 'sockets_id_endpoint_a', None)
-            socket_b_id = getattr(cable_obj, 'sockets_id_endpoint_b', None)
-
-            if socket_a_id in self.sockets and socket_b_id in self.sockets:
-                socket_a = self.sockets[socket_a_id]
-                socket_b = self.sockets[socket_b_id]
+            socket_ids = []
+            # Parcourir les liens du câble pour trouver les deux sockets
+            for link in getattr(cable_obj, 'links', []):
+                if link.get('rel') == 'Glpi\\Socket':
+                    try:
+                        # Extrait le dernier segment de l'URL, qui est l'ID
+                        socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(socket_id)
+                    except (ValueError, IndexError):
+                        # Ignore les href mal formés
+                        continue
+            
+            # Si nous avons trouvé exactement deux sockets, créons le lien
+            if len(socket_ids) == 2:
+                socket_a_id, socket_b_id = socket_ids
                 
-                socket_a.connected_to = socket_b
-                socket_a.via_cable = cable_obj
-                
-                socket_b.connected_to = socket_a
-                socket_b.via_cable = cable_obj
+                if socket_a_id in self.sockets and socket_b_id in self.sockets:
+                    socket_a = self.sockets[socket_a_id]
+                    socket_b = self.sockets[socket_b_id]
+                    
+                    # Création du lien bidirectionnel
+                    socket_a.connected_to = socket_b
+                    socket_a.via_cable = cable_obj
+                    
+                    socket_b.connected_to = socket_a
+                    socket_b.via_cable = cable_obj
 
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:
