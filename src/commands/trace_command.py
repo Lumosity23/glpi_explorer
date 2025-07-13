@@ -57,7 +57,7 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Connecté via (Câble)")
         
         # Trouver les sockets de départ
-        start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'items_id', None) == start_item.id]
+        start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'parent_item', None) == start_item]
 
         if not start_sockets:
             self.console.print(Panel(f"[yellow]Aucun socket physique trouvé pour {start_item.name}. Fin de la trace.[/yellow]", border_style="yellow"))
