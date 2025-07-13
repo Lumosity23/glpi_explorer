@@ -72,15 +72,27 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        # Étape 1: Lier chaque socket à son équipement parent (cette partie est probablement déjà correcte)
+        # Étape 1: Lier chaque socket à son équipement parent
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_dc_equipments}
+        
+        # Créer un dictionnaire de mapping nom -> objet pour une recherche rapide
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
+
         for socket_obj in self.sockets.values():
-            parent_id = getattr(socket_obj, 'items_id', None)
-            if parent_id in all_equipment:
-                # Ajoute une référence à l'objet parent directement sur le socket
-                socket_obj.parent_item = all_equipment[parent_id]
-                # Ajoute une référence au type de l'objet parent pour un accès facile
-                socket_obj.parent_itemtype = all_equipment[parent_id].itemtype 
+            parent_id_or_name = getattr(socket_obj, 'items_id', None)
+            
+            parent_item = None
+            
+            # Tenter de trouver le parent par ID (si c'est un entier)
+            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
+                parent_item = all_equipment[parent_id_or_name]
+            # Sinon, tenter de trouver par nom (si c'est une chaîne)
+            elif isinstance(parent_id_or_name, str):
+                parent_item = equipment_by_name.get(parent_id_or_name.lower())
+
+            if parent_item:
+                socket_obj.parent_item = parent_item
+                socket_obj.parent_itemtype = getattr(parent_item, 'itemtype', None)
             else:
                 socket_obj.parent_item = None
                 socket_obj.parent_itemtype = None

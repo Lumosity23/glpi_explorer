@@ -1,3 +1,19 @@
+## [MISSION 9.9] - 2025-07-14 - par Gemini
+
+### Objectif de la Phase
+
+Correction Finale de la Liaison Parent-Socket
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - La méthode `_link_topology` gère maintenant le cas où l'API GLPI retourne le nom de l'équipement parent au lieu de son ID dans le champ `items_id` d'un objet Socket.
+    - La liaison se fait désormais soit par ID numérique, soit par nom (insensible à la casse), rendant le processus beaucoup plus robuste.
+
+### Justification Technique
+
+Cette modification résout la cause racine de l'échec de la commande `trace` qui ne parvenait pas à trouver les sockets d'un équipement de départ.
+
 ## [MISSION 9.8] - 2025-07-14 - par Gemini
 ### Objectif de la Phase
 Correction du Débogueur de Cache et de l'Itemtype Socket
