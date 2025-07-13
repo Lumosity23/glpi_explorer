@@ -1,3 +1,12 @@
+feat(debug): Implémentation de la commande 'debug cache'
+
+- Ajout de la sous-commande 'debug cache' pour inspecter le contenu du cache de topologie.
+- 'debug cache' sans argument affiche un résumé du nombre d'objets de chaque type.
+- 'debug cache <type> <id>' affiche les détails bruts d'un objet spécifique, y compris ses liens de parenté et de connexion si disponibles.
+- Cette commande est essentielle pour diagnostiquer les problèmes de chargement du cache et de la logique de traçage.
+
+Ref: Mission 9.6
+
 fix(shell): Gestion du cas spécial pour le chargement de HelpCommand
 
 - La méthode _load_commands charge maintenant toutes les commandes standards en premier.
