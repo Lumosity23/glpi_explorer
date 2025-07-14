@@ -10,7 +10,7 @@ Correction de la Liaison Parent-Socket via le Nom
     - La méthode `_link_topology` gère maintenant le cas où l'API GLPI retourne le nom de l'équipement parent au lieu de son ID dans le champ `items_id` d'un objet Socket.
     - La liaison se fait désormais en priorité par ID numérique, et en fallback par nom (insensible à la casse), rendant le processus beaucoup plus robuste.
 - **`src/commands/trace_command.py`**:
-    - La commande `trace` a été adaptée pour trouver les sockets de départ en se basant sur l'attribut `parent_item`.
+    - La commande `trace` a été adaptée pour trouver les ports de départ en se basant sur l'attribut `parent_item` des `NetworkPort`.
 
 ### Justification Technique
 

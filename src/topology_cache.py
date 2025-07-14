@@ -83,29 +83,38 @@ class TopologyCache:
         # .lower() pour une comparaison insensible à la casse
         equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
-        for socket_obj in self.sockets.values():
-            parent_id_or_name = getattr(socket_obj, 'items_id', None)
+        # --- Étape 1: Lier chaque Port/Socket à son parent Équipement ---
+        # Un NetworkPort a un 'items_id' et 'itemtype' vers son parent
+        for port in self.network_ports.values():
+            parent_id_or_name = getattr(port, 'items_id', None)
             
             parent_item = None
             
             # Tenter de trouver le parent par ID (si c'est un entier)
-            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
+            if isinstance(parent_id_or_name, int):
                 parent_item = all_equipment.get(parent_id_or_name)
             # Sinon, tenter de trouver par nom (si c'est une chaîne)
             elif isinstance(parent_id_or_name, str):
                 parent_item = equipment_by_name.get(parent_id_or_name.lower())
 
             if parent_item:
-                socket_obj.parent_item = parent_item
-                socket_obj.parent_itemtype = getattr(parent_item, 'itemtype', None)
-            else:
-                socket_obj.parent_item = None
-                socket_obj.parent_itemtype = None
+                port.parent_item = parent_item
+                if not hasattr(port.parent_item, 'networkports'):
+                    port.parent_item.networkports = []
+                port.parent_item.networkports.append(port)
 
-        # Étape 2: Lier les sockets entre eux via les câbles (cette partie reste inchangée)
-        for cable_obj in self.cables.values():
+        # Un Socket est lié à un NetworkPort par 'networkports_id'
+        for socket in self.sockets.values():
+            port_id = getattr(socket, 'networkports_id', None)
+            if port_id in self.network_ports:
+                socket.networkport = self.network_ports[port_id]
+                # Lier en retour le socket au port
+                self.network_ports[port_id].socket = socket
+
+        # --- Étape 2: Lier les Sockets entre eux via les Câbles ---
+        for cable in self.cables.values():
             socket_ids = []
-            for link in getattr(cable_obj, 'links', []):
+            for link in getattr(cable, 'links', []):
                 if link.get('rel') == 'Glpi\\Socket':
                     try:
                         socket_id = int(link['href'].split('/')[-1])
