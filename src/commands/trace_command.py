@@ -32,6 +32,16 @@ class TraceCommand(BaseCommand):
             return
 
         self.console.print(f"Found start item: {start_item.name}")
+        print(f"[DEBUG] ID of start_item: {id(start_item)}")
+        if item_type == 'Computer':
+            cached_item = self.cache.computers.get(start_item.id)
+            if cached_item:
+                print(f"[DEBUG] ID of cached_item (from self.cache.computers): {id(cached_item)}")
+                print(f"[DEBUG] Are they the same object? {start_item is cached_item}")
+                print(f"[DEBUG] networkports on cached_item: {getattr(cached_item, 'networkports', 'Attribute not found')}")
+                print(f"[DEBUG] len(networkports on cached_item): {len(getattr(cached_item, 'networkports', []))}")
+            else:
+                print(f"[DEBUG] Cached item not found in self.cache.computers for ID {start_item.id}")
         self._perform_trace(start_item, item_type)
 
     def _find_item_in_cache(self, item_type, item_name):
@@ -60,7 +70,7 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Connecté via (Câble)")
         
         # Trouver les ports de départ directement sur l'objet équipement
-        start_ports = [p for p in self.cache.network_ports.values() if getattr(p, 'parent_item', None) == start_item]
+        start_ports = [p for p in self.cache.network_ports.values() if getattr(getattr(p, 'parent_item', None), 'id', None) == start_item.id]
 
         if not start_ports:
             self.console.print(Panel(f"Aucun port réseau trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
@@ -70,11 +80,6 @@ class TraceCommand(BaseCommand):
         current_port = start_ports[0]
         # On récupère le socket physique associé à ce port logique
         current_socket = getattr(current_port, 'socket', None)
-        
-        # Handle case where current_port has no associated socket
-        if not current_socket:
-            self.console.print(Panel(f"Le port {current_port.name} de {start_item.name} n'a pas de socket physique associé. Fin de la trace.", border_style="yellow"))
-            return
         
         # Handle case where current_port has no associated socket
         if not current_socket:
