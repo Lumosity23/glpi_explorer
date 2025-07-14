@@ -1,3 +1,19 @@
+## [MISSION 10.3] - 2025-07-14 - par Gemini
+
+### Objectif de la Phase
+
+Correction Finale de la Liaison Équipement-NetworkPort
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - La méthode `_link_topology` a été mise à jour pour parcourir tous les `NetworkPort` du cache et les attacher à leur équipement parent.
+    - Chaque objet équipement (Computer, Switch...) possède maintenant un attribut `networkports` qui est une liste de ses objets port.
+
+### Justification Technique
+
+Cette correction résout le problème où la commande `trace` ne trouvait aucun port de départ sur un équipement.
+
 ## [MISSION 10.2] - 2025-07-14 - par Gemini
 
 ### Objectif de la Phase

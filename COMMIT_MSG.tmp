@@ -1,4 +1,7 @@
-fix(trace): Correction de la NameError et de la logique de trace
+fix(cache): Ajout de la liaison Équipement vers NetworkPort
 
-La commande `trace` échouait à cause d'une NameError (start_ports vs start_sockets).
-La logique de récupération du parent et du port logique a également été corrigée pour se baser sur le socket actuel.
+- La méthode `_link_topology` a été mise à jour pour parcourir tous les `NetworkPort` du cache et les attacher à leur équipement parent.
+- Chaque objet équipement (Computer, Switch...) possède maintenant un attribut `networkports` qui est une liste de ses objets port.
+- Cette correction résout le problème où la commande `trace` ne trouvait aucun port de départ sur un équipement.
+
+Ref: Mission 10.3
