@@ -1,0 +1,4 @@
+fix(trace): Correction de la NameError et de la logique de trace
+
+La commande `trace` échouait à cause d'une NameError (start_ports vs start_sockets).
+La logique de récupération du parent et du port logique a également été corrigée pour se baser sur le socket actuel.

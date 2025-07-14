@@ -72,14 +72,13 @@ class TraceCommand(BaseCommand):
         # Trouver les sockets de départ en se basant sur le parent_item
         start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'parent_item', None) == start_item]
 
-        if not start_ports:
+        if not start_sockets:
             self.console.print(Panel(f"Aucun port réseau trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
             return
 
         # Pour l'instant, on prend le premier port de l'équipement
-        current_port = start_ports[0]
-        # On récupère le socket physique associé à ce port logique
-        current_socket = getattr(current_port, 'socket', None)
+        current_socket = start_sockets[0]
+        current_port = getattr(current_socket, 'networkport', None)
         
         # Handle case where current_port has no associated socket
         if not current_socket:
@@ -91,9 +90,9 @@ class TraceCommand(BaseCommand):
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
+            current_port = getattr(current_socket, 'networkport', None)
             
-            # Récupérer le parent du port logique, qui est notre équipement
-            parent_item = getattr(current_port, 'parent_item', None)
+            parent_item = getattr(current_socket, 'parent_item', None)
             parent_name = getattr(parent_item, 'name', 'Parent Inconnu')
             
             trace_table.add_row(
