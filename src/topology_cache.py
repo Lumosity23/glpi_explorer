@@ -83,7 +83,7 @@ class TopologyCache:
         # .lower() pour une comparaison insensible à la casse
         equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
-        # --- Étape 1: Lier chaque Port/Socket à son parent Équipement ---
+        # --- Étape 1: Lier chaque NetworkPort à son parent Équipement ---
         # Un NetworkPort a un 'items_id' et 'itemtype' vers son parent
         for port in self.network_ports.values():
             parent_id_or_name = getattr(port, 'items_id', None)
@@ -91,7 +91,7 @@ class TopologyCache:
             parent_item = None
             
             # Tenter de trouver le parent par ID (si c'est un entier)
-            if isinstance(parent_id_or_name, int):
+            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
                 parent_item = all_equipment.get(parent_id_or_name)
             # Sinon, tenter de trouver par nom (si c'est une chaîne)
             elif isinstance(parent_id_or_name, str):
@@ -99,9 +99,9 @@ class TopologyCache:
 
             if parent_item:
                 port.parent_item = parent_item
-                if not hasattr(port.parent_item, 'networkports'):
-                    port.parent_item.networkports = []
-                port.parent_item.networkports.append(port)
+                if not hasattr(parent_item, 'networkports'):
+                    parent_item.networkports = []
+                parent_item.networkports.append(port)
 
         # Un Socket est lié à un NetworkPort par 'networkports_id'
         for socket in self.sockets.values():
