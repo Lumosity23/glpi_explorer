@@ -29,7 +29,8 @@ class BaseCommand:
             'patchpanel': 'PassiveDCEquipment', 'patch': 'PassiveDCEquipment', 'pp': 'PassiveDCEquipment',
             'walloutlet': 'PassiveDCEquipment', 'wo': 'PassiveDCEquipment',
             'cable': 'Cable', 'cb': 'Cable',
-            'socket': 'Glpi\\Socket', 'so': 'Glpi\\Socket',
+            'socket': 'Glpi\Socket', 'so': 'Glpi\Socket',
+            'networkport': 'NetworkPort', 'np': 'NetworkPort',
         }
 
     def execute(self, args):

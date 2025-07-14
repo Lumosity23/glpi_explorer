@@ -10,8 +10,8 @@ import importlib
 import os
 
 class GLPIExplorerShell:
-    def __init__(self, console=None):
-        self.console = console if console else Console()
+    def __init__(self):
+        self.console = Console()
         self.api_client = None
         self.cache = None
         self.history = InMemoryHistory()

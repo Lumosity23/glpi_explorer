@@ -76,7 +76,47 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        def _link_topology():        for port in self.network_ports.values():            parent_id_or_name = getattr(port, 'items_id', None)                        parent_item = None                        if isinstance(parent_id_or_name, int):                if parent_id_or_name in self.computers:                    parent_item = self.computers[parent_id_or_name]                elif parent_id_or_name in self.network_equipments:                    parent_item = self.network_equipments[parent_id_or_name]                elif parent_id_or_name in self.passive_devices:                    parent_item = self.passive_devices[parent_id_or_name]            elif isinstance(parent_id_or_name, str):                for comp_id, comp_obj in self.computers.items():                    if getattr(comp_obj, 'name', '').lower() == parent_id_or_name.lower():                        parent_item = comp_obj                        break                if not parent_item:                    for net_eq_id, net_eq_obj in self.network_equipments.items():                        if getattr(net_eq_obj, 'name', '').lower() == parent_id_or_name.lower():                            parent_item = net_eq_obj                            break                if not parent_item:                    for pass_dev_id, pass_dev_obj in self.passive_devices.items():                        if getattr(pass_dev_obj, 'name', '').lower() == parent_id_or_name.lower():                            parent_item = pass_dev_obj                            break            if parent_item:                port.parent_item = parent_item                if not hasattr(parent_item, 'networkports'):                    parent_item.networkports = []                parent_item.networkports.append(port)        for socket in self.sockets.values():            port_id = getattr(socket, 'networkports_id', None)            if port_id in self.network_ports:                socket.networkport = self.network_ports[port_id]                self.network_ports[port_id].socket = socket        for cable in self.cables.values():            socket_ids = []            for link in getattr(cable, 'links', []):                if link.get('rel') == 'Glpi\Socket':                    try:                        socket_id = int(link['href'].split('/')[-1])                        socket_ids.append(socket_id)                    except (ValueError, IndexError):                        continue                        if len(socket_ids) == 2:                socket_a = self.sockets.get(socket_ids[0])                socket_b = self.sockets.get(socket_ids[1])                if socket_a and socket_b:                    socket_a.connected_to = socket_b                    socket_b.connected_to = socket_a
+        # Étape 1: Lier chaque socket à son équipement parent
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        
+        # Créer un dictionnaire de mapping nom -> objet pour une recherche rapide
+        # .lower() pour une comparaison insensible à la casse
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
+
+        for socket_obj in self.sockets.values():
+            parent_id_or_name = getattr(socket_obj, 'items_id', None)
+            
+            parent_item = None
+            
+            # Tenter de trouver le parent par ID (si c'est un entier)
+            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
+                parent_item = all_equipment.get(parent_id_or_name)
+            # Sinon, tenter de trouver par nom (si c'est une chaîne)
+            elif isinstance(parent_id_or_name, str):
+                parent_item = equipment_by_name.get(parent_id_or_name.lower())
+
+            if parent_item:
+                socket_obj.parent_item = parent_item
+                socket_obj.parent_itemtype = getattr(parent_item, 'itemtype', None)
+            else:
+                socket_obj.parent_item = None
+                socket_obj.parent_itemtype = None
+
+        # Étape 2: Lier les sockets entre eux via les câbles (cette partie reste inchangée)
+        for cable_obj in self.cables.values():
+            if 'links' in cable_obj.__dict__:
+                for link in cable_obj.links:
+                    item1_id = link.get('items1_id')
+                    item2_id = link.get('items2_id')
+                    
+                    socket1 = self.sockets.get(item1_id)
+                    socket2 = self.sockets.get(item2_id)
+                    
+                    if socket1 and socket2:
+                        socket1.connected_to = socket2
+                        socket2.connected_to = socket1
+                        socket1.cable = cable_obj
+                        socket2.cable = cable_obj
 
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:

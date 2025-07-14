@@ -69,8 +69,8 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Socket Physique")
         trace_table.add_column("Connecté via (Câble)")
         
-        # Trouver les ports de départ directement sur l'objet équipement
-        start_ports = [p for p in self.cache.network_ports.values() if getattr(getattr(p, 'parent_item', None), 'id', None) == start_item.id]
+        # Trouver les sockets de départ en se basant sur le parent_item
+        start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'parent_item', None) == start_item]
 
         if not start_ports:
             self.console.print(Panel(f"Aucun port réseau trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))

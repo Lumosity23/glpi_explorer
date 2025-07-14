@@ -50,11 +50,44 @@ class DebugCommand(BaseCommand):
         
         table.add_row("Computers", str(len(self.cache.computers)))
         table.add_row("NetworkEquipments", str(len(self.cache.network_equipments)))
-        table.add_row("PassiveDCEquipments", str(len(self.cache.passive_dc_equipments)))
+        table.add_row("PassiveDCEquipments", str(len(self.cache.passive_devices)))
         table.add_row("Cables", str(len(self.cache.cables)))
         
         table.add_row("Sockets", str(len(self.cache.sockets)))
+        table.add_row("NetworkPorts", str(len(self.cache.network_ports)))
         
+        self.console.print(table)
+
+    def _display_item_list(self, itemtype):
+        cache_map = {
+            'Computer': self.cache.computers,
+            'NetworkEquipment': self.cache.network_equipments,
+            'PassiveDCEquipment': self.cache.passive_devices,
+            'Cable': self.cache.cables,
+            'Glpi\\Socket': self.cache.sockets,
+            'NetworkPort': self.cache.network_ports
+        }
+
+        target_dict = cache_map.get(itemtype)
+        if target_dict is None:
+            self.console.print(Panel(f"Le type '{itemtype}' n'est pas géré pour la liste de débogage.", title="[red]Erreur[/red]"))
+            return
+
+        if not target_dict:
+            self.console.print(Panel(f"Aucun objet de type '{itemtype}' trouvé dans le cache.", title="[yellow]Info[/yellow]"))
+            return
+
+        table = Table(title=f"Liste des {itemtype}s", show_lines=True)
+        table.add_column("ID", justify="right", style="cyan", no_wrap=True)
+        table.add_column("Nom", style="magenta")
+        table.add_column("Parent ID", style="green")
+        table.add_column("Parent Type", style="blue")
+
+        for item_id, item in target_dict.items():
+            parent_id = getattr(item, 'items_id', 'N/A')
+            parent_type = getattr(item, 'itemtype', 'N/A')
+            table.add_row(str(item_id), getattr(item, 'name', 'N/A'), str(parent_id), parent_type)
+
         self.console.print(table)
 
     def _display_item_details(self, itemtype, item_id):
@@ -62,10 +95,11 @@ class DebugCommand(BaseCommand):
         cache_map = {
             'Computer': self.cache.computers,
             'NetworkEquipment': self.cache.network_equipments,
-            'PassiveDCEquipment': self.cache.passive_dc_equipments,
+            'PassiveDCEquipment': self.cache.passive_devices,
             'Cable': self.cache.cables,
             
-            'Glpi\\Socket': self.cache.sockets
+            'Glpi\\Socket': self.cache.sockets,
+            'NetworkPort': self.cache.network_ports
         }
         
         target_dict = cache_map.get(itemtype)
@@ -87,8 +121,9 @@ class DebugCommand(BaseCommand):
 
         # Itérer sur les attributs de l'objet SimpleNamespace
         for attr, value in vars(item).items():
-            # Afficher des représentations simples pour les objets complexes pour éviter les erreurs
-            if isinstance(value, types.SimpleNamespace):
+            if attr == 'networkports' and isinstance(value, list):
+                display_value = f"Liste de {len(value)} NetworkPort(s)"
+            elif isinstance(value, types.SimpleNamespace):
                 display_value = f"Objet {value.__class__.__name__} (ID: {getattr(value, 'id', 'N/A')})"
             elif isinstance(value, list) and value and isinstance(value[0], types.SimpleNamespace):
                  display_value = f"Liste de {len(value)} objet(s) {value[0].__class__.__name__}"
