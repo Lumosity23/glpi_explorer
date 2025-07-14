@@ -14,6 +14,7 @@ class TopologyCache:
         self.network_ports = {}
 
     def load_from_api(self, console):
+        self.console = console
         progress_columns = [
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
@@ -75,32 +76,36 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        # Créer un dictionnaire global de tous les équipements pour un accès facile
+        # Étape 1: Lier chaque socket à son équipement parent
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        
+        # Créer un dictionnaire de mapping nom -> objet pour une recherche rapide
+        # .lower() pour une comparaison insensible à la casse
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
-        # --- Étape 1: Lier chaque Port/Socket à son parent Équipement ---
-        # Un NetworkPort a un 'items_id' et 'itemtype' vers son parent
-        for port in self.network_ports.values():
-            parent_id = getattr(port, 'items_id', None)
-            if parent_id in all_equipment:
-                port.parent_item = all_equipment[parent_id]
-                # Créer une liste de ports sur l'objet parent si elle n'existe pas
-                if not hasattr(port.parent_item, 'networkports'):
-                    port.parent_item.networkports = []
-                port.parent_item.networkports.append(port)
+        for socket_obj in self.sockets.values():
+            parent_id_or_name = getattr(socket_obj, 'items_id', None)
+            
+            parent_item = None
+            
+            # Tenter de trouver le parent par ID (si c'est un entier)
+            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
+                parent_item = all_equipment.get(parent_id_or_name)
+            # Sinon, tenter de trouver par nom (si c'est une chaîne)
+            elif isinstance(parent_id_or_name, str):
+                parent_item = equipment_by_name.get(parent_id_or_name.lower())
 
-        # Un Socket est lié à un NetworkPort par 'networkports_id'
-        for socket in self.sockets.values():
-            port_id = getattr(socket, 'networkports_id', None)
-            if port_id in self.network_ports:
-                socket.networkport = self.network_ports[port_id]
-                # Lier en retour le socket au port
-                self.network_ports[port_id].socket = socket
+            if parent_item:
+                socket_obj.parent_item = parent_item
+                socket_obj.parent_itemtype = getattr(parent_item, 'itemtype', None)
+            else:
+                socket_obj.parent_item = None
+                socket_obj.parent_itemtype = None
 
-        # --- Étape 2: Lier les Sockets entre eux via les Câbles ---
-        for cable in self.cables.values():
+        # Étape 2: Lier les sockets entre eux via les câbles (cette partie reste inchangée)
+        for cable_obj in self.cables.values():
             socket_ids = []
-            for link in getattr(cable, 'links', []):
+            for link in getattr(cable_obj, 'links', []):
                 if link.get('rel') == 'Glpi\\Socket':
                     try:
                         socket_id = int(link['href'].split('/')[-1])
