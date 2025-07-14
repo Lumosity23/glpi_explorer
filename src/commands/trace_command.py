@@ -24,12 +24,14 @@ class TraceCommand(BaseCommand):
         item_type_alias, item_name = parts
         item_type = self._get_item_type(item_type_alias)
 
+        self.console.print(f"Starting trace for {item_name}")
         start_item = self._find_item_in_cache(item_type, item_name)
 
         if not start_item:
             self._display_error(f"Item '{item_name}' of type '{item_type}' not found in cache.")
             return
 
+        self.console.print(f"Found start item: {start_item.name}")
         self._perform_trace(start_item, item_type)
 
     def _find_item_in_cache(self, item_type, item_name):
@@ -53,67 +55,49 @@ class TraceCommand(BaseCommand):
         trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
         trace_table.add_column("Étape", justify="right")
         trace_table.add_column("Équipement Parent")
-        trace_table.add_column("Socket")
+        trace_table.add_column("Port Logique")
+        trace_table.add_column("Socket Physique")
         trace_table.add_column("Connecté via (Câble)")
         
-        # Trouver les sockets de départ
-        start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'parent_item', None) == start_item]
-
-        if not start_sockets:
-            self.console.print(Panel(f"[yellow]Aucun socket physique trouvé pour {start_item.name}. Fin de la trace.[/yellow]", border_style="yellow"))
+        # Trouver les ports de départ directement sur l'objet équipement
+        start_ports = getattr(start_item, 'networkports', [])
+        
+        if not start_ports:
+            self.console.print(Panel(f"Aucun port réseau trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
             return
 
-        # Pour cette mission, on ne gère pas encore le choix interactif. On prend le premier.
-        current_socket = start_sockets[0]
+        # Pour l'instant, on prend le premier port de l'équipement
+        current_port = start_ports[0]
+        # On récupère le socket physique associé à ce port logique
+        current_socket = getattr(current_port, 'socket', None)
+        
         visited_sockets = set()
         step = 1
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
-            parent_name = getattr(current_socket.parent_item, 'name', 'Parent Inconnu')
-            cable_name = getattr(getattr(current_socket, 'via_cable', None), 'name', 'N/A')
-
+            
+            # Récupérer le parent du port logique, qui est notre équipement
+            parent_item = getattr(current_port, 'parent_item', None)
+            parent_name = getattr(parent_item, 'name', 'Parent Inconnu')
+            
             trace_table.add_row(
                 str(step),
                 parent_name,
-                current_socket.name,
-                cable_name
+                current_port.name, # Nom du port logique
+                current_socket.name, # Nom du socket physique
+                "N/A" # On gérera le câble plus tard
             )
-
-            # Logique de traversée
+            
+            # On suit la connexion PHYSIQUE du socket
             if hasattr(current_socket, 'connected_to'):
                 next_socket = current_socket.connected_to
-                
-                # Gestion de la traversée des équipements passifs
-                next_parent = getattr(next_socket, 'parent_item', None)
-                if next_parent and getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment':
-                    # Logique simplifiée : on suppose que le nom indique IN/OUT. Ex: "Port 1 IN", "Port 1 OUT"
-                    if " IN" in next_socket.name.upper():
-                        out_port_name = next_socket.name.upper().replace(" IN", " OUT")
-                        # Trouver le port OUT correspondant sur le même équipement passif
-                        found_out_port = False
-                        for other_socket in self.cache.sockets.values():
-                            if getattr(other_socket, 'parent_item', None) == next_parent and other_socket.name.upper() == out_port_name:
-                                # On a trouvé le port de sortie, on affiche la traversée et on continue depuis là
-                                trace_table.add_row(
-                                    "",
-                                    f"-> Traversée de {next_parent.name}",
-                                    f"{next_socket.name} -> {other_socket.name}",
-                                    "(Interne)"
-                                )
-                                current_socket = other_socket
-                                found_out_port = True
-                                break
-                        if not found_out_port:
-                            current_socket = None # Arrêt si pas de port OUT correspondant
-                    else: # Si on arrive sur un port OUT, la logique est de continuer
-                         current_socket = next_socket
-                else: # Si ce n'est pas un passif, on continue normalement
-                    current_socket = next_socket
-
-            else: # Fin de la ligne
-                current_socket = None
+                # On remonte au port logique suivant
+                current_port = getattr(next_socket, 'networkport', None)
+                current_socket = next_socket
+            else:
+                break # Fin de la trace
             
             step += 1
-        
+            
         self.console.print(trace_table)
