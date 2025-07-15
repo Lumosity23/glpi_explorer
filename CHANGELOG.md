@@ -1,3 +1,18 @@
+## [MISSION 10.4] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Correction de la logique de liaison Équipement-NetworkPort.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Correction de la logique dans `_link_topology` pour utiliser le `itemtype` de l'équipement parent lors de la liaison des `NetworkPort`.
+
+### Justification Technique
+
+La logique précédente utilisait incorrectement le `itemtype` du `NetworkPort` lui-même, ce qui empêchait la liaison correcte avec son équipement parent. Cette correction assure que la liaison est maintenant correctement établie.
+
 ## [MISSION 10.3] - 2025-07-14 - par Gemini
 
 ### Objectif de la Phase

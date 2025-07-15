@@ -85,22 +85,24 @@ class TopologyCache:
         # Étape 1: Lier chaque NetworkPort à son équipement parent
         for port in self.network_ports.values():
             parent_id = getattr(port, 'items_id', None)
-            parent_itemtype = getattr(port, 'itemtype', None) # Assumant que l'itemtype est chargé
-            
-            # Utiliser le dictionnaire du bon type d'équipement
-            parent_dict = None
-            if parent_itemtype == 'Computer': parent_dict = self.computers
-            elif parent_itemtype == 'NetworkEquipment': parent_dict = self.network_equipments
-            elif parent_itemtype == 'PassiveDCEquipment': parent_dict = self.passive_devices
-            
-            if parent_dict and parent_id in parent_dict:
-                parent_item = parent_dict[parent_id]
-                port.parent_item = parent_item
-                
-                # Créer une liste de ports sur l'objet parent si elle n'existe pas
-                if not hasattr(parent_item, 'networkports'):
-                    parent_item.networkports = []
-                parent_item.networkports.append(port)
+            parent_itemtype = getattr(port, 'itemtype', None)
+
+            if parent_itemtype and parent_id:
+                parent_dict = None
+                if parent_itemtype == 'Computer':
+                    parent_dict = self.computers
+                elif parent_itemtype == 'NetworkEquipment':
+                    parent_dict = self.network_equipments
+                elif parent_itemtype == 'PassiveDCEquipment':
+                    parent_dict = self.passive_devices
+
+                if parent_dict and parent_id in parent_dict:
+                    parent_item = parent_dict[parent_id]
+                    port.parent_item = parent_item
+                    
+                    if not hasattr(parent_item, 'networkports'):
+                        parent_item.networkports = []
+                    parent_item.networkports.append(port)
         
         # --- FIN DU NOUVEAU BLOC DE CODE ---
         

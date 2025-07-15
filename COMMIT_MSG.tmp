@@ -1,7 +1,0 @@
-fix(cache): Ajout de la liaison Équipement vers NetworkPort
-
-- La méthode `_link_topology` a été mise à jour pour parcourir tous les `NetworkPort` du cache et les attacher à leur équipement parent.
-- Chaque objet équipement (Computer, Switch...) possède maintenant un attribut `networkports` qui est une liste de ses objets port.
-- Cette correction résout le problème où la commande `trace` ne trouvait aucun port de départ sur un équipement.
-
-Ref: Mission 10.3
