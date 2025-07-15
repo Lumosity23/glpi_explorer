@@ -1,3 +1,22 @@
+## [MISSION 12.3] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Création d'un script de validation de la liaison "Socket-Câble-Socket".
+
+### Modifications Apportées
+
+- **`link_validator.py`**:
+    - Création d'un script de diagnostic autonome pour valider la capacité à suivre une connexion physique de base (`Socket -> Câble -> Socket`) en utilisant les données du cache.
+    - Le script prend un ID de socket en argument de ligne de commande, charge le cache de topologie complet, et tente de trouver le câble connecté et l'autre socket à l'extrémité.
+    - Affiche un rapport de diagnostic détaillé de chaque étape.
+
+### Justification Technique
+
+Ce script est une étape de validation cruciale avant de refondre l'architecture de la commande `trace`. Il permet de s'assurer que le cache contient les informations correctes et que la logique de base de la liaison est fonctionnelle.
+
+Ref: Mission 12.3
+
 ## [MISSION 12.2] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
