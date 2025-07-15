@@ -1,3 +1,19 @@
+## [MISSION 11.2] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Correction de la liaison Équipement-NetworkPort par nom.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - La méthode `_link_topology` gère maintenant le cas où l'API GLPI retourne le nom de l'équipement parent au lieu de son ID dans le champ `items_id` d'un objet NetworkPort.
+    - La liaison se fait désormais soit par ID numérique, soit par nom, ce qui résout la cause racine de l'échec de la commande `trace`.
+
+### Justification Technique
+
+Cette modification finale corrige la cause racine de l'échec de la commande `trace`.
+
 ## [MISSION 11.1] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
@@ -527,11 +543,11 @@ Refactoring majeur de l'architecture des commandes pour améliorer la modularit�
 
 - **`src/commands/base_command.py`**: Introduction d'une classe de base abstraite pour toutes les commandes.
 
-- **`src/commands/get_command.py`**: Extraction de la logique de la commande `get` dans son own file.
+- **`src/commands/get_command.py`**: Extraction de la logique de la commande `get` dans son propre fichier.
 
-- **`src/commands/list_command.py`**: Extraction de la logique de la commande `list` dans son own file.
+- **`src/commands/list_command.py`**: Extraction de la logique de la commande `list` dans son propre fichier.
 
-- **`src/commands/debug_command.py`**: Extraction de la logique de la commande `debug` dans son own file.
+- **`src/commands/debug_command.py`**: Extraction de la logique de la commande `debug` dans son propre fichier.
 
 - **`src/shell.py`**: Simplification massive du fichier pour agir comme un dispatcheur dynamique des commandes, chargeant les commandes depuis le dossier `src/commands/`.
 
@@ -558,7 +574,7 @@ Correction finale de la méthode de recherche `search_item` pour extraire correc
 
 - **`src/api_client.py`**:
   - Modification des `params` de la requête `search_item` pour inclure `forcedisplay[0]=2`, assurant que l'ID de l'objet est toujours présent dans la réponse.
-  - Correction de la logique d'analyse de la réponse JSON pour rechercher la clé `"2"` pour l'ID de l'objet.
+  - Correction de la logique d'analyse de la réponse JSON pour rechercher la clé "2" pour l'ID de l'objet.
   - Ajout d'un bloc `try...except` plus robuste pour gérer les erreurs de parsing JSON ou les structures de données inattendues.
 
 ## [MISSION 2.8] - 2025-07-08 - par Manus
@@ -596,7 +612,7 @@ Correction des bugs des commandes `list` et `get`.
   - Correction des mappings pour `PassiveDevice` vers `PassiveEquipment` pour les alias `patchpanel`, `patch`, `pp`, `walloutlet`, `wo`.
 
 - **`src/api_client.py`**:
-  - Refactorisation de la logique d'extraction de l'ID dans `search_item` pour gérer la structure de réponse de l'API GLPI avec `totalcount` et les clés numériques (`'2'`) pour l'ID.
+  - Refactorisation de la logique d'extraction de l'ID dans `search_item` pour gérer la structure de réponse de l'API GLPI avec `totalcount` et les clés numériques ("2") pour l'ID.
 
 ## [MISSION 2.5] - 2025-07-08 - par Manus
 
