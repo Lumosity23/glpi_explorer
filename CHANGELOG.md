@@ -1,3 +1,27 @@
+## [MISSION 13.1] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Refonte du Cache en Dépôt de Données Brutes.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Suppression complète de la méthode `_link_topology` et de toute logique de liaison implicite au chargement.
+    - Le TopologyCache agit désormais comme un simple conteneur de données, chargeant les objets bruts depuis l'API.
+- **`src/commands/trace_command.py`**:
+    - La commande `trace` est temporairement désactivée pour éviter les crashs suite à la refonte du cache.
+- **`src/commands/get_command.py`**:
+    - La sous-commande `get port` est temporairement désactivée.
+
+### Justification Technique
+
+Cette modification est la première étape de la nouvelle architecture découplée (Dépôt/Linker) et prépare le terrain pour la création d'un `TopologyLinker` dédié.
+
+BREAKING CHANGE: La structure et le rôle du cache ont été fondamentalement modifiés. Les commandes ne peuvent plus se fier aux attributs de liaison pré-calculés.
+
+Ref: Mission 13.1
+
 ## [MISSION 12.8] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
