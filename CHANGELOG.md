@@ -1,3 +1,25 @@
+## [MISSION 11.5] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Refonte du Chargement du Cache par "Get Details" Individuel
+
+### Modifications Apportées
+
+- **`src/api_client.py`**:
+    - Ajout du paramètre `only_id=True` par défaut à la méthode `list_items` pour optimiser la récupération des listes d'ID.
+- **`src/topology_cache.py`**:
+    - Le processus de chargement du cache a été entièrement réécrit.
+    - Il ne se base plus sur les réponses allégées de `list_items`, mais effectue un `get_item_details` pour chaque objet individuel du parc.
+    - Cette approche garantit que les objets dans le cache sont aussi riches et complets que ceux affichés par la commande 'get'.
+    - La méthode `_link_topology` a été simplifiée pour ne gérer que la liaison des câbles.
+
+### Justification Technique
+
+Bien que plus lent au premier chargement, ce mécanisme résout définitivement le problème des attributs manquants (comme `_networkports`) et assure la fiabilité du cache.
+
+Ref: Mission 11.5
+
 ## [MISSION 11.4] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase

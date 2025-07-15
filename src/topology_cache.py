@@ -22,136 +22,143 @@ class TopologyCache:
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         ]
         with Progress(*progress_columns, console=console) as progress:
-            task = progress.add_task("Chargement de la topologie...", total=6)
+            main_task = progress.add_task("Chargement de la topologie...", total=6)
 
-            self._load_items('Computer', self.computers, progress, task)
-            self._load_items('NetworkEquipment', self.network_equipments, progress, task)
-            self._load_items('PassiveDCEquipment', self.passive_devices, progress, task)
-            self._load_items('Glpi\\Socket', self.sockets, progress, task)
-            self._load_items('Cable', self.cables, progress, task)
-            self._load_items('NetworkPort', self.network_ports, progress, task)
+            self._load_computers(progress, main_task)
+            self._load_network_equipments(progress, main_task)
+            self._load_passive_devices(progress, main_task)
+            self._load_sockets(progress, main_task)
+            self._load_cables(progress, main_task)
+            self._load_network_ports(progress, main_task)
 
         self._link_topology()
 
-    def _load_items(self, item_type, target_dict, progress, task_id):
-        progress.update(task_id, description=f"Chargement des {item_type}s...")
-        items_data = self.api_client.list_items(item_type, "0-9999")
-        for data in items_data:
-            data['itemtype'] = item_type
-            target_dict[data['id']] = types.SimpleNamespace(**data)
+    def _load_computers(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Ordinateurs...")
+        id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('Computer', item_id)
+                if details:
+                    details['itemtype'] = 'Computer'
+                    self.computers[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
+        progress.advance(task_id)
+
+    def _load_network_equipments(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Équipements Réseau...")
+        id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('NetworkEquipment', item_id)
+                if details:
+                    details['itemtype'] = 'NetworkEquipment'
+                    self.network_equipments[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
+        progress.advance(task_id)
+
+    def _load_passive_devices(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Équipements Passifs...")
+        id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('PassiveDCEquipment', item_id)
+                if details:
+                    details['itemtype'] = 'PassiveDCEquipment'
+                    self.passive_devices[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
+        progress.advance(task_id)
+
+    def _load_sockets(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Sockets Physiques...")
+        id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('Glpi\\Socket', item_id)
+                if details:
+                    details['itemtype'] = 'Glpi\\Socket'
+                    self.sockets[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
+        progress.advance(task_id)
+
+    def _load_cables(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Câbles...")
+        id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('Cable', item_id)
+                if details:
+                    details['itemtype'] = 'Cable'
+                    self.cables[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
+        progress.advance(task_id)
+
+    def _load_network_ports(self, progress, task_id):
+        progress.update(task_id, description="Chargement des Ports Réseau...")
+        id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
+        if not id_list:
+            progress.advance(task_id)
+            return
+
+        sub_task = progress.add_task("", total=len(id_list), parent=task_id)
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('NetworkPort', item_id)
+                if details:
+                    details['itemtype'] = 'NetworkPort'
+                    self.network_ports[item_id] = types.SimpleNamespace(**details)
+            progress.advance(sub_task)
         progress.advance(task_id)
 
     def _link_topology(self):
-        # --- PASSE 1: Enrichir les équipements avec leurs ports ---
-        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        
-        for equip in all_equipment.values():
-            equip.networkports = [] # Initialise l'attribut
-            
-            # Chercher le lien HATEOAS pour les NetworkPorts
-            networkport_link = None
-            for link in getattr(equip, 'links', []):
-                if link.get('rel') == 'NetworkPort':
-                    networkport_link = link.get('href')
-                    break
-            
-            # Si le lien existe, suivre le lien pour récupérer les ports
-            if networkport_link:
-                # La réponse de ce sous-item est une liste d'objets NetworkPort complets
-                ports_for_this_equip = self.api_client.get_sub_items(networkport_link)
-                for port_data in ports_for_this_equip:
-                    port_id = port_data.get('id')
-                    if port_id and port_id in self.network_ports:
-                        # Récupérer l'objet port déjà chargé dans le cache
-                        port_obj = self.network_ports[port_id]
-                        # Créer les liens
-                        port_obj.parent_item = equip
-                        equip.networkports.append(port_obj)
-
-        # --- PASSE 2: Lier les Sockets et les Câbles (cette logique est plus fiable maintenant) ---
-        # Lier NetworkPorts à Sockets
-        for socket in self.sockets.values():
-            port_id = getattr(socket, 'networkports_id', None)
-            if port_id in self.network_ports:
-                network_port = self.network_ports[port_id]
-                network_port.socket = socket
-                socket.networkport = network_port
-                socket.parent_item = getattr(network_port, 'parent_item', None)
-        
         # Lier les Sockets via les Câbles
-        for cable in self.cables.values():
-            socket_ids = []
-            # ... (logique existante pour extraire les ID de socket des liens du câble)
-            # ... (logique existante pour créer les liens connected_to)
-
-    def get_ports_for_item(self, parent_item):
-        """Recherche et retourne tous les NetworkPorts appartenant à un équipement parent."""
-        found_ports = []
-        parent_id = getattr(parent_item, 'id', None)
-        parent_name = getattr(parent_item, 'name', '').lower()
-
-        if not parent_id:
-            return []
-
-        for port in self.network_ports.values():
-            port_parent_id_or_name = getattr(port, 'items_id', None)
-            
-            # Gère le cas où l'API retourne un ID numérique
-            if isinstance(port_parent_id_or_name, int) and port_parent_id_or_name == parent_id:
-                found_ports.append(port)
-            # Gère le cas où l'API retourne un nom
-            elif isinstance(port_parent_id_or_name, str) and port_parent_id_or_name.lower() == parent_name:
-                found_ports.append(port)
-        
-        return found_ports
-
-    def get_socket_for_port(self, network_port):
-        """Trouve le Socket physique correspondant à un NetworkPort logique."""
-        port_id = getattr(network_port, 'id', None)
-        if not port_id:
-            return None
-            
-        for socket in self.sockets.values():
-            if getattr(socket, 'networkports_id', None) == port_id:
-                return socket
-        return None
-
-    def get_connection_for_socket(self, socket):
-        """Trouve le socket connecté à un autre via un câble."""
-        socket_id = getattr(socket, 'id', None)
-        if not socket_id:
-            return None
-
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
                 if link.get('rel') == 'Glpi\\Socket':
                     try:
-                        link_socket_id = int(link['href'].split('/')[-1])
-                        socket_ids.append(link_socket_id)
+                        socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(socket_id)
                     except (ValueError, IndexError):
                         continue
             
             if len(socket_ids) == 2:
-                if socket_ids[0] == socket_id:
-                    return self.sockets.get(socket_ids[1])
-                elif socket_ids[1] == socket_id:
-                    return self.sockets.get(socket_ids[0])
-        return None
-
-    def get_parent_for_socket(self, socket):
-        """Trouve l'équipement parent d'un socket."""
-        # Logique de la Mission 10.5
-        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
-        
-        parent_id_or_name = getattr(socket, 'items_id', None)
-        
-        if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
-            return all_equipment.get(parent_id_or_name)
-        elif isinstance(parent_id_or_name, str):
-            return equipment_by_name.get(parent_id_or_name.lower())
-        return None
+                socket_a = self.sockets.get(socket_ids[0])
+                socket_b = self.sockets.get(socket_ids[1])
+                if socket_a and socket_b:
+                    socket_a.connected_to = socket_b
+                    socket_b.connected_to = socket_a
 
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:

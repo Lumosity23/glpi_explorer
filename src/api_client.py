@@ -81,7 +81,7 @@ class ApiClient:
 
 
 
-    def list_items(self, itemtype, item_range="0-4"):
+    def list_items(self, itemtype, item_range="0-9999", only_id=True):
         if not self.session_token:
             return []
 
@@ -93,7 +93,8 @@ class ApiClient:
 
         params = {
             "range": item_range,
-            "expand_dropdowns": "true"
+            "expand_dropdowns": "true",
+            "only_id": "true" if only_id else "false"
         }
         try:
             response = requests.get(f"{self.base_url}/{itemtype}/", headers=headers, params=params)
