@@ -1,3 +1,23 @@
+## [MISSION 13.2] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Création du `TopologyLinker` et de la navigation de base.
+
+### Modifications Apportées
+
+- **`src/topology_linker.py`**:
+    - Création de la nouvelle classe `TopologyLinker` qui encapsule la logique de navigation dans le cache.
+    - Implémentation des méthodes de recherche de base : `find_item`, `find_socket_by_id`, et `find_connection_for_socket`.
+- **`src/commands/testlink_command.py`**:
+    - Ajout d'une commande de test `testlink <socket_id>` pour valider le bon fonctionnement de la liaison Socket-Câble-Socket via le linker.
+
+### Justification Technique
+
+Cette mission établit le "cerveau" de notre nouvelle architecture.
+
+Ref: Mission 13.2
+
 ## [MISSION 13.1] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
