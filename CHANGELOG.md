@@ -1,3 +1,24 @@
+## [MISSION 12.4] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Amélioration de l'esthétique du panneau de démarrage.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Refonte complète de la méthode `load_from_api` pour améliorer l'esthétique du panneau de démarrage.
+    - Le chargement se fait maintenant en deux passes : d'abord, récupération de tous les ID pour calculer le total, puis chargement des détails.
+    - Utilisation d'un `Panel` `rich` unique avec le titre "GLPI-Explorer".
+    - Utilisation d'une seule barre de progression `rich` qui affiche le décompte des équipements en cours de chargement (par exemple, "Chargement Computers: 12/153").
+    - Suppression des anciennes méthodes de chargement individuelles (`_load_computers`, etc.).
+
+### Justification Technique
+
+Cette modification améliore considérablement l'expérience utilisateur au démarrage de l'application, en fournissant un retour visuel plus clair, plus esthétique et plus informatif, similaire à celui de Gemini CLI.
+
+Ref: Mission 12.4
+
 ## [MISSION 12.3] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
