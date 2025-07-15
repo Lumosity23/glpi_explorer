@@ -26,7 +26,9 @@ def main():
         return
     
     api_client = ApiClient(config)
-    api_client.connect()
+    if not api_client.connect():
+        console.print("[bold red]La connexion à l'API a échoué. Le script ne peut pas continuer.[/bold red]")
+        return
     
     console.print("[cyan]Chargement complet du cache de topologie...[/cyan]")
     cache = TopologyCache(api_client)
@@ -49,7 +51,7 @@ def main():
     for cable in cache.cables.values():
         socket_ids = []
         for link in getattr(cable, 'links', []):
-            if link.get('rel') == 'Glpi\Socket':
+            if link.get('rel') == 'Glpi\\Socket':
                 try:
                     socket_id_from_link = int(link['href'].split('/')[-1])
                     socket_ids.append(socket_id_from_link)
@@ -71,7 +73,7 @@ def main():
     # On re-parcourt les liens du câble trouvé
     socket_ids_in_cable = []
     for link in getattr(found_cable, 'links', []):
-        if link.get('rel') == 'Glpi\Socket':
+        if link.get('rel') == 'Glpi\\Socket':
             try:
                 socket_ids_in_cable.append(int(link['href'].split('/')[-1]))
             except (ValueError, IndexError):
