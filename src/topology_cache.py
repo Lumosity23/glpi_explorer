@@ -6,6 +6,7 @@ from rich.console import Console
 from rich.text import Text
 from rich.live import Live
 from rich.layout import Layout
+from rich.align import Align
 
 class TopologyCache:
     def __init__(self, api_client, cache_file='topology_cache.pkl'):
@@ -62,7 +63,7 @@ class TopologyCache:
         )
         layout["progress"].update(progress_bar)
 
-        with Live(Panel(layout), console=console, screen=True, redirect_stderr=False) as live:
+        with Live(Align.center(Panel(layout)), console=console, redirect_stderr=False) as live:
             task = progress_bar.add_task("Chargement de la topologie...", total=total_items)
             for item_type, target_dict in item_types_to_load.items():
                 id_list = id_lists[item_type]
@@ -74,6 +75,7 @@ class TopologyCache:
                             details['itemtype'] = item_type
                             target_dict[item_id] = types.SimpleNamespace(**details)
                     progress_bar.update(task, advance=1, description=f"Chargement {item_type}: {i+1}/{len(id_list)}")
+            live.update(Align.center(Panel(layout)))
 
         self._link_topology()
 

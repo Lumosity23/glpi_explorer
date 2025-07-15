@@ -1,3 +1,22 @@
+## [MISSION 12.6] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Amélioration de l'affichage du panneau de démarrage pour qu'il persiste après le chargement.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Suppression de l'argument `screen=True` de `rich.Live` pour que le panneau reste visible après le chargement.
+    - Utilisation de `rich.align.Align.center` pour centrer le panneau et limiter sa largeur à celle du logo.
+    - Ajout d'une mise à jour finale à la barre de progression pour afficher un message de "chargement terminé".
+
+### Justification Technique
+
+Cette modification garantit que le panneau de démarrage avec le logo persiste à l'écran après le chargement, offrant une expérience utilisateur plus cohérente et esthétique.
+
+Ref: Mission 12.6
+
 ## [MISSION 12.5] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
@@ -610,7 +629,7 @@ Refondre l'affichage de la commande `get` pour unifier les informations généra
 
 ### Justification Technique
 
-L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futures.
+L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futurs.
 
 ## [MISSION 5.3] - 2025-07-09 - par Manus
 
