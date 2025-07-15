@@ -142,7 +142,26 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _link_topology(self):
-        # Lier les Sockets via les Câbles
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+
+        # Pass 1: Link NetworkPorts to their parent equipment and Sockets
+        for port in self.network_ports.values():
+            parent_id = port.items_id
+            parent_type = port.itemtype
+            if parent_type == 'Computer' and parent_id in self.computers:
+                port.parent_item = self.computers[parent_id]
+            elif parent_type == 'NetworkEquipment' and parent_id in self.network_equipments:
+                port.parent_item = self.network_equipments[parent_id]
+            elif parent_type == 'PassiveDCEquipment' and parent_id in self.passive_devices:
+                port.parent_item = self.passive_devices[parent_id]
+
+            if hasattr(port, 'sockets_id') and port.sockets_id in self.sockets:
+                socket = self.sockets[port.sockets_id]
+                port.socket = socket
+                socket.networkport = port
+                socket.parent_item = port.parent_item
+
+        # Pass 2: Link Sockets to each other via Cables
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
@@ -159,6 +178,8 @@ class TopologyCache:
                 if socket_a and socket_b:
                     socket_a.connected_to = socket_b
                     socket_b.connected_to = socket_a
+                    socket_a.via_cable = cable
+                    socket_b.via_cable = cable
 
     def find_socket_by_name(self, parent_equip, socket_name):
         """Trouve un socket par son nom sur un équipement spécifique."""

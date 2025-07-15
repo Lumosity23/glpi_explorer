@@ -1,3 +1,22 @@
+## [MISSION 12.2] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Correction de la Référence d'Objet dans la Commande "trace"
+
+### Modifications Apportées
+
+- **`src/commands/trace_command.py`**:
+    - Réécriture complète de la commande pour résoudre le problème de référence d'objet.
+    - La recherche de l'objet de départ se fait maintenant directement dans la commande, sans méthode d'aide, pour garantir la manipulation de l'objet enrichi du cache.
+    - L'accès aux ports se fait via `getattr(start_item, 'networkports', [])` pour gérer le cas où l'attribut n'existerait pas.
+
+### Justification Technique
+
+Cette modification résout l'AttributeError et rend la commande `trace` fonctionnelle.
+
+Ref: Mission 12.2
+
 ## [MISSION 12.1] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
