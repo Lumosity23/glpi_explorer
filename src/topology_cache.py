@@ -2,10 +2,9 @@ import pickle
 import types
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
-from rich.console import Console
+from rich.console import Console, Group
 from rich.text import Text
 from rich.live import Live
-from rich.layout import Layout
 from rich.align import Align
 
 class TopologyCache:
@@ -47,13 +46,7 @@ class TopologyCache:
             id_lists[item_type] = id_list
             total_items += len(id_list)
 
-        layout = Layout()
-        layout.split(
-            Layout(name="header", size=10),
-            Layout(name="progress", size=3)
-        )
-
-        layout["header"].update(Text(logo, justify="center", style="bold blue"))
+        logo_text = Text(logo, justify="center", style="bold blue")
 
         progress_bar = Progress(
             SpinnerColumn(),
@@ -61,9 +54,11 @@ class TopologyCache:
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         )
-        layout["progress"].update(progress_bar)
+        
+        loading_group = Group(logo_text, progress_bar)
+        panel = Panel(Align.center(loading_group))
 
-        with Live(Align.center(Panel(layout)), console=console, redirect_stderr=False) as live:
+        with Live(panel, console=console, redirect_stderr=False) as live:
             task = progress_bar.add_task("Chargement de la topologie...", total=total_items)
             for item_type, target_dict in item_types_to_load.items():
                 id_list = id_lists[item_type]
@@ -75,7 +70,13 @@ class TopologyCache:
                             details['itemtype'] = item_type
                             target_dict[item_id] = types.SimpleNamespace(**details)
                     progress_bar.update(task, advance=1, description=f"Chargement {item_type}: {i+1}/{len(id_list)}")
-            live.update(Align.center(Panel(Text(logo, justify="center", style="bold blue"), title="Bienvenue dans GLPI Explorer", subtitle="v0.1")))
+            
+            final_panel = Panel(
+                Align.center(logo_text),
+                title="Bienvenue dans GLPI Explorer",
+                subtitle="v0.1"
+            )
+            live.update(final_panel)
 
         self._link_topology()
 

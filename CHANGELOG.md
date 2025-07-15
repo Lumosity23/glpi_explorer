@@ -1,3 +1,22 @@
+## [MISSION 12.8] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Correction de l'affichage du panneau de démarrage pour un rendu final unifié et compact.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Abandon de `rich.Layout` au profit de `rich.Group` pour un contrôle plus flexible de l'affichage.
+    - Le logo et la barre de progression sont groupés et affichés dans un seul `Panel` via `rich.Live`.
+    - Une fois le chargement terminé, le `Live` est mis à jour pour remplacer la barre de progression par le message de bienvenue et la version, le tout dans le même `Panel` qui se redimensionne automatiquement.
+
+### Justification Technique
+
+Cette modification finale corrige le problème de l'espace vertical excessif et assure un affichage de démarrage unifié et compact, comme demandé.
+
+Ref: Mission 12.8
+
 ## [MISSION 12.7] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
