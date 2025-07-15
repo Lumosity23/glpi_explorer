@@ -1,5 +1,3 @@
----
-
 ### **📄 Le Framework de Développement Supervisé par IA (ASDF)**
 
 **Philosophie :** Combiner la vision stratégique et la capacité de validation d'un humain avec la vitesse d'exécution et la connaissance technique d'une IA spécialisée pour accélérer le développement de logiciels complexes, tout en maintenant une haute qualité de code et une traçabilité rigoureuse.
@@ -8,7 +6,6 @@
 *   **Le Superviseur (Humain) :** Vous. L'architecte, le chef de projet, le testeur final. Vous définissez la vision, découpez le travail en phases logiques, validez les résultats et résolvez les blocages d'environnement.
 *   **L'Exécutant (IA, ex: ManusAI) :** Votre assistant. Le développeur expert qui écrit, corrige et structure le code en suivant des instructions précises.
 
----
 
 ### **Les 5 Piliers du Framework ASDF**
 
