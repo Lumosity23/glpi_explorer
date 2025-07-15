@@ -75,7 +75,7 @@ class TopologyCache:
                             details['itemtype'] = item_type
                             target_dict[item_id] = types.SimpleNamespace(**details)
                     progress_bar.update(task, advance=1, description=f"Chargement {item_type}: {i+1}/{len(id_list)}")
-            live.update(Align.center(Panel(layout)))
+            live.update(Align.center(Panel(Text(logo, justify="center", style="bold blue"), title="Bienvenue dans GLPI Explorer", subtitle="v0.1")))
 
         self._link_topology()
 

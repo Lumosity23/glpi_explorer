@@ -89,7 +89,7 @@ class GLPIExplorerShell:
         # Load commands now that api_client is initialized
         self._load_commands()
 
-        self.console.print(Panel("Bienvenue dans GLPI Explorer", title="[bold cyan]GLPI Explorer[/]", subtitle="[green]v0.1[/]"))
+        
 
         while True:
             try:

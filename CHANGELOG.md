@@ -1,3 +1,22 @@
+## [MISSION 12.7] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Correction de l'affichage du panneau de démarrage pour éviter les panneaux doubles.
+
+### Modifications Apportées
+
+- **`src/shell.py`**:
+    - Suppression de l'affichage du panneau de bienvenue.
+- **`src/topology_cache.py`**:
+    - Modification de la méthode `load_from_api` pour intégrer le message de bienvenue et la version dans le panneau de chargement après la fin du chargement.
+
+### Justification Technique
+
+Cette modification centralise l'affichage du démarrage dans `topology_cache.py`, évitant ainsi l'affichage de deux panneaux successifs et offrant une expérience utilisateur plus propre et plus professionnelle.
+
+Ref: Mission 12.7
+
 ## [MISSION 12.6] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
