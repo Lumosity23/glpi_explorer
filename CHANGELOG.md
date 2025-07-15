@@ -1,3 +1,18 @@
+## [MISSION 11.1] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Script de Diagnostic du Processus de Création du Cache
+
+### Modifications Apportées
+
+- **`cache_builder_diagnostic.py`**:
+    - Création d'un script de diagnostic pour isoler et tester la logique de liaison des objets dans le cache.
+
+### Justification Technique
+
+Cet outil est conçu pour identifier la cause exacte de l'échec de l'attachement des `NetworkPorts` à leurs équipements parents.
+
 ## [MISSION 10.7] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
@@ -512,11 +527,11 @@ Refactoring majeur de l'architecture des commandes pour améliorer la modularit�
 
 - **`src/commands/base_command.py`**: Introduction d'une classe de base abstraite pour toutes les commandes.
 
-- **`src/commands/get_command.py`**: Extraction de la logique de la commande `get` dans son propre fichier.
+- **`src/commands/get_command.py`**: Extraction de la logique de la commande `get` dans son own file.
 
-- **`src/commands/list_command.py`**: Extraction de la logique de la commande `list` dans son propre fichier.
+- **`src/commands/list_command.py`**: Extraction de la logique de la commande `list` dans son own file.
 
-- **`src/commands/debug_command.py`**: Extraction de la logique de la commande `debug` dans son propre fichier.
+- **`src/commands/debug_command.py`**: Extraction de la logique de la commande `debug` dans son own file.
 
 - **`src/shell.py`**: Simplification massive du fichier pour agir comme un dispatcheur dynamique des commandes, chargeant les commandes depuis le dossier `src/commands/`.
 
