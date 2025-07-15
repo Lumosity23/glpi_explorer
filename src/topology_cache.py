@@ -77,73 +77,54 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        # Étape 1: Lier chaque socket à son équipement parent
+        # Dictionnaire global de tous les équipements pour un accès facile
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
 
-        # --- DÉBUT DU NOUVEAU BLOC DE CODE À AJOUTER ---
+        # --- ÉTAPE 1: Lier les Équipements à leurs NetworkPorts ---
+        # On attache une liste de ports à chaque équipement.
+        for equip in all_equipment.values():
+            equip.networkports = [] # Initialise l'attribut
 
-        # Étape 1: Lier chaque NetworkPort à son équipement parent
         for port in self.network_ports.values():
             parent_id = getattr(port, 'items_id', None)
-            parent_itemtype = getattr(port, 'itemtype', None)
+            if parent_id in all_equipment:
+                parent_item = all_equipment[parent_id]
+                # Attache le port à son parent
+                parent_item.networkports.append(port)
+                # Attache le parent au port pour une navigation inverse facile
+                port.parent_item = parent_item
 
-            if parent_itemtype and parent_id:
-                parent_dict = None
-                if parent_itemtype == 'Computer':
-                    parent_dict = self.computers
-                elif parent_itemtype == 'NetworkEquipment':
-                    parent_dict = self.network_equipments
-                elif parent_itemtype == 'PassiveDCEquipment':
-                    parent_dict = self.passive_devices
+        # --- ÉTAPE 2: Lier les NetworkPorts à leurs Sockets physiques ---
+        # Un socket est la représentation physique d'un port.
+        for socket in self.sockets.values():
+            port_id = getattr(socket, 'networkports_id', None)
+            if port_id and port_id in self.network_ports:
+                network_port = self.network_ports[port_id]
+                # Lier le port logique au socket physique
+                network_port.socket = socket
+                # Lier le socket au port logique (et donc à son parent équipement)
+                socket.networkport = network_port
+                # On hérite du parent du port logique
+                socket.parent_item = getattr(network_port, 'parent_item', None)
 
-                if parent_dict and parent_id in parent_dict:
-                    parent_item = parent_dict[parent_id]
-                    port.parent_item = parent_item
-                    
-                    if not hasattr(parent_item, 'networkports'):
-                        parent_item.networkports = []
-                    parent_item.networkports.append(port)
-        
-        # --- FIN DU NOUVEAU BLOC DE CODE ---
-        
-        # Créer un dictionnaire de mapping nom -> objet pour une recherche rapide
-        # .lower() pour une comparaison insensible à la casse
-        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
-
-        for socket_obj in self.sockets.values():
-            parent_id_or_name = getattr(socket_obj, 'items_id', None)
+        # --- ÉTAPE 3: Lier les Sockets entre eux via les Câbles ---
+        # Cette logique est maintenant fiable car les sockets sont correctement liés.
+        for cable in self.cables.values():
+            socket_ids = []
+            for link in getattr(cable, 'links', []):
+                if link.get('rel') == 'Glpi\\Socket':
+                    try:
+                        socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(socket_id)
+                    except (ValueError, IndexError):
+                        continue
             
-            parent_item = None
-            
-            # Tenter de trouver le parent par ID (si c'est un entier)
-            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
-                parent_item = all_equipment.get(parent_id_or_name)
-            # Sinon, tenter de trouver par nom (si c'est une chaîne)
-            elif isinstance(parent_id_or_name, str):
-                parent_item = equipment_by_name.get(parent_id_or_name.lower())
-
-            if parent_item:
-                socket_obj.parent_item = parent_item
-                socket_obj.parent_itemtype = getattr(parent_item, 'itemtype', None)
-            else:
-                socket_obj.parent_item = None
-                socket_obj.parent_itemtype = None
-
-        # Étape 2: Lier les sockets entre eux via les câbles (cette partie reste inchangée)
-        for cable_obj in self.cables.values():
-            if 'links' in cable_obj.__dict__:
-                for link in cable_obj.links:
-                    item1_id = link.get('items1_id')
-                    item2_id = link.get('items2_id')
-                    
-                    socket1 = self.sockets.get(item1_id)
-                    socket2 = self.sockets.get(item2_id)
-                    
-                    if socket1 and socket2:
-                        socket1.connected_to = socket2
-                        socket2.connected_to = socket1
-                        socket1.cable = cable_obj
-                        socket2.cable = cable_obj
+            if len(socket_ids) == 2:
+                socket_a = self.sockets.get(socket_ids[0])
+                socket_b = self.sockets.get(socket_ids[1])
+                if socket_a and socket_b:
+                    socket_a.connected_to = socket_b
+                    socket_b.connected_to = socket_a
 
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:
