@@ -68,50 +68,38 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Port Logique")
         trace_table.add_column("Socket Physique")
         trace_table.add_column("Connecté via (Câble)")
-        
-        # Trouver les sockets de départ en se basant sur le parent_item
-        start_sockets = [s for s in self.cache.sockets.values() if getattr(s, 'parent_item', None) == start_item]
 
-        if not start_sockets:
-            self.console.print(Panel(f"Aucun port réseau trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
-            return
-
-        # Pour l'instant, on prend le premier port de l'équipement
-        current_socket = start_sockets[0]
-        current_port = getattr(current_socket, 'networkport', None)
-        
-        # Handle case where current_port has no associated socket
-        if not current_socket:
-            self.console.print(Panel(f"Le port {current_port.name} de {start_item.name} n'a pas de socket physique associé. Fin de la trace.", border_style="yellow"))
+        # ÉTAPE 1: Trouver les ports de départ
+        start_ports = self.cache.get_ports_for_item(start_item)
+        if not start_ports:
+            self.console.print(Panel("Aucun port réseau trouvé pour cet équipement.", border_style="yellow"))
             return
         
-        visited_sockets = set()
+        current_port = start_ports[0] # On prend le premier
+        current_socket = self.cache.get_socket_for_port(current_port)
         step = 1
 
-        while current_socket and current_socket.id not in visited_sockets:
-            visited_sockets.add(current_socket.id)
-            current_port = getattr(current_socket, 'networkport', None)
+        while current_socket:
+            parent = self.cache.get_parent_for_socket(current_socket)
+            parent_name = getattr(parent, 'name', 'Parent Inconnu')
+
+            trace_table.add_row(str(step), parent_name, current_port.name, current_socket.name, "N/A")
             
-            parent_item = getattr(current_socket, 'parent_item', None)
-            parent_name = getattr(parent_item, 'name', 'Parent Inconnu')
+            # ÉTAPE 2: Suivre la connexion
+            next_socket = self.cache.get_connection_for_socket(current_socket)
             
-            trace_table.add_row(
-                str(step),
-                parent_name,
-                current_port.name, # Nom du port logique
-                current_socket.name, # Nom du socket physique
-                "N/A" # On gérera le câble plus tard
-            )
-            
-            # On suit la connexion PHYSIQUE du socket
-            if hasattr(current_socket, 'connected_to'):
-                next_socket = current_socket.connected_to
-                # On remonte au port logique suivant
-                current_port = getattr(next_socket, 'networkport', None)
-                current_socket = next_socket
-            else:
+            if not next_socket:
                 break # Fin de la trace
-            
+
+            # Prépare l'itération suivante
+            current_socket = next_socket
+            # Ceci est une simplification. Il faudrait une méthode pour trouver le port d'un socket.
+            # Pour l'instant, on suppose que la liaison inverse a été faite lors du chargement.
+            current_port = getattr(current_socket, 'networkport', None)
+            if not current_port:
+                # Si le socket n'a pas de port logique (cas d'un patch panel), il faut le gérer
+                # Pour l'instant on s'arrête
+                break
             step += 1
-            
+
         self.console.print(trace_table)

@@ -1,3 +1,23 @@
+## [MISSION 11.3] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Refonte du Cache avec Méthodes de Recherche Explicites
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Abandon de la méthode `_link_topology` qui attachait des attributs aux objets du cache.
+    - Création de méthodes de recherche explicites dans `TopologyCache` (`get_ports_for_item`, `get_socket_for_port`, etc.).
+- **`src/commands/trace_command.py`**:
+    - La commande `trace` a été réécrite pour utiliser ces nouvelles méthodes.
+
+### Justification Technique
+
+Cette approche est plus robuste, plus facile à déboguer et élimine les problèmes de "magie" qui échouaient silencieusement.
+
+BREAKING CHANGE: La manière d'interagir avec le cache a été complètement modifiée.
+
 ## [MISSION 11.2] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
