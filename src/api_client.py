@@ -37,10 +37,22 @@ class ApiClient:
         try:
             requests.get(f"{self.base_url}/killSession", headers=headers)
         except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la fermeture de session: {e}")
+            self.console.print(f"[red]Erreur lors de la déconnexion: {e}[/red]")
 
-
-
+    def get_sub_items(self, full_href):
+        """Fait une requête GET sur une URL complète fournie par un lien HATEOAS."""
+        if not self.session_token:
+            return []
+        headers = {
+            "Session-Token": self.session_token,
+            "App-Token": self.app_token
+        }
+        try:
+            response = requests.get(full_href, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException:
+            return []
 
     def get_item_details(self, itemtype, item_id):
         if not self.session_token:

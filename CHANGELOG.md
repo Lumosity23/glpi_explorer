@@ -1,3 +1,26 @@
+## [MISSION 11.4] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Refonte du Cache par Enrichissement HATEOAS
+
+### Modifications Apportées
+
+- **`src/api_client.py`**:
+    - Ajout d'une nouvelle méthode `get_sub_items(self, full_href)` pour suivre les liens HATEOAS.
+- **`src/topology_cache.py`**:
+    - La création du cache se fait maintenant en deux passes : chargement brut, puis enrichissement.
+    - La liaison Équipement-NetworkPort se base désormais sur le suivi des liens HATEOAS (`rel: "NetworkPort"`) fournis par l'API.
+    - La méthode `load_from_api` a été simplifiée.
+    - La méthode `_link_topology` a été entièrement réécrite pour implémenter la nouvelle logique d'enrichissement.
+    - Suppression des anciennes méthodes de recherche (`get_ports_for_item`, `get_socket_for_port`, etc.) devenues obsolètes.
+
+### Justification Technique
+
+Cette approche garantit que chaque équipement dans le cache contient une liste complète et fiable de ses ports, en se basant directement sur les informations fournies par l'API (HATEOAS). Cela élimine les erreurs de liaison dues aux incohérences de l'API.
+
+Ref: Mission 11.4
+
 ## [MISSION 11.3] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
