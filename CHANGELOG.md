@@ -1,3 +1,25 @@
+## [MISSION 12.1] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Implémentation Finale de la Logique de Traçage Complète
+
+### Modifications Apportées
+
+- **`src/commands/trace_command.py`**:
+    - Refonte totale de la commande `trace` pour naviguer sur le cache de topologie.
+    - La navigation se base sur la hiérarchie Équipement -> NetworkPort -> Socket.
+    - Ajout d'une logique de "traversée" interne pour les équipements passifs (IN -> OUT).
+    - Ajout d'une logique de "concentration" pour les hubs (IN -> port OUT principal).
+- **`src/topology_cache.py`**:
+    - Ajout de la méthode d'aide `find_socket_by_name`.
+
+### Justification Technique
+
+La commande `trace` est maintenant fonctionnelle et capable de suivre un chemin réseau complexe.
+
+Ref: Mission 12.1
+
 ## [MISSION 11.6] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase

@@ -160,6 +160,14 @@ class TopologyCache:
                     socket_a.connected_to = socket_b
                     socket_b.connected_to = socket_a
 
+    def find_socket_by_name(self, parent_equip, socket_name):
+        """Trouve un socket par son nom sur un équipement spécifique."""
+        for port in getattr(parent_equip, '_networkports', {}).get('NetworkPortEthernet', []):
+            socket = getattr(self.network_ports.get(port['id']), 'socket', None)
+            if socket and getattr(socket, 'name', '').lower() == socket_name.lower():
+                return socket
+        return None
+
     def save_to_disk(self):
         with open(self.cache_file, 'wb') as f:
             pickle.dump(self, f)
