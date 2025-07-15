@@ -4,6 +4,8 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
 from rich.panel import Panel
 from rich.console import Console
 from rich.text import Text
+from rich.live import Live
+from rich.layout import Layout
 
 class TopologyCache:
     def __init__(self, api_client, cache_file='topology_cache.pkl'):
@@ -18,6 +20,15 @@ class TopologyCache:
 
     def load_from_api(self, console):
         self.console = console
+
+        logo = """
+         ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
+        ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
+        ██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝ ██████╔╝██║     ██║   ██║██████╔╝█████╗  ██████╔╝
+        ██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗ ██╔═══╝ ██║     ██║   ██║██╔══██╗██╔══╝  ██╔══██╗
+        ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║  ██║███████╗██║  ██║
+         ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+        """
 
         item_types_to_load = {
             "Computer": self.computers,
@@ -35,17 +46,24 @@ class TopologyCache:
             id_lists[item_type] = id_list
             total_items += len(id_list)
 
-        title = Text("GLPI-Explorer", justify="center", style="bold blue")
-        progress_table = Progress(
+        layout = Layout()
+        layout.split(
+            Layout(name="header", size=10),
+            Layout(name="progress", size=3)
+        )
+
+        layout["header"].update(Text(logo, justify="center", style="bold blue"))
+
+        progress_bar = Progress(
             SpinnerColumn(),
             TextColumn("[progress.description]{task.description}"),
             BarColumn(),
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-            console=console
         )
+        layout["progress"].update(progress_bar)
 
-        with progress_table as progress:
-            task = progress.add_task("Chargement de la topologie...", total=total_items)
+        with Live(Panel(layout), console=console, screen=True, redirect_stderr=False) as live:
+            task = progress_bar.add_task("Chargement de la topologie...", total=total_items)
             for item_type, target_dict in item_types_to_load.items():
                 id_list = id_lists[item_type]
                 for i, item_ref in enumerate(id_list):
@@ -55,9 +73,8 @@ class TopologyCache:
                         if details:
                             details['itemtype'] = item_type
                             target_dict[item_id] = types.SimpleNamespace(**details)
-                    progress.update(task, advance=1, description=f"Chargement {item_type}: {i+1}/{len(id_list)}")
+                    progress_bar.update(task, advance=1, description=f"Chargement {item_type}: {i+1}/{len(id_list)}")
 
-        console.print(Panel(title, title_align="center"))
         self._link_topology()
 
     def _link_topology(self):

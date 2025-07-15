@@ -1,3 +1,22 @@
+## [MISSION 12.5] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Intégration du logo ASCII et de la barre de progression dans un seul panneau.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - La méthode `load_from_api` a été modifiée pour utiliser `rich.Live` et `rich.Layout`.
+    - Le logo ASCII "GLPI-Explorer" et la barre de progression sont maintenant affichés dans un seul `Panel` unifié.
+    - La barre de progression est mise à jour dynamiquement à l'intérieur du panneau sans réimprimer tout l'écran.
+
+### Justification Technique
+
+Cette modification améliore encore l'esthétique du panneau de démarrage en intégrant le logo et la barre de progression dans un seul cadre, offrant une expérience utilisateur plus professionnelle et plus propre.
+
+Ref: Mission 12.5
+
 ## [MISSION 12.4] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
@@ -387,7 +406,7 @@ Ref: Mission 9.3
 
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
-- Le cache charge désormais les `Glpi\\Socket` en plus des autres équipements.
+- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
 - La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
 - La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
 - Ajout d'une logique de base pour la traversée des équipements passifs.
@@ -407,7 +426,7 @@ Intégration des `Sockets` physiques dans le cache de topologie pour corriger un
 
 - **`src/topology_cache.py`**:
     - Ajout d'un dictionnaire `self.sockets` pour stocker les `Sockets`.
-    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\\Socket` depuis l'API.
+    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\Socket` depuis l'API.
     - Refonte complète de la méthode `_link_topology` pour qu'elle connecte les `Sockets` entre eux en se basant sur les `sockets_id` des `Cables`.
     - Chaque `Socket` est maintenant lié à son équipement parent.
 
@@ -591,7 +610,7 @@ Refondre l'affichage de la commande `get` pour unifier les informations généra
 
 ### Justification Technique
 
-L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futurs.
+L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futures.
 
 ## [MISSION 5.3] - 2025-07-09 - par Manus
 
