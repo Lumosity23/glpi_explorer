@@ -1,3 +1,19 @@
+## [MISSION 10.5] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Correction de la commande `debug cache` pour accepter les noms d'équipement.
+
+### Modifications Apportées
+
+- **`src/commands/debug_command.py`**:
+    - La méthode `execute` a été modifiée pour accepter un nom d'équipement en plus d'un ID.
+    - Ajout de la méthode `_display_item_details_by_name` pour rechercher un équipement par nom dans le cache.
+
+### Justification Technique
+
+La commande `debug cache` ne fonctionnait qu'avec des ID numériques, ce qui la rendait difficile à utiliser. Cette modification permet aux utilisateurs de spécifier un nom d'équipement, ce qui est plus intuitif et pratique.
+
 ## [MISSION 10.4] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase

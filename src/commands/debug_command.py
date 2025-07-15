@@ -25,19 +25,24 @@ class DebugCommand(BaseCommand):
         # 'debug cache <type> [<id>]'
         if len(parts) >= 2:
             user_type_alias = parts[1].lower()
-            item_id = int(parts[2]) if len(parts) > 2 else None
+            identifier = parts[2] if len(parts) > 2 else None
             
             glpi_itemtype = self.TYPE_ALIASES.get(user_type_alias)
             if not glpi_itemtype:
                 self.console.print(Panel(f"Type d'alias inconnu : '{user_type_alias}'", title="[red]Erreur[/red]"))
                 return
 
-            if item_id:
-                # Mode détail : 'debug cache <type> <id>'
-                self._display_item_details(glpi_itemtype, item_id)
+            if identifier:
+                # Essayer de convertir en ID entier
+                try:
+                    item_id = int(identifier)
+                    self._display_item_details(glpi_itemtype, item_id)
+                except ValueError:
+                    # Si ce n'est pas un ID, le traiter comme un nom
+                    self._display_item_details_by_name(glpi_itemtype, identifier)
             else:
-                # Mode liste non implémenté pour l'instant
-                self.console.print(Panel(f"La vue liste pour le type '{user_type_alias}' n'est pas encore implémentée.", title="[yellow]Info[/yellow]"))
+                # Mode liste
+                self._display_item_list(glpi_itemtype)
 
     def _display_cache_summary(self):
         if not self.cache:
@@ -133,3 +138,29 @@ class DebugCommand(BaseCommand):
             details_table.add_row(attr, display_value)
             
         self.console.print(details_table)
+
+    def _display_item_details_by_name(self, itemtype, item_name):
+        cache_map = {
+            'Computer': self.cache.computers,
+            'NetworkEquipment': self.cache.network_equipments,
+            'PassiveDCEquipment': self.cache.passive_devices,
+            'Cable': self.cache.cables,
+            'Glpi\\Socket': self.cache.sockets,
+            'NetworkPort': self.cache.network_ports
+        }
+
+        target_dict = cache_map.get(itemtype)
+        if target_dict is None:
+            self.console.print(Panel(f"Le type '{itemtype}' n'est pas géré pour la recherche par nom.", title="[red]Erreur[/red]"))
+            return
+
+        found_item = None
+        for item in target_dict.values():
+            if getattr(item, 'name', '').lower() == item_name.lower():
+                found_item = item
+                break
+
+        if found_item:
+            self._display_item_details(itemtype, found_item.id)
+        else:
+            self.console.print(Panel(f"Aucun objet de type '{itemtype}' avec le nom '{item_name}' trouvé dans le cache.", title="[red]Non Trouvé[/red]"))
