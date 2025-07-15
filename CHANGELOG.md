@@ -1,3 +1,20 @@
+## [MISSION 10.7] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Refonte finale de la liaison de topologie hiérarchique.
+
+### Modifications Apportées
+
+- **`src/topology_cache.py`**:
+    - Réécriture complète de `_link_topology` pour établir une chaîne de liaison fiable basée sur la structure avérée de l'API GLPI.
+    - La liaison se fait désormais dans cet ordre : Équipement -> NetworkPort, puis NetworkPort -> Socket.
+    - La liaison du Socket à son parent se fait maintenant via la parenté de son NetworkPort, résolvant les incohérences de l'API.
+
+### Justification Technique
+
+Cette modification finale corrige la cause racine de l'échec de la commande `trace`.
+
 ## [MISSION 10.6] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
@@ -172,7 +189,7 @@ Ref: Mission 9.3
 
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
-- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
+- Le cache charge désormais les `Glpi\\Socket` en plus des autres équipements.
 - La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
 - La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
 - Ajout d'une logique de base pour la traversée des équipements passifs.
@@ -192,7 +209,7 @@ Intégration des `Sockets` physiques dans le cache de topologie pour corriger un
 
 - **`src/topology_cache.py`**:
     - Ajout d'un dictionnaire `self.sockets` pour stocker les `Sockets`.
-    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\Socket` depuis l'API.
+    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\\Socket` depuis l'API.
     - Refonte complète de la méthode `_link_topology` pour qu'elle connecte les `Sockets` entre eux en se basant sur les `sockets_id` des `Cables`.
     - Chaque `Socket` est maintenant lié à son équipement parent.
 

@@ -77,38 +77,43 @@ class TopologyCache:
             progress.advance(task_id)
 
     def _link_topology(self):
-        # Dictionnaire global de tous les équipements pour un accès facile
+        # Dictionnaires globaux pour un accès facile
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
-        # --- ÉTAPE 1: Lier les Équipements à leurs NetworkPorts ---
-        # On attache une liste de ports à chaque équipement.
+        # --- ÉTAPE 1: Lier les NetworkPorts à leurs Équipements Parents ---
+        # On attache une liste de ports à chaque équipement et on lie le port à son parent.
         for equip in all_equipment.values():
-            equip.networkports = [] # Initialise l'attribut
+            equip.networkports = []
 
         for port in self.network_ports.values():
             parent_id = getattr(port, 'items_id', None)
-            if parent_id in all_equipment:
+            # Pour un NetworkPort, l'ID parent est numérique.
+            if isinstance(parent_id, int) and parent_id in all_equipment:
                 parent_item = all_equipment[parent_id]
-                # Attache le port à son parent
                 parent_item.networkports.append(port)
-                # Attache le parent au port pour une navigation inverse facile
                 port.parent_item = parent_item
 
-        # --- ÉTAPE 2: Lier les NetworkPorts à leurs Sockets physiques ---
-        # Un socket est la représentation physique d'un port.
+        # --- ÉTAPE 2: Lier les Sockets à leurs NetworkPorts et Équipements Parents ---
         for socket in self.sockets.values():
+            # Lier au NetworkPort correspondant
             port_id = getattr(socket, 'networkports_id', None)
             if port_id and port_id in self.network_ports:
                 network_port = self.network_ports[port_id]
-                # Lier le port logique au socket physique
-                network_port.socket = socket
-                # Lier le socket au port logique (et donc à son parent équipement)
                 socket.networkport = network_port
-                # On hérite du parent du port logique
+                network_port.socket = socket
+                # Le parent du Socket est le parent de son NetworkPort
                 socket.parent_item = getattr(network_port, 'parent_item', None)
+            
+            # Fallback si le lien au NetworkPort échoue (ne devrait pas arriver)
+            # On utilise la méthode de recherche par nom pour le parent du socket
+            if not hasattr(socket, 'parent_item') or not socket.parent_item:
+                parent_name = getattr(socket, 'items_id', None)
+                if isinstance(parent_name, str):
+                    socket.parent_item = equipment_by_name.get(parent_name.lower())
 
         # --- ÉTAPE 3: Lier les Sockets entre eux via les Câbles ---
-        # Cette logique est maintenant fiable car les sockets sont correctement liés.
+        # Cette logique est correcte et reste inchangée.
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
