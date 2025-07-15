@@ -70,36 +70,53 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Connecté via (Câble)")
 
         # ÉTAPE 1: Trouver les ports de départ
-        start_ports = self.cache.get_ports_for_item(start_item)
+        start_ports = getattr(start_item, '_networkports', {}).get('NetworkPortEthernet', [])
         if not start_ports:
             self.console.print(Panel("Aucun port réseau trouvé pour cet équipement.", border_style="yellow"))
             return
         
-        current_port = start_ports[0] # On prend le premier
-        current_socket = self.cache.get_socket_for_port(current_port)
+        current_port_data = start_ports[0] # On prend le premier
+        current_port_id = current_port_data.get('id')
+        current_port = self.cache.network_ports.get(current_port_id)
+
+        if not current_port:
+            self.console.print(Panel(f"Port avec ID {current_port_id} non trouvé dans le cache.", border_style="red"))
+            return
+
+        current_socket = self.cache.sockets.get(getattr(current_port, 'sockets_id', None))
         step = 1
 
         while current_socket:
-            parent = self.cache.get_parent_for_socket(current_socket)
+            parent = self._find_parent_for_socket(current_socket)
             parent_name = getattr(parent, 'name', 'Parent Inconnu')
 
             trace_table.add_row(str(step), parent_name, current_port.name, current_socket.name, "N/A")
             
             # ÉTAPE 2: Suivre la connexion
-            next_socket = self.cache.get_connection_for_socket(current_socket)
+            next_socket = getattr(current_socket, 'connected_to', None)
             
             if not next_socket:
                 break # Fin de la trace
 
             # Prépare l'itération suivante
             current_socket = next_socket
-            # Ceci est une simplification. Il faudrait une méthode pour trouver le port d'un socket.
-            # Pour l'instant, on suppose que la liaison inverse a été faite lors du chargement.
-            current_port = getattr(current_socket, 'networkport', None)
+            current_port = self.cache.network_ports.get(getattr(current_socket, 'networkports_id', None))
+
             if not current_port:
-                # Si le socket n'a pas de port logique (cas d'un patch panel), il faut le gérer
-                # Pour l'instant on s'arrête
                 break
             step += 1
 
         self.console.print(trace_table)
+
+    def _find_parent_for_socket(self, socket):
+        socket_id = getattr(socket, 'id', None)
+        if not socket_id:
+            return None
+
+        all_equipment = {**self.cache.computers, **self.cache.network_equipments, **self.cache.passive_devices}
+        for equip in all_equipment.values():
+            for port_type in getattr(equip, '_networkports', {}):
+                for port in equip._networkports[port_type]:
+                    if port.get('sockets_id') == socket_id:
+                        return equip
+        return None

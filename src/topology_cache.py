@@ -34,7 +34,7 @@ class TopologyCache:
         self._link_topology()
 
     def _load_computers(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Ordinateurs...")
+        progress.update(task_id, description="[cyan]Computers...")
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)
@@ -52,7 +52,7 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _load_network_equipments(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Équipements Réseau...")
+        progress.update(task_id, description="[cyan]NetworkEquipments...")
         id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)
@@ -70,7 +70,7 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _load_passive_devices(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Équipements Passifs...")
+        progress.update(task_id, description="[cyan]PassiveDCEquipments...")
         id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)
@@ -88,7 +88,7 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _load_sockets(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Sockets Physiques...")
+        progress.update(task_id, description="[cyan]Sockets...")
         id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)
@@ -106,7 +106,7 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _load_cables(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Câbles...")
+        progress.update(task_id, description="[cyan]Cables...")
         id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)
@@ -124,7 +124,7 @@ class TopologyCache:
         progress.advance(task_id)
 
     def _load_network_ports(self, progress, task_id):
-        progress.update(task_id, description="Chargement des Ports Réseau...")
+        progress.update(task_id, description="[cyan]NetworkPorts...")
         id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(task_id)

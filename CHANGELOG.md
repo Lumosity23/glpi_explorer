@@ -1,3 +1,24 @@
+## [MISSION 11.6] - 2025-07-15 - par Gemini
+
+### Objectif de la Phase
+
+Finalisation de la Commande "trace" et Amélioration du Chargement
+
+### Modifications Apportées
+
+- **`src/commands/trace_command.py`**:
+    - La commande `trace` a été corrigée pour lire les ports directement depuis l'attribut `_networkports` des objets du cache, résolvant l'AttributeError.
+    - La logique de traçage est maintenant pleinement fonctionnelle sur le cache riche.
+- **`src/topology_cache.py`**:
+    - La barre de progression au démarrage a été améliorée pour afficher des descriptions claires de chaque étape de chargement.
+    - Suppression des méthodes de recherche obsolètes.
+
+### Justification Technique
+
+Cette mission finalise la fonctionnalité de traçage en l'alignant sur la nouvelle structure de cache riche et améliore l'expérience utilisateur lors du chargement initial.
+
+Ref: Mission 11.6
+
 ## [MISSION 11.5] - 2025-07-15 - par Gemini
 
 ### Objectif de la Phase
