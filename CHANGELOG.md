@@ -1,3 +1,12 @@
+## [MISSION 13.9] - 2025-07-16
+
+### Changed
+- **refactor(cache)!:** Simplification de la topologie basée sur la liaison Équipement-Socket.
+  - La logique de liaison du cache a été refondue pour créer une relation directe entre un Équipement et ses Sockets physiques.
+  - Abandon de la dépendance complexe aux NetworkPorts pour la construction de la topologie de base.
+  - Chaque objet équipement dans le cache possède maintenant un attribut `sockets` qui est une liste de ses objets socket.
+  - La commande `trace` a été adaptée pour utiliser cette nouvelle structure simple et robuste.
+
 ## [MISSION 13.10] - 2025-07-16
 
 ### Changed

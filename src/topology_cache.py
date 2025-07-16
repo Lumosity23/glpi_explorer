@@ -51,6 +51,7 @@ class TopologyCache:
             self._load_cables(progress_bar, main_task)
             self._load_sockets(progress_bar, main_task)
             self._load_network_ports(progress_bar, main_task)
+            self._link_topology()
 
             final_panel = Panel(
                 Align.center(logo_text),
@@ -58,6 +59,52 @@ class TopologyCache:
                 subtitle="v0.1"
             )
             live.update(final_panel)
+
+    def _link_topology(self):
+        # Dictionnaires globaux pour l'accès
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
+
+        # --- ÉTAPE 1: Attacher chaque Socket à son Équipement parent ---
+        for equip in all_equipment.values():
+            equip.sockets = [] # Initialise l'attribut sur tous les équipements
+
+        for socket in self.sockets.values():
+            parent_id_or_name = getattr(socket, 'items_id', None)
+            parent_item = None
+            
+            # Trouver le parent par ID ou par Nom
+            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
+                parent_item = all_equipment.get(parent_id_or_name)
+            elif isinstance(parent_id_or_name, str):
+                parent_item = equipment_by_name.get(parent_id_or_name.lower())
+
+            if parent_item:
+                # On attache l'objet socket à la liste des sockets de son parent
+                parent_item.sockets.append(socket)
+                # On ajoute une référence au parent sur le socket pour une navigation facile
+                socket.parent_item = parent_item
+
+        # --- ÉTAPE 2: Lier les Sockets entre eux via les Câbles ---
+        # Cette logique est correcte et ne change pas.
+        for cable in self.cables.values():
+            socket_ids = []
+            for link in getattr(cable, 'links', []):
+                if link.get('rel') == 'Glpi\Socket':
+                    try:
+                        socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(socket_id)
+                    except (ValueError, IndexError):
+                        continue
+            
+            if len(socket_ids) == 2:
+                socket_a = self.sockets.get(socket_ids[0])
+                socket_b = self.sockets.get(socket_ids[1])
+                if socket_a and socket_b:
+                    socket_a.connected_to = socket_b
+                    socket_b.connected_to = socket_a
+
+    
 
     def _process_and_flatten_ports(self, item_details):
         flattened_ports = []
@@ -92,11 +139,8 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('Computer', item_id)
                 if details:
-                    # Créer l'objet équipement
                     item_obj = types.SimpleNamespace(**details)
-                    # Traiter et attacher la liste de ports aplatie
                     item_obj.ports = self._process_and_flatten_ports(details)
-                    
                     self.computers[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)
@@ -114,11 +158,8 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('NetworkEquipment', item_id)
                 if details:
-                    # Créer l'objet équipement
                     item_obj = types.SimpleNamespace(**details)
-                    # Traiter et attacher la liste de ports aplatie
                     item_obj.ports = self._process_and_flatten_ports(details)
-                    
                     self.network_equipments[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)

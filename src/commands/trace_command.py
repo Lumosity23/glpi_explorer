@@ -11,6 +11,7 @@ class TraceCommand(BaseCommand):
         }
 
     def execute(self, args):
+        # ... (code pour trouver l'objet de départ 'start_item') ...
         try:
             user_type_alias, item_name = args.split(maxsplit=1)
         except ValueError:
@@ -28,31 +29,64 @@ class TraceCommand(BaseCommand):
         if not start_item:
             self.console.print(Panel(f"Objet '{item_name}' non trouvé dans le cache.", title="[red]Erreur[/red]"))
             return
-
-        trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
-        trace_table.add_column("Étape")
-        trace_table.add_column("Équipement Début")
-        trace_table.add_column("Port Début")
-        trace_table.add_column("Câble")
-        trace_table.add_column("Équipement Fin")
-        trace_table.add_column("Port Fin")
         
-        # Utiliser le linker pour construire le chemin
-        path = linker.build_path_from_item(start_item)
-
-        if not path:
-            self.console.print(Panel(f"Impossible de démarrer une trace depuis {start_item.name}. Vérifiez ses connexions.", border_style="yellow"))
+        # --- ÉTAPE 1: Trouver les sockets de départ ---
+        start_sockets = getattr(start_item, 'sockets', [])
+        
+        if not start_sockets:
+            self.console.print(Panel(f"Aucun socket physique trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
             return
 
-        # Afficher le chemin
-        for step, hop in enumerate(path, 1):
-            trace_table.add_row(
-                str(step),
-                hop.get('start_equip_name', 'N/A'),
-                hop.get('start_port_name', 'N/A'),
-                hop.get('cable_name', 'N/A'),
-                hop.get('end_equip_name', 'N/A'),
-                hop.get('end_port_name', 'N/A'),
-            )
+        # Pour l'instant, on prend le premier socket trouvé.
+        current_socket = start_sockets[0]
         
+        # --- ÉTAPE 2: Initialisation et Boucle de traçage ---
+        trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
+        trace_table.add_column("Étape")
+        trace_table.add_column("Équipement")
+        trace_table.add_column("Socket")
+        trace_table.add_column("Câble")
+        trace_table.add_column("Équipement Suivant")
+        trace_table.add_column("Socket Suivant")
+
+        visited_sockets = set()
+        step = 1
+
+        while current_socket and current_socket.id not in visited_sockets:
+            visited_sockets.add(current_socket.id)
+            
+            parent = getattr(current_socket, 'parent_item', None)
+            parent_name = getattr(parent, 'name', 'Parent Inconnu')
+
+            next_socket = getattr(current_socket, 'connected_to', None)
+            if next_socket:
+                next_parent = getattr(next_socket, 'parent_item', None)
+                next_parent_name = getattr(next_parent, 'name', 'Parent Inconnu')
+                cable = linker.find_cable_between_sockets(current_socket, next_socket)
+                cable_name = getattr(cable, 'name', 'N/A')
+                trace_table.add_row(
+                    str(step),
+                    parent_name,
+                    current_socket.name,
+                    cable_name,
+                    next_parent_name,
+                    next_socket.name
+                )
+            else:
+                trace_table.add_row(
+                    str(step),
+                    parent_name,
+                    current_socket.name,
+                    "N/A",
+                    "N/A",
+                    "N/A"
+                )
+
+            
+            # Gérer la traversée des passifs (logique à venir)
+            # ...
+            
+            current_socket = next_socket
+            step += 1
+            
         self.console.print(trace_table)

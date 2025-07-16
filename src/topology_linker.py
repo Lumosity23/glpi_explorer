@@ -42,7 +42,7 @@ class TopologyLinker:
         for cable in self.cache.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\Socket':
+                if link.get('rel') == 'Glpi\\Socket':
                     try:
                         socket_ids.append(int(link['href'].split('/')[-1]))
                     except (ValueError, IndexError):
@@ -158,6 +158,26 @@ class TopologyLinker:
         for port in self.cache.network_ports.values():
             if getattr(port, 'sockets_id', None) == socket_id:
                 return port
+        return None
+
+    def find_cable_between_sockets(self, socket_a, socket_b):
+        """Trouve le câble qui connecte deux sockets."""
+        socket_a_id = getattr(socket_a, 'id', None)
+        socket_b_id = getattr(socket_b, 'id', None)
+        if not socket_a_id or not socket_b_id:
+            return None
+
+        for cable in self.cache.cables.values():
+            socket_ids = []
+            for link in getattr(cable, 'links', []):
+                if link.get('rel') == 'Glpi\\Socket':
+                    try:
+                        socket_ids.append(int(link['href'].split('/')[-1]))
+                    except (ValueError, IndexError):
+                        continue
+            
+            if len(socket_ids) == 2 and set(socket_ids) == {socket_a_id, socket_b_id}:
+                return cable
         return None
 
     def build_path_from_item(self, start_item):
