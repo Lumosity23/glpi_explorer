@@ -1,0 +1,4 @@
+fix(commands): Correction d'une erreur de syntaxe dans get_command.py
+
+- Suppression d'un bloc de commentaires `"""` qui provoquait une erreur de syntaxe `unterminated triple-quoted string literal`.
+- Cette erreur empêchait le chargement de la commande `get`.
