@@ -36,11 +36,11 @@ class ListCommand(BaseCommand):
             self.console.print(Panel(f"[bold red]Erreur:[/bold red] Type inconnu: \'{user_type_alias}\'", title="[red]Erreur[/red]"))
             return
             
-        with self.console.status(f"Liste des objets de type {glpi_itemtype}..."):
-            items = self.api_client.list_items(glpi_itemtype)
-        
+        target_dict = self.get_target_dict(glpi_itemtype)
+        items = list(target_dict.values()) if target_dict else []
+
         if not items:
-            self.console.print(Panel(f"Aucun objet de type \'{user_type_alias}\' n\'a été trouvé dans GLPI.", title="[blue]Information[/blue]", border_style="blue"))
+            self.console.print(Panel(f"Aucun item de type '{glpi_itemtype}' trouvé dans le cache.", title="Information", style="yellow"))
             return
         
         table = Table(

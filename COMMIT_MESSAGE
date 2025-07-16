@@ -1,0 +1,4 @@
+fix(commands): Correction de la logique d'extraction des ports réseau
+
+- Rétablissement de la logique correcte pour extraire les ports réseau à partir du dictionnaire `_networkports`.
+- Correction de la `KeyError` qui se produisait lors de l'affichage des détails d'un objet avec des ports réseau.

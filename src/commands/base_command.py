@@ -33,6 +33,16 @@ class BaseCommand:
             'networkport': 'NetworkPort', 'np': 'NetworkPort',
         }
 
+    def get_target_dict(self, glpi_itemtype: str) -> dict:
+        if glpi_itemtype == 'Computer': return self.cache.computers
+        elif glpi_itemtype == 'NetworkEquipment': return self.cache.network_equipments
+        elif glpi_itemtype == 'PassiveDCEquipment': return self.cache.passive_dc_equipments
+        elif glpi_itemtype == 'Cable': return self.cache.cables
+        elif glpi_itemtype == 'Glpi\\Socket': return self.cache.sockets
+        elif glpi_itemtype == 'NetworkPort': return self.cache.network_ports
+        # ... ajoutez les autres elif pour tous les types ...
+        return None
+
     def execute(self, args):
         raise NotImplementedError("Subclasses must implement this method")
 
@@ -57,7 +67,7 @@ class BaseCommand:
     def _display_json(self, data):
         self.console.print(Panel(self.console.print_json(data=data), title="[cyan]Détails JSON[/cyan]"))
 
-    def _render_item_details_to_display_object(self, details: dict, glpi_itemtype: str):
+    def _render_item_details_to_display_object(self, details: object, glpi_itemtype: str):
         """
         Renders item details into a rich.Table or a rich.Group of Panels (for cables).
         This method is designed to be reusable by commands like 'get' and 'compare'.
@@ -70,10 +80,10 @@ class BaseCommand:
             general_info_table.add_column("Type Câble")
 
             general_info_table.add_row(
-                str(details.get("id")),
-                details.get("name"),
+                str(getattr(details, "id", "N/A")),
+                getattr(details, "name", "N/A"),
                 glpi_itemtype,
-                details.get("cabletypes_id", "N/A"),
+                str(getattr(details, "cabletypes_id", "N/A")),
             )
 
             endpoints_table = Table(title="Points de Connexion", expand=True, box=box.MINIMAL)
@@ -81,26 +91,26 @@ class BaseCommand:
             endpoints_table.add_column("Type")
             endpoints_table.add_column("Socket")
 
-            socket_a = details.get("sockets_id_endpoint_a", "N/A").replace("(&nbsp;)", "").strip()
-            socket_b = details.get("sockets_id_endpoint_b", "N/A").replace("(&nbsp;)", "").strip()
+            socket_a = str(getattr(details, "sockets_id_endpoint_a", "N/A")).replace("(&nbsp;)", "").strip()
+            socket_b = str(getattr(details, "sockets_id_endpoint_b", "N/A")).replace("(&nbsp;)", "").strip()
 
             endpoints_table.add_row(
                 "A",
-                details.get("itemtype_endpoint_a", "N/A"),
+                str(getattr(details, "itemtype_endpoint_a", "N/A")),
                 socket_a,
             )
             endpoints_table.add_row(
                 "B",
-                details.get("itemtype_endpoint_b", "N/A"),
+                str(getattr(details, "itemtype_endpoint_b", "N/A")),
                 socket_b,
             )
             
             return Group(
-                Panel(general_info_table, title=f"[bold blue]Détails du Câble {details.get('name', 'N/A')}[/bold blue]", box=box.MINIMAL),
+                Panel(general_info_table, title=f"[bold blue]Détails du Câble {getattr(details, 'name', 'N/A')}[/bold blue]", box=box.MINIMAL),
                 Panel(endpoints_table, title="[bold blue]Points de Connexion[/bold blue]", box=box.MINIMAL)
             )
         else:
-            table = Table(title=f"Détails de {details.get("name", "N/A")}", expand=True)
+            table = Table(title=f"Détails de {getattr(details, "name", "N/A")}", expand=True)
             table.add_column("ID")
             table.add_column("Nom")
             table.add_column("Type")
@@ -110,7 +120,7 @@ class BaseCommand:
             table.add_column("Vitesse", style="green")
             table.add_column("Adresse MAC", style="yellow")
 
-            network_ports_data = details.get("_networkports", {})
+            network_ports_data = getattr(details, "_networkports", {})
             all_ports = []
             if network_ports_data:
                 for port_list in network_ports_data.values():
@@ -118,11 +128,11 @@ class BaseCommand:
 
             if not all_ports:
                 table.add_row(
-                    str(details.get("id")),
-                    details.get("name"),
+                    str(getattr(details, "id", "N/A")),
+                    getattr(details, "name", "N/A"),
                     glpi_itemtype,
-                    str(details.get("states_id", "N/A")),
-                    str(details.get("locations_id", "N/A")),
+                    str(getattr(details, "states_id", "N/A")),
+                    str(getattr(details, "locations_id", "N/A")),
                     "N/A",
                     "N/A",
                     "N/A",
@@ -130,20 +140,20 @@ class BaseCommand:
             else:
                 first_port = all_ports[0]
                 table.add_row(
-                    str(details.get("id")),
-                    details.get("name"),
+                    str(getattr(details, "id", "N/A")),
+                    getattr(details, "name", "N/A"),
                     glpi_itemtype,
-                    str(details.get("states_id", "N/A")),
-                    str(details.get("locations_id", "N/A")),
-                    first_port.get("name", "N/A"),
-                    f"{first_port.get('speed', 'N/A')} Mbps",
-                    first_port.get("mac", "N/A"),
+                    str(getattr(details, "states_id", "N/A")),
+                    str(getattr(details, "locations_id", "N/A")),
+                    getattr(first_port, "name", "N/A"),
+                    f"{getattr(first_port, 'speed', 'N/A')} Mbps",
+                    getattr(first_port, "mac", "N/A"),
                 )
                 for port in all_ports[1:]:
                     table.add_row(
                         "", "", "", "", "",
-                        port.get("name", "N/A"),
-                        f"{port.get('speed', 'N/A')} Mbps",
-                        port.get("mac", "N/A"),
+                        getattr(port, "name", "N/A"),
+                        f"{getattr(port, 'speed', 'N/A')} Mbps",
+                        getattr(port, "mac", "N/A"),
                     )
             return table

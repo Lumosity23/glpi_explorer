@@ -1,3 +1,11 @@
+## [MISSION 13.5] - 2025-07-16
+
+### Changed
+- **perf(commands):** Refonte des commandes `list`, `get`, et `compare` pour l'utilisation exclusive du cache.
+  - Les commandes n'effectuent plus d'appels API directs.
+  - Toutes les données sont maintenant lues instantanément depuis le `TopologyCache` local.
+  - Amélioration drastique de la performance et de la réactivité de l'application après le chargement initial.
+
 ## [MISSION 13.3] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
@@ -59,7 +67,7 @@ Refonte du Cache en Dépôt de Données Brutes.
 
 Cette modification est la première étape de la nouvelle architecture découplée (Dépôt/Linker) et prépare le terrain pour la création d'un `TopologyLinker` dédié.
 
-BREAKING CHANGE: La structure et le rôle du cache ont été fondamentalement modifiés. Les commandes ne peuvent plus se fier aux attributs de liaison pré-calculés.
+BREAKING CHANGE: La structure et le rôle du cache ont été fondamentalement modifiés.
 
 Ref: Mission 13.1
 
