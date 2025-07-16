@@ -1,7 +1,7 @@
-refactor(cache): Aplatissement structuré des données de ports
+feat(display): Finalisation de l'affichage 'get' via le cache structuré
 
-- Le processus de chargement du cache transforme maintenant la structure `_networkports` complexe de l'API en une simple liste d'objets attachée à chaque équipement (`equip.ports`).
-- Chaque objet de cette liste contient les informations clés d'un port (id, nom, vitesse, etc.).
-- Cette approche simplifie radicalement l'accès aux données de ports pour toutes les commandes, en particulier `get` et la future commande `trace`.
+- La commande `get` a été mise à jour pour lire le nouvel attribut `item.ports` des objets du cache.
+- La logique de parsing complexe a été supprimée de la commande, qui se contente maintenant de parcourir une liste simple d'objets "port".
+- L'affichage des détails d'un équipement et de ses ports est maintenant pleinement fonctionnel et robuste.
 
-Ref: Mission 13.8
+Ref: Mission 13.9

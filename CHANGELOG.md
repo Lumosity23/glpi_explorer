@@ -1,3 +1,11 @@
+## [MISSION 13.9] - 2025-07-16
+
+### Changed
+- **feat(display):** Finalisation de l'affichage 'get' via le cache structuré.
+  - La commande `get` a été mise à jour pour lire le nouvel attribut `item.ports` des objets du cache.
+  - La logique de parsing complexe a été supprimée de la commande, qui se contente maintenant de parcourir une liste simple d'objets "port".
+  - L'affichage des détails d'un équipement et de ses ports est maintenant pleinement fonctionnel et robuste.
+
 ## [MISSION 13.8] - 2025-07-16
 
 ### Changed
