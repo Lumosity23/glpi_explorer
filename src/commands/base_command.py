@@ -121,11 +121,7 @@ class BaseCommand:
             table.add_column("Vitesse", style="green")
             table.add_column("Adresse MAC", style="yellow")
 
-            all_ports = []
-            structured_ports_obj = getattr(details, "networkports", types.SimpleNamespace())
-            for category_name in vars(structured_ports_obj):
-                port_list = getattr(structured_ports_obj, category_name)
-                all_ports.extend(port_list)
+            all_ports = getattr(details, "ports", [])
 
             if not all_ports:
                 table.add_row(
@@ -139,8 +135,7 @@ class BaseCommand:
                     "N/A",
                 )
             else:
-                for i, port_data in enumerate(all_ports):
-                    port = types.SimpleNamespace(**port_data)
+                for i, port in enumerate(all_ports):
                     if i == 0:
                         table.add_row(
                             str(getattr(details, "id", "N/A")),
@@ -149,14 +144,14 @@ class BaseCommand:
                             str(getattr(details, "states_id", "N/A")),
                             str(getattr(details, "locations_id", "N/A")),
                             getattr(port, "name", "N/A"),
-                            f"{getattr(port, 'speed', 'N/A')} Mbps",
+                            f'{getattr(port, "speed", "N/A")} Mbps' if getattr(port, "speed", "N/A") != "N/A" else "N/A",
                             getattr(port, "mac", "N/A"),
                         )
                     else:
                         table.add_row(
                             "", "", "", "", "",
                             getattr(port, "name", "N/A"),
-                            f"{getattr(port, 'speed', 'N/A')} Mbps",
+                            f'{getattr(port, "speed", "N/A")} Mbps' if getattr(port, "speed", "N/A") != "N/A" else "N/A",
                             getattr(port, "mac", "N/A"),
                         )
             return table

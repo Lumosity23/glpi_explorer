@@ -59,18 +59,26 @@ class TopologyCache:
             )
             live.update(final_panel)
 
-    def _process_and_structure_ports(self, item_details):
-        structured_ports = types.SimpleNamespace()
+    def _process_and_flatten_ports(self, item_details):
+        flattened_ports = []
         raw_ports_data = item_details.get("_networkports", {})
+        
         if not raw_ports_data:
-            return structured_ports
-        for category, port_list in raw_ports_data.items():
-            simple_category_name = category.replace("NetworkPort", "").lower()
-            processed_port_list = []
+            return flattened_ports
+
+        for port_type, port_list in raw_ports_data.items():
             for port_data in port_list:
-                processed_port_list.append(types.SimpleNamespace(**port_data))
-            setattr(structured_ports, simple_category_name, processed_port_list)
-        return structured_ports
+                # Créer un objet simple avec uniquement les clés qui nous intéressent
+                port_obj = types.SimpleNamespace(
+                    id=port_data.get('id'),
+                    name=port_data.get('name'),
+                    mac=port_data.get('mac'),
+                    speed=port_data.get('speed')
+                    # Ajoutez d'autres clés si nécessaire
+                )
+                flattened_ports.append(port_obj)
+        
+        return flattened_ports
 
     def _load_computers(self, progress, main_task_id):
         progress.update(main_task_id, description="[cyan]Computers...")
@@ -84,11 +92,11 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('Computer', item_id)
                 if details:
-                    structured_ports = self._process_and_structure_ports(details)
-                    if '_networkports' in details:
-                        del details['_networkports']
+                    # Créer l'objet équipement
                     item_obj = types.SimpleNamespace(**details)
-                    item_obj.networkports = structured_ports
+                    # Traiter et attacher la liste de ports aplatie
+                    item_obj.ports = self._process_and_flatten_ports(details)
+                    
                     self.computers[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)
@@ -106,11 +114,11 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('NetworkEquipment', item_id)
                 if details:
-                    structured_ports = self._process_and_structure_ports(details)
-                    if '_networkports' in details:
-                        del details['_networkports']
+                    # Créer l'objet équipement
                     item_obj = types.SimpleNamespace(**details)
-                    item_obj.networkports = structured_ports
+                    # Traiter et attacher la liste de ports aplatie
+                    item_obj.ports = self._process_and_flatten_ports(details)
+                    
                     self.network_equipments[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)

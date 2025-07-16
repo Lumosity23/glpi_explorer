@@ -1,8 +1,7 @@
-refactor(cache): Structuration hiérarchique des données de ports
+refactor(cache): Aplatissement structuré des données de ports
 
-- Le processus de chargement du cache a été amélioré avec une étape de post-traitement.
-- Une nouvelle méthode `_process_and_structure_ports` transforme la clé `_networkports` brute de l'API en une structure d'objets `SimpleNamespace` hiérarchique et propre (ex: `equip.networkports.ethernet`).
-- La commande `get` a été adaptée pour naviguer dans cette nouvelle structure, simplifiant sa logique d'affichage.
-- Cette modification rend le cache plus intuitif et plus facile à interroger pour les futures commandes.
+- Le processus de chargement du cache transforme maintenant la structure `_networkports` complexe de l'API en une simple liste d'objets attachée à chaque équipement (`equip.ports`).
+- Chaque objet de cette liste contient les informations clés d'un port (id, nom, vitesse, etc.).
+- Cette approche simplifie radicalement l'accès aux données de ports pour toutes les commandes, en particulier `get` et la future commande `trace`.
 
 Ref: Mission 13.8
