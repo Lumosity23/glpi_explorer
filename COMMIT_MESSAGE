@@ -1,4 +1,7 @@
-fix(commands): Correction d'une erreur de syntaxe dans get_command.py
+fix(display): Correction du parsing des données de ports dans get
 
-- Suppression d'un bloc de commentaires `"""` qui provoquait une erreur de syntaxe `unterminated triple-quoted string literal`.
-- Cette erreur empêchait le chargement de la commande `get`.
+- La logique d'affichage de la commande 'get' a été corrigée pour gérer la structure de dictionnaire de la clé `_networkports`.
+- Le code parcourt maintenant correctement les différents types de ports (Ethernet, Wifi, etc.) et les affiche dans la table.
+- Cette correction résout le bug où les détails des ports n'apparaissaient pas pour un équipement.
+
+Ref: Mission 13.7

@@ -1,4 +1,5 @@
 import os
+import types
 from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
@@ -138,7 +139,8 @@ class BaseCommand:
                     "N/A",
                 )
             else:
-                for i, port in enumerate(all_ports):
+                for i, port_data in enumerate(all_ports):
+                    port = types.SimpleNamespace(**port_data)
                     if i == 0:
                         table.add_row(
                             str(getattr(details, "id", "N/A")),
