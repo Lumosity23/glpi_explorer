@@ -138,22 +138,23 @@ class BaseCommand:
                     "N/A",
                 )
             else:
-                first_port = all_ports[0]
-                table.add_row(
-                    str(getattr(details, "id", "N/A")),
-                    getattr(details, "name", "N/A"),
-                    glpi_itemtype,
-                    str(getattr(details, "states_id", "N/A")),
-                    str(getattr(details, "locations_id", "N/A")),
-                    getattr(first_port, "name", "N/A"),
-                    f"{getattr(first_port, 'speed', 'N/A')} Mbps",
-                    getattr(first_port, "mac", "N/A"),
-                )
-                for port in all_ports[1:]:
-                    table.add_row(
-                        "", "", "", "", "",
-                        getattr(port, "name", "N/A"),
-                        f"{getattr(port, 'speed', 'N/A')} Mbps",
-                        getattr(port, "mac", "N/A"),
-                    )
+                for i, port in enumerate(all_ports):
+                    if i == 0:
+                        table.add_row(
+                            str(getattr(details, "id", "N/A")),
+                            getattr(details, "name", "N/A"),
+                            glpi_itemtype,
+                            str(getattr(details, "states_id", "N/A")),
+                            str(getattr(details, "locations_id", "N/A")),
+                            getattr(port, "name", "N/A"),
+                            f"{getattr(port, 'speed', 'N/A')} Mbps",
+                            getattr(port, "mac", "N/A"),
+                        )
+                    else:
+                        table.add_row(
+                            "", "", "", "", "",
+                            getattr(port, "name", "N/A"),
+                            f"{getattr(port, 'speed', 'N/A')} Mbps",
+                            getattr(port, "mac", "N/A"),
+                        )
             return table
