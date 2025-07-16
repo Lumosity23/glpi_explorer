@@ -121,11 +121,11 @@ class BaseCommand:
             table.add_column("Vitesse", style="green")
             table.add_column("Adresse MAC", style="yellow")
 
-            network_ports_data = getattr(details, "_networkports", {})
             all_ports = []
-            if network_ports_data:
-                for port_list in network_ports_data.values():
-                    all_ports.extend(port_list)
+            structured_ports_obj = getattr(details, "networkports", types.SimpleNamespace())
+            for category_name in vars(structured_ports_obj):
+                port_list = getattr(structured_ports_obj, category_name)
+                all_ports.extend(port_list)
 
             if not all_ports:
                 table.add_row(

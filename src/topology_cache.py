@@ -59,6 +59,19 @@ class TopologyCache:
             )
             live.update(final_panel)
 
+    def _process_and_structure_ports(self, item_details):
+        structured_ports = types.SimpleNamespace()
+        raw_ports_data = item_details.get("_networkports", {})
+        if not raw_ports_data:
+            return structured_ports
+        for category, port_list in raw_ports_data.items():
+            simple_category_name = category.replace("NetworkPort", "").lower()
+            processed_port_list = []
+            for port_data in port_list:
+                processed_port_list.append(types.SimpleNamespace(**port_data))
+            setattr(structured_ports, simple_category_name, processed_port_list)
+        return structured_ports
+
     def _load_computers(self, progress, main_task_id):
         progress.update(main_task_id, description="[cyan]Computers...")
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
@@ -71,8 +84,12 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('Computer', item_id)
                 if details:
-                    details['itemtype'] = 'Computer'
-                    self.computers[item_id] = types.SimpleNamespace(**details)
+                    structured_ports = self._process_and_structure_ports(details)
+                    if '_networkports' in details:
+                        del details['_networkports']
+                    item_obj = types.SimpleNamespace(**details)
+                    item_obj.networkports = structured_ports
+                    self.computers[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
@@ -89,8 +106,12 @@ class TopologyCache:
             if item_id:
                 details = self.api_client.get_item_details('NetworkEquipment', item_id)
                 if details:
-                    details['itemtype'] = 'NetworkEquipment'
-                    self.network_equipments[item_id] = types.SimpleNamespace(**details)
+                    structured_ports = self._process_and_structure_ports(details)
+                    if '_networkports' in details:
+                        del details['_networkports']
+                    item_obj = types.SimpleNamespace(**details)
+                    item_obj.networkports = structured_ports
+                    self.network_equipments[item_id] = item_obj
             progress.advance(sub_task)
         progress.remove_task(sub_task)
         progress.advance(main_task_id)

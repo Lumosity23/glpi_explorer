@@ -51,7 +51,8 @@ class GetCommand(BaseCommand):
                     break
         
         if details:
-            self._display_item_details(details, glpi_itemtype)
+            display_object = self._render_item_details_to_display_object(details, glpi_itemtype)
+            self.console.print(display_object)
         else:
             self.console.print(Panel(f"Erreur: Aucun objet de type '{glpi_itemtype}' nommé '{item_name}' trouvé dans le cache.", title="Erreur", style="bold red"))
 
