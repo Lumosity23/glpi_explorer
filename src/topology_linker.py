@@ -57,3 +57,103 @@ class TopologyLinker:
                     return {'via_cable': cable, 'other_socket': other_socket}
         
         return None
+
+    def _find_parent_of_socket(self, socket_obj):
+        """Trouve l'équipement parent d'un socket."""
+        parent_id = getattr(socket_obj, 'items_id', None)
+        parent_itemtype = getattr(socket_obj, 'itemtype', None)
+
+        if not parent_id or not parent_itemtype:
+            return None
+
+        target_dict = None
+        if parent_itemtype == 'Computer':
+            target_dict = self.cache.computers
+        elif parent_itemtype == 'NetworkEquipment':
+            target_dict = self.cache.network_equipments
+        elif parent_itemtype == 'PassiveDCEquipment':
+            target_dict = self.cache.passive_devices
+        
+        if target_dict:
+            return target_dict.get(parent_id)
+        
+        return None
+
+    def get_next_hop(self, current_socket):
+        """Orchestre la logique pour trouver le prochain saut dans la topologie."""
+        connection = self.find_connection_for_socket(current_socket)
+        if not connection:
+            return None
+
+        next_socket_physical = connection['other_socket']
+        parent_equip = self._find_parent_of_socket(next_socket_physical)
+
+        if not parent_equip:
+            return next_socket_physical
+
+        # Logique de traversée pour équipements passifs
+        if getattr(parent_equip, 'itemtype', '') == 'PassiveDCEquipment':
+            return self._handle_passive_traversal(next_socket_physical, parent_equip)
+
+        # Logique de concentration pour les hubs
+        if 'HB' in getattr(parent_equip, 'name', ''):
+             return self._handle_hub_traversal(next_socket_physical, parent_equip)
+
+        return next_socket_physical
+
+    def _handle_passive_traversal(self, socket_in, parent_equip):
+        """Gère la traversée d'un équipement passif."""
+        socket_name = getattr(socket_in, 'name', '')
+        if 'IN' in socket_name:
+            out_name = socket_name.replace('IN', 'OUT')
+            for socket in self.cache.sockets.values():
+                if getattr(socket, 'items_id', None) == parent_equip.id and getattr(socket, 'name', '') == out_name:
+                    return socket
+        return socket_in
+
+    def _handle_hub_traversal(self, socket_in, parent_equip):
+        """Gère la logique d'un hub."""
+        socket_name = getattr(socket_in, 'name', '')
+        if 'IN' in socket_name:
+            # Find the OUT port with the highest number
+            out_port_name = ''
+            highest_port_num = -1
+            for socket in self.cache.sockets.values():
+                if getattr(socket, 'items_id', None) == parent_equip.id:
+                    if 'OUT' in getattr(socket, 'name', ''):
+                        try:
+                            port_num = int(socket.name.split(' ')[-1])
+                            if port_num > highest_port_num:
+                                highest_port_num = port_num
+                                out_port_name = socket.name
+                        except (ValueError, IndexError):
+                            continue
+            if out_port_name:
+                for socket in self.cache.sockets.values():
+                    if getattr(socket, 'items_id', None) == parent_equip.id and getattr(socket, 'name', '') == out_port_name:
+                        return socket
+        return None # Fin de trace si on arrive sur un port OUT
+
+    def find_ports_for_item(self, item):
+        """Trouve tous les ports réseau pour un équipement donné."""
+        ports = []
+        item_id = getattr(item, 'id', None)
+        item_type = getattr(item, 'itemtype', None)
+        if not item_id or not item_type:
+            return ports
+
+        for port in self.cache.network_ports.values():
+            if getattr(port, 'items_id', None) == item_id and getattr(port, 'itemtype', None) == item_type:
+                ports.append(port)
+        return ports
+
+    def find_socket_for_port(self, port):
+        """Trouve le socket associé à un port réseau."""
+        port_id = getattr(port, 'id', None)
+        if not port_id:
+            return None
+        
+        for socket in self.cache.sockets.values():
+            if getattr(socket, 'networkports_id', None) == port_id:
+                return socket
+        return None

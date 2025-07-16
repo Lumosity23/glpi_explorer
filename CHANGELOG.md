@@ -1,3 +1,24 @@
+## [MISSION 13.3] - 2025-07-16 - par Gemini
+
+### Objectif de la Phase
+
+Implémentation de la commande trace avec logique de traversée.
+
+### Modifications Apportées
+
+- **`src/topology_linker.py`**:
+    - Le `TopologyLinker` gère maintenant la traversée des équipements passifs (IN->OUT) et la logique de concentration des hubs.
+    - La méthode principale `get_next_hop` orchestre la navigation de socket en socket.
+- **`src/commands/trace_command.py`**:
+    - La commande `trace` a été réactivée et réécrite pour utiliser le `TopologyLinker`.
+    - L'outil est maintenant capable de tracer un chemin réseau complet.
+
+### Justification Technique
+
+Cette mission établit la logique de traçage complète dans le `TopologyLinker` et la rend disponible à travers la commande `trace`.
+
+Ref: Mission 13.3
+
 ## [MISSION 13.2] - 2025-07-16 - par Gemini
 
 ### Objectif de la Phase
