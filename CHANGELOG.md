@@ -1,3 +1,11 @@
+## [MISSION 13.10] - 2025-07-16
+
+### Changed
+- **feat(trace):** Implémentation fonctionnelle de la commande trace.
+  - La commande `trace` a été corrigée pour utiliser le bon attribut (`.ports`) des objets du cache.
+  - La logique de navigation complexe a été centralisée dans une nouvelle méthode `build_path_from_item` du `TopologyLinker`.
+  - La commande `trace` est maintenant fonctionnelle et capable de suivre une connexion physique de base.
+
 ## [MISSION 13.9] - 2025-07-16
 
 ### Changed

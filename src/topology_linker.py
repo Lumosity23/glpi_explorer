@@ -42,7 +42,7 @@ class TopologyLinker:
         for cable in self.cache.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\\Socket':
+                if link.get('rel') == 'Glpi\Socket':
                     try:
                         socket_ids.append(int(link['href'].split('/')[-1]))
                     except (ValueError, IndexError):
@@ -136,16 +136,7 @@ class TopologyLinker:
 
     def find_ports_for_item(self, item):
         """Trouve tous les ports réseau pour un équipement donné."""
-        ports = []
-        item_id = getattr(item, 'id', None)
-        item_type = getattr(item, 'itemtype', None)
-        if not item_id or not item_type:
-            return ports
-
-        for port in self.cache.network_ports.values():
-            if getattr(port, 'items_id', None) == item_id and getattr(port, 'itemtype', None) == item_type:
-                ports.append(port)
-        return ports
+        return getattr(item, 'ports', [])
 
     def find_socket_for_port(self, port):
         """Trouve le socket associé à un port réseau."""
@@ -157,3 +148,52 @@ class TopologyLinker:
             if getattr(socket, 'networkports_id', None) == port_id:
                 return socket
         return None
+
+    def find_port_for_socket(self, socket):
+        """Trouve le port réseau associé à un socket."""
+        socket_id = getattr(socket, 'id', None)
+        if not socket_id:
+            return None
+
+        for port in self.cache.network_ports.values():
+            if getattr(port, 'sockets_id', None) == socket_id:
+                return port
+        return None
+
+    def build_path_from_item(self, start_item):
+        path = []
+        # On utilise les méthodes de recherche que nous avons conçues
+        start_ports = self.find_ports_for_item(start_item)
+        if not start_ports:
+            return []
+        
+        current_port = start_ports[0] # On prend le premier port
+        
+        while current_port:
+            current_socket = self.find_socket_for_port(current_port)
+            if not current_socket: break
+            
+            connection = self.find_connection_for_socket(current_socket)
+            if not connection:
+                # C'est une fin de ligne
+                # On pourrait ajouter une dernière étape "non connectée"
+                break
+                
+            next_socket = connection['other_socket']
+            
+            # Logique pour la traversée des passifs (à ajouter ici)
+            # ...
+            
+            # On stocke l'étape
+            path.append({
+                'start_equip_name': getattr(self._find_parent_of_socket(current_socket), 'name', 'N/A'),
+                'start_port_name': current_port.name,
+                'cable_name': connection['via_cable'].name,
+                'end_equip_name': getattr(self._find_parent_of_socket(next_socket), 'name', 'N/A'),
+                'end_port_name': getattr(self.find_port_for_socket(next_socket), 'name', next_socket.name),
+            })
+            
+            # On passe à l'étape suivante
+            current_port = self.find_port_for_socket(next_socket)
+
+        return path

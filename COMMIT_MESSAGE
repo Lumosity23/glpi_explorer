@@ -1,7 +1,7 @@
-feat(display): Finalisation de l'affichage 'get' via le cache structuré
+feat(trace): Implémentation fonctionnelle de la commande trace
 
-- La commande `get` a été mise à jour pour lire le nouvel attribut `item.ports` des objets du cache.
-- La logique de parsing complexe a été supprimée de la commande, qui se contente maintenant de parcourir une liste simple d'objets "port".
-- L'affichage des détails d'un équipement et de ses ports est maintenant pleinement fonctionnel et robuste.
+- La commande `trace` a été corrigée pour utiliser le bon attribut (`.ports`) des objets du cache.
+- La logique de navigation complexe a été centralisée dans une nouvelle méthode `build_path_from_item` du `TopologyLinker`.
+- La commande `trace` est maintenant fonctionnelle et capable de suivre une connexion physique de base.
 
-Ref: Mission 13.9
+Ref: Mission 13.10
