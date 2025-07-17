@@ -1,3 +1,15 @@
+## [MISSION 13.11] - 2025-07-17
+
+### Changed
+- **fix(cache):** Correction de l'indexation basée sur le nom des parents
+  - La logique de création de l'index `equipment_to_sockets_map` gère maintenant le cas où l'API retourne un nom textuel au lieu d'un ID numérique pour le parent d'un socket.
+  - Cette modification résout la cause racine de l'échec de la liaison équipement-socket.
+- **feat(debug):** Ajout de la commande 'debug index'
+  - Création de la commande `debug index` pour afficher le contenu de la map `equipment_to_sockets_map`.
+  - Cet outil permet de valider visuellement que l'index est construit correctement.
+
+Ref: Mission 13.11
+
 ## [MISSION 13.10] - 2025-07-17
 
 ### Changed
@@ -21,7 +33,7 @@ Ref: Mission 13.10
 ## [MISSION 13.10] - 2025-07-16
 
 ### Changed
-- **feat(trace):** Implémentation fonctionnelle de la commande trace.
+- **feat(trace)::** Implémentation fonctionnelle de la commande trace.
   - La commande `trace` a été corrigée pour utiliser le bon attribut (`.ports`) des objets du cache.
   - La logique de navigation complexe a été centralisée dans une nouvelle méthode `build_path_from_item` du `TopologyLinker`.
   - La commande `trace` est maintenant fonctionnelle et capable de suivre une connexion physique de base.

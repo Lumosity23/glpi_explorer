@@ -62,25 +62,31 @@ class TopologyCache:
             live.update(final_panel)
 
     def _link_topology(self):
-        # Réinitialiser l'index à chaque chargement
+        # Réinitialiser l'index
         self.equipment_to_sockets_map = {}
-        
-        # Pas besoin de all_equipment, on va travailler directement sur les sockets
-        
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        # Dictionnaire inversé pour trouver un ID d'équipement par son nom
+        name_to_id_map = {getattr(eq, 'name', '').lower(): eq_id for eq_id, eq in all_equipment.items()}
+
         # --- ÉTAPE 1: Construire l'index Équipement -> Sockets ---
         for socket_id, socket in self.sockets.items():
-            parent_id = getattr(socket, 'items_id', None)
+            parent_id_or_name = getattr(socket, 'items_id', None)
+            parent_id = None
             
-            # Pour l'instant, on ne gère que les parents avec un ID numérique
-            if isinstance(parent_id, int) and parent_id > 0:
-                # Si l'ID de l'équipement n'est pas encore dans notre map, on crée une liste vide
+            # Si c'est un entier, c'est l'ID
+            if isinstance(parent_id_or_name, int):
+                parent_id = parent_id_or_name
+            # Si c'est une chaîne, on cherche l'ID correspondant
+            elif isinstance(parent_id_or_name, str):
+                parent_id = name_to_id_map.get(parent_id_or_name.lower())
+
+            if parent_id and parent_id > 0:
                 if parent_id not in self.equipment_to_sockets_map:
                     self.equipment_to_sockets_map[parent_id] = []
-                # On ajoute l'ID du socket à la liste de son parent
                 self.equipment_to_sockets_map[parent_id].append(socket_id)
-        
+
         # --- ÉTAPE 2: Lier les Sockets entre eux via les Câbles ---
-        # Cette logique est correcte et ne change pas.
+        # (Cette partie reste inchangée)
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):

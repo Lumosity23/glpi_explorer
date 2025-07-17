@@ -8,47 +8,49 @@ class DebugCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
         super().__init__(api_client, console, cache)
         self.name = "debug"
-        self.description = "Inspecte le cache de topologie."
+        self.description = "Inspecte le cache de topologie ou l'index."
         self.aliases = ["dbg"]
 
     def get_help_message(self):
         return {
             "description": self.description,
-            "usage": "debug cache [<type>] [<id>|<nom>]"
+            "usage": "debug <cache|index> [<type>] [<id>|<nom>]"
         }
 
     def execute(self, args):
         parts = args.split()
-        if not parts or parts[0].lower() != 'cache':
-            self.console.print(Panel("Usage: debug cache [<type>] [<id>]", title="[red]Erreur[/red]"))
-            return
-
-        # 'debug cache' sans arguments
-        if len(parts) == 1:
-            self._display_cache_summary()
+        if not parts or parts[0].lower() not in ['cache', 'index']:
+            self.console.print(Panel("Usage: debug <cache|index> ...", title="[red]Erreur[/red]"))
             return
         
-        # 'debug cache <type> [<id>]'
-        if len(parts) >= 2:
-            user_type_alias = parts[1].lower()
-            identifier = parts[2] if len(parts) > 2 else None
-            
-            glpi_itemtype = self.TYPE_ALIASES.get(user_type_alias)
-            if not glpi_itemtype:
-                self.console.print(Panel(f"Type d'alias inconnu : '{user_type_alias}'", title="[red]Erreur[/red]"))
-                return
+        sub_command = parts[0].lower()
 
-            if identifier:
-                # Essayer de convertir en ID entier
-                try:
-                    item_id = int(identifier)
-                    self._display_item_details(glpi_itemtype, item_id)
-                except ValueError:
-                    # Si ce n'est pas un ID, le traiter comme un nom
-                    self._display_item_details_by_name(glpi_itemtype, identifier)
-            else:
-                # Mode liste
-                self._display_item_list(glpi_itemtype)
+        if sub_command == 'cache':
+            self._handle_cache_command(parts[1:])
+        elif sub_command == 'index':
+            self._display_index()
+
+    def _handle_cache_command(self, parts):
+        if not parts:
+            self._display_cache_summary()
+            return
+
+        user_type_alias = parts[0].lower()
+        identifier = parts[1] if len(parts) > 1 else None
+        
+        glpi_itemtype = self.TYPE_ALIASES.get(user_type_alias)
+        if not glpi_itemtype:
+            self.console.print(Panel(f"Type d'alias inconnu : '{user_type_alias}'", title="[red]Erreur[/red]"))
+            return
+
+        if identifier:
+            try:
+                item_id = int(identifier)
+                self._display_item_details(glpi_itemtype, item_id)
+            except ValueError:
+                self._display_item_details_by_name(glpi_itemtype, identifier)
+        else:
+            self._display_item_list(glpi_itemtype)
 
     def _display_cache_summary(self):
         if not self.cache:
@@ -63,7 +65,6 @@ class DebugCommand(BaseCommand):
         table.add_row("NetworkEquipments", str(len(self.cache.network_equipments)))
         table.add_row("PassiveDCEquipments", str(len(self.cache.passive_devices)))
         table.add_row("Cables", str(len(self.cache.cables)))
-        
         table.add_row("Sockets", str(len(self.cache.sockets)))
         table.add_row("NetworkPorts", str(len(self.cache.network_ports)))
         
@@ -102,13 +103,11 @@ class DebugCommand(BaseCommand):
         self.console.print(table)
 
     def _display_item_details(self, itemtype, item_id):
-        # Dictionnaire pour mapper l'itemtype à l'attribut du cache
         cache_map = {
             'Computer': self.cache.computers,
             'NetworkEquipment': self.cache.network_equipments,
             'PassiveDCEquipment': self.cache.passive_devices,
             'Cable': self.cache.cables,
-            
             'Glpi\\Socket': self.cache.sockets,
             'NetworkPort': self.cache.network_ports
         }
@@ -125,12 +124,10 @@ class DebugCommand(BaseCommand):
             
         self.console.print(f"[bold blue]Détails pour {itemtype} ID {item_id} depuis le cache :[/bold blue]")
         
-        # Créer une table pour afficher les attributs de l'objet
         details_table = Table(title="Attributs de l'Objet", box=None, show_header=False)
         details_table.add_column("Attribut", style="cyan")
         details_table.add_column("Valeur")
 
-        # Itérer sur les attributs de l'objet SimpleNamespace
         for attr, value in vars(item).items():
             if attr == 'networkports' and isinstance(value, list):
                 display_value = f"Liste de {len(value)} NetworkPort(s)"
@@ -170,3 +167,26 @@ class DebugCommand(BaseCommand):
             self._display_item_details(itemtype, found_item.id)
         else:
             self.console.print(Panel(f"Aucun objet de type '{itemtype}' avec le nom '{item_name}' trouvé dans le cache.", title="[red]Non Trouvé[/red]"))
+
+    def _display_index(self):
+        """Affiche le contenu de l'index equipment_to_sockets_map."""
+        if not self.cache or not self.cache.equipment_to_sockets_map:
+            self.console.print(Panel("L'index Équipement -> Sockets est vide ou non initialisé.", title="[yellow]Info[/yellow]"))
+            return
+        
+        table = Table(title="Index : Équipement vers Sockets")
+        table.add_column("ID Équipement", style="cyan", justify="right")
+        table.add_column("Nom Équipement", style="magenta")
+        table.add_column("ID(s) des Sockets Associés", style="green")
+        
+        all_equipment = {**self.cache.computers, **self.cache.network_equipments, **self.cache.passive_devices}
+        
+        for equip_id, socket_ids in self.cache.equipment_to_sockets_map.items():
+            equip_name = getattr(all_equipment.get(equip_id), 'name', 'NOM INCONNU')
+            table.add_row(
+                str(equip_id),
+                equip_name,
+                ', '.join(map(str, socket_ids))
+            )
+        
+        self.console.print(table)
