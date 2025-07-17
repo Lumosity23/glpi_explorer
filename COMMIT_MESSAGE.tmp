@@ -1,4 +1,4 @@
-fix(list): Correction de l'accès aux attributs pour SimpleNamespace
+fix(trace): Correction d'une faute de frappe dans l'appel de la méthode
 
-- Remplacement de `item.get("key")` par `getattr(item, "key", "N/A")`.
-- Résout l'AttributeError qui se produisait lors de l'utilisation de la commande `list`.
+- Remplacement de `get_connection_for_socket` par `find_connection_for_socket`.
+- Résout l'AttributeError qui se produisait lors de l'utilisation de la commande `trace`.

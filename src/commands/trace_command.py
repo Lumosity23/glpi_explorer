@@ -65,7 +65,7 @@ class TraceCommand(BaseCommand):
             parent = getattr(current_socket, 'parent_item', None)
             parent_name = getattr(parent, 'name', 'Parent Inconnu')
             
-            connection = linker.get_connection_for_socket(current_socket) # Utiliser la méthode du cache
+            connection = linker.find_connection_for_socket(current_socket) # Utiliser la méthode du cache
             
             if connection:
                 cable_name = getattr(connection['via_cable'], 'name', 'N/A')
