@@ -1,3 +1,16 @@
+## [MISSION 14.3] - 2025-07-17
+
+### Changed
+- **refactor(cache)!:** Implémentation du constructeur de graphe de topologie final
+  - Remplacement de `_link_topology` par une méthode unifiée `build_topology_graph`.
+  - Cette méthode établit les liaisons dans un ordre séquentiel strict pour garantir la cohérence : Equipement->Port, Port->Socket, Socket->Câble.
+  - La commande `trace` a été réécrite pour naviguer sur ce graphe fiable.
+  - Cette approche résout les problèmes de liaison en cascade et constitue la base finale pour la commande `trace`.
+
+BREAKING CHANGE: La logique de liaison et la structure des objets dans le cache ont été modifiées.
+
+Ref: Mission 14.3
+
 ## [MISSION 14.2] - 2025-07-17
 
 ### Changed
