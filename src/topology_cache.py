@@ -62,51 +62,77 @@ class TopologyCache:
             live.update(final_panel)
 
     def _link_topology(self):
+        # Dictionnaire global de tous les équipements pour un accès facile
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
-        # --- ÉTAPE 1: Construire l'index Équipement -> Sockets ---
-        for socket_id, socket in self.sockets.items():
-            parent_id_or_name = getattr(socket, 'items_id', None)
-            parent_item = None
-            
-            # Trouver le parent, que l'ID soit un entier ou un nom
-            if isinstance(parent_id_or_name, int):
-                parent_item = all_equipment.get(parent_id_or_name)
-            elif isinstance(parent_id_or_name, str):
-                parent_item = equipment_by_name.get(parent_id_or_name.lower())
-
-            if parent_item:
-                parent_id = getattr(parent_item, 'id', None)
-                if parent_id:
-                    if parent_id not in self.equipment_to_sockets_map:
-                        self.equipment_to_sockets_map[parent_id] = []
-                    self.equipment_to_sockets_map[parent_id].append(socket_id)
-                # Lier le parent au socket pour une navigation facile
-                socket.parent_item = parent_item
+        # --- ÉTAPE 1: Initialiser les attributs sur tous les objets ---
+        for equip in all_equipment.values():
+            equip.sockets_list = []
+        for port in self.network_ports.values():
+            port.socket = None
+            port.parent_item = None
+        for socket in self.sockets.values():
+            socket.networkport = None
+            socket.parent_item = None
+            socket.connected_to = None
         
-        # --- ÉTAPE 2: Lier les Sockets via les Câbles (ne change pas) ---
+        # --- ÉTAPE 2: Lier les NetworkPorts à leurs parents ---
+        # Cette étape est la plus importante. On se base sur les données riches des équipements.
+        for equip in all_equipment.values():
+            raw_ports_data = getattr(equip, "_networkports", {})
+            if not raw_ports_data:
+                continue
+            
+            for port_list in raw_ports_data.values():
+                for port_data in port_list:
+                    port_id = port_data.get('id')
+                    if port_id and port_id in self.network_ports:
+                        port_obj = self.network_ports[port_id]
+                        port_obj.parent_item = equip # LIAISON 1: Port -> Parent
+                        equip.sockets_list.append(port_obj) # LIAISON 2: Parent -> Port (on stocke les ports logiques)
+
+        # --- ÉTAPE 3: Lier Sockets et NetworkPorts ---
+        for socket in self.sockets.values():
+            port_id = getattr(socket, 'networkports_id', None)
+            if port_id and port_id in self.network_ports:
+                network_port = self.network_ports[port_id]
+                network_port.socket = socket # LIAISON 3: Port -> Socket
+                socket.networkport = network_port # LIAISON 4: Socket -> Port
+                # Hériter de la parenté du port logique, qui est maintenant correcte
+                socket.parent_item = network_port.parent_item
+
+        # --- ÉTAPE 4: Lier Sockets via les Câbles ---
+        # Cette logique est déjà correcte.
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\Socket':
+                if link.get('rel') == 'Glpi\\Socket':
                     try:
-                        link_socket_id = int(link['href'].split('/')[-1])
-                        socket_ids.append(link_socket_id)
-                    except (ValueError, IndexError):
-                        continue
+                        socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(socket_id)
+                    except (ValueError, IndexError): continue
             
             if len(socket_ids) == 2:
                 socket_a = self.sockets.get(socket_ids[0])
                 socket_b = self.sockets.get(socket_ids[1])
                 if socket_a and socket_b:
-                    socket_a.connected_to = socket_b
-                    socket_b.connected_to = socket_a
+                    socket_a.connected_to = socket_b # LIAISON 5
+                    socket_b.connected_to = socket_a # LIAISON 6
 
     def get_sockets_for_item_id(self, item_id):
-        """Retourne une liste d'objets Socket pour un ID d'équipement donné."""
-        socket_ids = self.equipment_to_sockets_map.get(item_id, [])
-        return [self.sockets.get(sid) for sid in socket_ids if sid in self.sockets]
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        item = all_equipment.get(item_id)
+        if not item or not hasattr(item, 'sockets_list'):
+            return []
+        
+        # Retourne la liste des objets socket directement
+        # Nous devons attacher les sockets aux équipements maintenant
+        # La logique a changé, nous retournons les sockets des ports
+        sockets_list = []
+        for port in getattr(item, 'sockets_list', []):
+            if hasattr(port, 'socket'):
+                sockets_list.append(port.socket)
+        return sockets_list
 
     def _process_and_flatten_ports(self, item_details):
         flattened_ports = []

@@ -1,3 +1,13 @@
+## [MISSION 14.2] - 2025-07-17
+
+### Changed
+- **fix(cache):** Correction finale de la logique de liaison de topologie
+  - Réécriture de `_link_topology` pour utiliser les données riches (`_networkports`) des équipements afin de garantir une liaison Parent->Port fiable.
+  - La liaison est maintenant hiérarchique et correcte : Equipement -> NetworkPort -> Socket -> Câble.
+  - Cette modification résout les problèmes de "Parent Inconnu" et de points de départ incorrects pour la commande `trace`.
+
+Ref: Mission 14.2
+
 ## [MISSION 14.1] - 2025-07-17
 
 ### Changed

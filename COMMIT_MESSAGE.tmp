@@ -1,4 +1,7 @@
-fix(trace): Correction d'une faute de frappe dans l'appel de la méthode
+fix(cache): Correction finale de la logique de liaison de topologie
 
-- Remplacement de `get_connection_for_socket` par `find_connection_for_socket`.
-- Résout l'AttributeError qui se produisait lors de l'utilisation de la commande `trace`.
+- Réécriture de `_link_topology` pour utiliser les données riches (`_networkports`) des équipements afin de garantir une liaison Parent->Port fiable.
+- La liaison est maintenant hiérarchique et correcte : Equipement -> NetworkPort -> Socket -> Câble.
+- Cette modification résout les problèmes de "Parent Inconnu" et de points de départ incorrects pour la commande `trace`.
+
+Ref: Mission 14.2
