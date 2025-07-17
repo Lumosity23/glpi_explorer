@@ -7,6 +7,7 @@ from src.api_client import ApiClient
 class ListCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
         super().__init__(api_client, console, cache)
+        self.aliases = ["ls"]
 
     def get_help_message(self):
         return {

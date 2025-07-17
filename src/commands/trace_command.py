@@ -4,6 +4,10 @@ from rich.table import Table
 from ..topology_linker import TopologyLinker
 
 class TraceCommand(BaseCommand):
+    def __init__(self, api_client, console, cache):
+        super().__init__(api_client, console, cache)
+        self.aliases = ["tr"]
+
     def get_help_message(self):
         return {
             "description": "Suit le chemin réseau d'un équipement de port en port.",

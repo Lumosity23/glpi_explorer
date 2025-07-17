@@ -17,28 +17,33 @@ class GLPIExplorerShell:
         self.history = InMemoryHistory()
         self.prompt_session = PromptSession(history=self.history)
         self.commands = {}
-        # Command loading is now deferred to the run method
+        self.aliases = {}
 
     def _load_commands(self):
         self.commands = {}
+        self.aliases = {}
         commands_dir = os.path.join(os.path.dirname(__file__), 'commands')
-        
-        # Étape 1: Charger toutes les commandes SAUF 'help'
+
         for filename in os.listdir(commands_dir):
-            if filename.endswith('_command.py') and not filename.startswith('base') and not filename.startswith('help'):
+            if filename.endswith('_command.py') and not filename.startswith('base'):
                 module_name = filename[:-3]
                 command_name = module_name.replace('_command', '')
                 try:
                     module = importlib.import_module(f'src.commands.{module_name}')
                     class_name = ''.join(word.capitalize() for word in command_name.replace('_', ' ').split()) + 'Command'
                     command_class = getattr(module, class_name)
-                    
-                    # Instancier la commande et la stocker
-                    self.commands[command_name] = command_class(self.api_client, self.console, self.cache)
+
+                    if command_name == 'help':
+                        continue
+
+                    instance = command_class(self.api_client, self.console, self.cache)
+                    self.commands[command_name] = instance
+                    if hasattr(instance, 'aliases') and instance.aliases:
+                        for alias in instance.aliases:
+                            self.aliases[alias] = command_name
                 except Exception as e:
                     self.console.print(Panel(f"Avertissement: Impossible de charger la commande depuis {filename}. Erreur: {e}", title="[yellow]Chargement Commande[/yellow]"))
-        
-        # Étape 2: Maintenant que les autres commandes sont chargées, charger 'help' en lui passant la map
+
         try:
             from src.commands.help_command import HelpCommand
             self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.commands)
@@ -49,79 +54,56 @@ class GLPIExplorerShell:
         if not isinstance(config, dict):
             return False
         required_keys = ["url", "app_token", "user_token"]
-        for key in required_keys:
-            if key not in config or not config[key]:
-                return False
-        return True
+        return all(key in config and config[key] for key in required_keys)
 
     def run(self):
         config_manager = ConfigManager()
         config = config_manager.load_config()
 
         if not self._is_config_valid(config):
-            self.console.print(Panel("[bold blue]Bienvenue... ou la configuration est invalide.[/bold blue]\n[yellow]Il semble que ce soit votre première utilisation ou que la configuration précédente soit manquante ou corrompue.\nNous allons vous guider à travers le processus de configuration.[/yellow]", expand=False))
-            while True:
-                config = config_manager.run_setup_interactive()
-                api_client_test = ApiClient(config)
-                with self.console.status("[bold green]Test de la connexion API...[/bold green]"):
-                    is_connected = api_client_test.connect()
-
-                if not is_connected:
-                    self.console.print(Panel(f"[bold red]Échec de la connexion :[/bold red] Veuillez réessayer avec des informations valides.", title="[red]Erreur de Connexion[/red]"))
-                else:
-                    api_client_test.close_session()
-                    config_manager.save_config(config)
-                    self.console.print(Panel("[bold green]Configuration sauvegardée avec succès ![/bold green]", title="[green]Succès[/green]"))
-                    break
+            self.console.print(Panel("[bold blue]Configuration requise.[/bold blue]", expand=False))
+            config = config_manager.run_setup_interactive()
+            config_manager.save_config(config)
 
         self.api_client = ApiClient(config)
-        with self.console.status("[bold green]Connexion à l'API GLPI...[/bold green]"):
-            is_connected = self.api_client.connect()
-
-        if not is_connected:
-            self.console.print(Panel(f"[bold red]Échec de la connexion principale :[/bold red] Veuillez vérifier votre configuration ou relancer l'application pour reconfigurer.", title="[red]Erreur[/red]"))
+        if not self.api_client.connect():
+            self.console.print(Panel("[bold red]Échec de la connexion.[/bold red]", title="[red]Erreur[/red]"))
             return
 
-        # Initialize and load cache
         self.cache = TopologyCache(self.api_client)
         self.cache.load_from_api(self.console)
-
-        # Load commands now that api_client is initialized
         self._load_commands()
-
-        
 
         while True:
             try:
-                prompt_message = FormattedText([
-                    ('bold cyan', '(glpi-explorer)> ')
-                ])
-                
+                prompt_message = FormattedText([('bold cyan', '(glpi-explorer)> ')])
                 full_command = self.prompt_session.prompt(prompt_message).strip()
 
                 if not full_command:
                     continue
+                
                 parts = full_command.split(maxsplit=1)
                 command_name = parts[0].lower()
                 args = parts[1] if len(parts) > 1 else ""
 
-                # Handle aliases
-                if command_name == "ls":
-                    command_name = "list"
-                elif command_name == "q":
-                    command_name = "exit"
-
-                if command_name in self.commands:
-                    command_instance = self.commands[command_name]
-                    command_instance.execute(args)
-                elif command_name in ("exit", "quit"):
+                if command_name in ('exit', 'quit', 'q'):
                     if self.api_client:
                         self.api_client.close_session()
                     break
+
+                resolved_command_name = self.aliases.get(command_name, command_name)
+
+                if resolved_command_name in self.commands:
+                    self.commands[resolved_command_name].execute(args)
                 else:
-                    self.console.print(Panel(f"[bold red]Commande inconnue:[/bold red] '{command_name}'. Commandes supportées: {', '.join(self.commands.keys())}, exit, quit, ls, q", title="[red]Erreur[/red]"))
+                    supported_cmds = ", ".join(sorted(list(self.commands.keys()) + list(self.aliases.keys())))
+                    self.console.print(Panel(f"[bold red]Commande inconnue:[/bold red] '{command_name}'.", title="[red]Erreur[/red]"))
 
             except EOFError:
                 if self.api_client:
                     self.api_client.close_session()
                 break
+
+if __name__ == "__main__":
+    shell = GLPIExplorerShell()
+    shell.run()

@@ -11,6 +11,12 @@ class DebugCommand(BaseCommand):
         self.description = "Inspecte le cache de topologie."
         self.aliases = ["dbg"]
 
+    def get_help_message(self):
+        return {
+            "description": self.description,
+            "usage": "debug cache [<type>] [<id>|<nom>]"
+        }
+
     def execute(self, args):
         parts = args.split()
         if not parts or parts[0].lower() != 'cache':

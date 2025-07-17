@@ -9,6 +9,7 @@ from src.api_client import ApiClient
 class GetCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
         super().__init__(api_client, console, cache)
+        self.aliases = ["show"]
 
     def get_help_message(self):
         return {

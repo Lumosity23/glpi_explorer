@@ -8,6 +8,7 @@ from rich import box
 class CompareCommand(BaseCommand):
     def __init__(self, api_client, console, cache):
         super().__init__(api_client, console, cache)
+        self.aliases = ["cp"]
 
     def get_help_message(self):
         return {
