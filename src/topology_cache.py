@@ -76,32 +76,29 @@ class TopologyCache:
             socket.parent = None
             socket.connection = None # Remplacera 'connected_to' pour plus de détails
 
-        # --- ÉTAPE 2: Lier les Équipements à leurs NetworkPorts ---
-        # On utilise les données riches chargées avec get_item_details
+        # --- NOUVELLE ÉTAPE 2: Lier Parents, Ports, et Sockets ensemble ---
         for equip in all_equipment.values():
-            raw_ports_data = getattr(equip, "_networkports", {})
-            if not raw_ports_data: continue
-            
-            for port_list in raw_ports_data.values():
-                for port_data in port_list:
-                    port_id = port_data.get('id')
-                    if port_id in self.network_ports:
-                        port_obj = self.network_ports[port_id]
-                        port_obj.parent = equip # Lien Port -> Parent
-                        equip.ports.append(port_obj) # Lien Parent -> Port
+            equip.ports = [] # Initialise l'attribut sur tous les équipements
 
-        # --- ÉTAPE 3: Lier NetworkPorts et Sockets ---
         for port in self.network_ports.values():
-            # Un NetworkPort peut avoir un 'sockets_id' qui est l'ID du socket physique
-            socket_id = getattr(port, 'sockets_id', None)
-            if socket_id and socket_id in self.sockets:
-                socket_obj = self.sockets[socket_id]
-                port.socket = socket_obj
-                socket_obj.port = port
-                # Le socket hérite du parent de son port logique
-                socket_obj.parent = port.parent
+            # Lier le port à son parent équipement
+            parent_id = getattr(port, 'items_id', None)
+            if parent_id and parent_id in all_equipment:
+                parent_item = all_equipment[parent_id]
+                port.parent = parent_item
+                parent_item.ports.append(port)
 
-        # --- ÉTAPE 4: Lier les Sockets via les Câbles ---
+        for socket in self.sockets.values():
+            # Lier le socket à son port logique
+            port_id = getattr(socket, 'networkports_id', None)
+            if port_id and port_id in self.network_ports:
+                port_obj = self.network_ports[port_id]
+                socket.port = port_obj
+                port_obj.socket = socket # Liaison inverse
+                # Le socket hérite du parent de son port
+                socket.parent = getattr(port_obj, 'parent', None)
+
+        # --- ÉTAPE 3: Lier les Sockets via les Câbles ---
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):

@@ -1,3 +1,13 @@
+## [MISSION 14.4] - 2025-07-17
+
+### Changed
+- **fix(cache):** Correction de la liaison NetworkPort-Socket
+  - La logique de liaison dans `build_topology_graph` a été corrigée pour se baser sur la clé `networkports_id` présente dans les objets `Socket`.
+  - La liaison se fait maintenant en partant du Socket pour trouver son Port logique, ce qui correspond à la structure de données de l'API.
+  - Cette modification résout le bug où la trace s'arrêtait après la première étape car le lien entre le port logique et le port physique n'était pas établi.
+
+Ref: Mission 14.4
+
 ## [MISSION 14.3] - 2025-07-17
 
 ### Changed

@@ -1,10 +1,7 @@
-refactor(cache)!: Implémentation du constructeur de graphe de topologie final
+fix(cache): Correction de la liaison NetworkPort-Socket
 
-- Remplacement de `_link_topology` par une méthode unifiée `build_topology_graph`.
-- Cette méthode établit les liaisons dans un ordre séquentiel strict pour garantir la cohérence : Equipement->Port, Port->Socket, Socket->Câble.
-- La commande `trace` a été réécrite pour naviguer sur ce graphe fiable.
-- Cette approche résout les problèmes de liaison en cascade et constitue la base finale pour la commande `trace`.
+- La logique de liaison dans `build_topology_graph` a été corrigée pour se baser sur la clé `networkports_id` présente dans les objets `Socket`.
+- La liaison se fait maintenant en partant du Socket pour trouver son Port logique, ce qui correspond à la structure de données de l'API.
+- Cette modification résout le bug où la trace s'arrêtait après la première étape car le lien entre le port logique et le port physique n'était pas établi.
 
-BREAKING CHANGE: La logique de liaison et la structure des objets dans le cache ont été modifiées.
-
-Ref: Mission 14.3
+Ref: Mission 14.4
