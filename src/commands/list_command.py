@@ -60,12 +60,12 @@ class ListCommand(BaseCommand):
 
         for item in items:
             row_data = [
-                str(item.get("id", "N/A")),
-                item.get("name", "N/A"),
-                str(item.get("states_id", "N/A")) # Always include Statut
+                str(getattr(item, "id", "N/A")),
+                getattr(item, "name", "N/A"),
+                str(getattr(item, "states_id", "N/A")) # Always include Statut
             ]
             if glpi_itemtype == "Cable":
-                row_data.append(item.get("cabletypes_id", "N/A"))
+                row_data.append(getattr(item, "cabletypes_id", "N/A"))
             table.add_row(*row_data)
         self.console.print(Panel(table, expand=False))
 
