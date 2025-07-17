@@ -52,7 +52,7 @@ class TopologyCache:
             self._load_cables(progress_bar, main_task)
             self._load_sockets(progress_bar, main_task)
             self._load_network_ports(progress_bar, main_task)
-            self.build_topology_graph()
+            self._build_topology_graph()
 
             final_panel = Panel(
                 Align.center(logo_text),
@@ -61,61 +61,70 @@ class TopologyCache:
             )
             live.update(final_panel)
 
-    def build_topology_graph(self):
-        # Dictionnaire global de tous les équipements
+    def _build_topology_graph(self):
+        # Dictionnaires globaux pour un accès rapide
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        name_to_id_map = {getattr(eq, 'name', ''): eq_id for eq_id, eq in all_equipment.items()}
 
-        # --- Étape 1: Initialiser les attributs sur tous les objets pour un état propre ---
+        # --- Étape 1: Initialisation des attributs sur tous les objets ---
         for equip in all_equipment.values():
-            equip.ports = [] # Utilisons 'ports' pour être clair
+            equip.ports = []
+            equip.sockets = []
         for port in self.network_ports.values():
-            port.socket = None
             port.parent = None
+            port.socket = None
         for socket in self.sockets.values():
-            socket.port = None
             socket.parent = None
-            socket.connection = None # Remplacera 'connected_to' pour plus de détails
+            socket.port = None
+            socket.connection = None
 
-        # --- NOUVELLE ÉTAPE 2: Lier Parents, Ports, et Sockets ensemble ---
-        for equip in all_equipment.values():
-            equip.ports = [] # Initialise l'attribut sur tous les équipements
-
+        # --- ÉTAPE 2: LIAISON PARENT-PORT & PARENT-SOCKET (LA CLÉ) ---
+        # On parcourt les ports, qui connaissent leur parent ID
         for port in self.network_ports.values():
-            # Lier le port à son parent équipement
             parent_id = getattr(port, 'items_id', None)
-            if parent_id and parent_id in all_equipment:
-                parent_item = all_equipment[parent_id]
-                port.parent = parent_item
-                parent_item.ports.append(port)
+            if parent_id in all_equipment:
+                parent_equip = all_equipment[parent_id]
+                port.parent = parent_equip
+                parent_equip.ports.append(port)
 
+        # On parcourt les sockets, qui connaissent aussi leur parent ID (parfois par nom)
         for socket in self.sockets.values():
-            # Lier le socket à son port logique
+            parent_id_or_name = getattr(socket, 'items_id', None)
+            parent_equip = None
+            if isinstance(parent_id_or_name, int):
+                parent_equip = all_equipment.get(parent_id_or_name)
+            elif isinstance(parent_id_or_name, str):
+                parent_id = name_to_id_map.get(parent_id_or_name.lower())
+                parent_equip = all_equipment.get(parent_id)
+
+            if parent_equip:
+                socket.parent = parent_equip
+                parent_equip.sockets.append(socket)
+                # On remplit notre index ici
+                if parent_equip.id not in self.equipment_to_sockets_map:
+                    self.equipment_to_sockets_map[parent_equip.id] = []
+                self.equipment_to_sockets_map[parent_equip.id].append(socket.id)
+
+        # --- ÉTAPE 3: LIAISON PORT-SOCKET ---
+        for socket in self.sockets.values():
             port_id = getattr(socket, 'networkports_id', None)
             if port_id and port_id in self.network_ports:
-                port_obj = self.network_ports[port_id]
-                socket.port = port_obj
-                port_obj.socket = socket # Liaison inverse
-                # Le socket hérite du parent de son port
-                socket.parent = getattr(port_obj, 'parent', None)
+                network_port = self.network_ports[port_id]
+                socket.port = network_port
+                network_port.socket = socket
 
-        # --- ÉTAPE 3: Lier les Sockets via les Câbles ---
+        # --- ÉTAPE 4: LIAISON CÂBLE-SOCKET ---
         for cable in self.cables.values():
-            socket_ids = []
-            for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\\Socket':
-                    try:
-                        socket_ids.append(int(link['href'].split('/')[-1]))
-                    except (ValueError, IndexError): continue
-            
+            socket_ids = [int(link['href'].split('/')[-1]) for link in getattr(cable, 'links', []) if link.get('rel') == 'Glpi\\Socket']
             if len(socket_ids) == 2:
                 socket_a = self.sockets.get(socket_ids[0])
                 socket_b = self.sockets.get(socket_ids[1])
                 if socket_a and socket_b:
-                    # Stocker un dictionnaire de connexion complet
                     socket_a.connection = {'via_cable': cable, 'to_socket': socket_b}
                     socket_b.connection = {'via_cable': cable, 'to_socket': socket_a}
 
-    
+    def get_sockets_for_item_id(self, item_id):
+        return self.equipment_to_sockets_map.get(item_id, [])
 
     def _process_and_flatten_ports(self, item_details):
         flattened_ports = []

@@ -1,3 +1,15 @@
+## [MISSION 15.1] - 2025-07-18
+
+### Changed
+- **fix(cache):** Implémentation du constructeur de graphe topologique unifié
+  - Remplacement de toute la logique de liaison par une unique méthode `_build_topology_graph`.
+  - Cette méthode établit les relations dans un ordre séquentiel strict pour garantir la cohérence : Equipement-Port, Equipement-Socket, Port-Socket, et Câble-Socket.
+  - La logique gère les incohérences de l'API (ID vs Nom pour les parents).
+  - L'index `equipment_to_sockets_map` est maintenant correctement rempli.
+  - Cette modification constitue la base de données en mémoire finale et fiable pour la commande `trace`.
+
+Ref: Mission 15.1
+
 ## [MISSION 14.4] - 2025-07-17
 
 ### Changed

@@ -33,13 +33,13 @@ class TraceCommand(BaseCommand):
             self.console.print(Panel(f"Objet '{item_name}' non trouvé dans le cache.", title="[red]Erreur[/red]"))
             return
 
-        start_ports = getattr(start_item, 'ports', [])
-        if not start_ports:
-            self.console.print(Panel(f"Aucun port trouvé pour {start_item.name} dans le cache.", border_style="yellow"))
+        start_sockets = self.cache.get_sockets_for_item_id(start_item.id)
+        if not start_sockets:
+            self.console.print(Panel(f"Aucun socket trouvé pour {start_item.name} dans le cache.", border_style="yellow"))
             return
 
         # Pour cette mission, on part du premier port
-        current_port = start_ports[0]
+        current_port = self.cache.sockets[start_sockets[0]].port
         
         trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
         trace_table.add_column("Étape")
