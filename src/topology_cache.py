@@ -17,6 +17,7 @@ class TopologyCache:
         self.cables = {}
         self.sockets = {}
         self.network_ports = {}
+        self.equipment_to_sockets_map = {}
 
     def load_from_api(self, console):
         self.console = console
@@ -61,39 +62,32 @@ class TopologyCache:
             live.update(final_panel)
 
     def _link_topology(self):
-        # Dictionnaires globaux pour l'accès
-        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
-
-        # --- ÉTAPE 1: Attacher chaque Socket à son Équipement parent ---
-        for equip in all_equipment.values():
-            equip.sockets = [] # Initialise l'attribut sur tous les équipements
-
-        for socket in self.sockets.values():
-            parent_id_or_name = getattr(socket, 'items_id', None)
-            parent_item = None
+        # Réinitialiser l'index à chaque chargement
+        self.equipment_to_sockets_map = {}
+        
+        # Pas besoin de all_equipment, on va travailler directement sur les sockets
+        
+        # --- ÉTAPE 1: Construire l'index Équipement -> Sockets ---
+        for socket_id, socket in self.sockets.items():
+            parent_id = getattr(socket, 'items_id', None)
             
-            # Trouver le parent par ID ou par Nom
-            if isinstance(parent_id_or_name, int) and parent_id_or_name in all_equipment:
-                parent_item = all_equipment.get(parent_id_or_name)
-            elif isinstance(parent_id_or_name, str):
-                parent_item = equipment_by_name.get(parent_id_or_name.lower())
-
-            if parent_item:
-                # On attache l'objet socket à la liste des sockets de son parent
-                parent_item.sockets.append(socket)
-                # On ajoute une référence au parent sur le socket pour une navigation facile
-                socket.parent_item = parent_item
-
+            # Pour l'instant, on ne gère que les parents avec un ID numérique
+            if isinstance(parent_id, int) and parent_id > 0:
+                # Si l'ID de l'équipement n'est pas encore dans notre map, on crée une liste vide
+                if parent_id not in self.equipment_to_sockets_map:
+                    self.equipment_to_sockets_map[parent_id] = []
+                # On ajoute l'ID du socket à la liste de son parent
+                self.equipment_to_sockets_map[parent_id].append(socket_id)
+        
         # --- ÉTAPE 2: Lier les Sockets entre eux via les Câbles ---
         # Cette logique est correcte et ne change pas.
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\Socket':
+                if link.get('rel') == 'Glpi\\Socket':
                     try:
-                        socket_id = int(link['href'].split('/')[-1])
-                        socket_ids.append(socket_id)
+                        link_socket_id = int(link['href'].split('/')[-1])
+                        socket_ids.append(link_socket_id)
                     except (ValueError, IndexError):
                         continue
             
@@ -104,7 +98,10 @@ class TopologyCache:
                     socket_a.connected_to = socket_b
                     socket_b.connected_to = socket_a
 
-    
+    def get_sockets_for_item_id(self, item_id):
+        """Retourne une liste d'objets Socket pour un ID d'équipement donné."""
+        socket_ids = self.equipment_to_sockets_map.get(item_id, [])
+        return [self.sockets.get(sid) for sid in socket_ids if sid in self.sockets]
 
     def _process_and_flatten_ports(self, item_details):
         flattened_ports = []

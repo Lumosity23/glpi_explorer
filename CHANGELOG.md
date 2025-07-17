@@ -1,3 +1,14 @@
+## [MISSION 13.10] - 2025-07-17
+
+### Changed
+- **feat(cache):** Création d'un index Équipement-vers-Sockets
+  - Abandon de la liaison par attribut au profit d'une structure d'indexation dédiée `equipment_to_sockets_map`.
+  - Le cache crée maintenant une map `[equipment_id] -> [socket_id_1, socket_id_2, ...]` lors du chargement.
+  - Ajout d'une méthode `get_sockets_for_item_id` pour interroger cet index de manière propre.
+  - La commande `trace` a été mise à jour pour utiliser cette nouvelle méthode, rendant la recherche des points de départ fiable et explicite.
+
+Ref: Mission 13.10
+
 ## [MISSION 13.9] - 2025-07-16
 
 ### Changed

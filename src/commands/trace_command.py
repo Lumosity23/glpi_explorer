@@ -15,7 +15,6 @@ class TraceCommand(BaseCommand):
         }
 
     def execute(self, args):
-        # ... (code pour trouver l'objet de départ 'start_item') ...
         try:
             user_type_alias, item_name = args.split(maxsplit=1)
         except ValueError:
@@ -33,12 +32,14 @@ class TraceCommand(BaseCommand):
         if not start_item:
             self.console.print(Panel(f"Objet '{item_name}' non trouvé dans le cache.", title="[red]Erreur[/red]"))
             return
+
+        start_item_id = getattr(start_item, 'id', None)
         
-        # --- ÉTAPE 1: Trouver les sockets de départ ---
-        start_sockets = getattr(start_item, 'sockets', [])
+        # --- ÉTAPE 1: Trouver les sockets de départ via le nouvel index ---
+        start_sockets = self.cache.get_sockets_for_item_id(start_item_id)
         
         if not start_sockets:
-            self.console.print(Panel(f"Aucun socket physique trouvé pour {start_item.name}. Fin de la trace.", border_style="yellow"))
+            self.console.print(Panel(f"Aucun socket physique trouvé pour {start_item.name} via l'index. Fin de la trace.", border_style="yellow"))
             return
 
         # Pour l'instant, on prend le premier socket trouvé.
