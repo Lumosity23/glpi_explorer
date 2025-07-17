@@ -1,3 +1,17 @@
+## [MISSION 15.2] - 2025-07-18
+
+### Changed
+- **refactor(trace)!:** Refonte de trace avec un moteur de liaison à la volée
+  - Abandon de l'architecture de cache pré-lié.
+  - Création de méthodes de recherche explicites dans `TopologyLinker` qui construisent les relations "à la demande".
+  - La commande `trace` a été entièrement réécrite pour utiliser ce nouveau linker.
+  - Implémentation de la logique de traversée des équipements passifs.
+  - Cette approche est plus robuste, plus simple à déboguer et résout les problèmes de liaison persistants.
+
+BREAKING CHANGE: L'architecture de la commande trace et du linker est entièrement nouvelle.
+
+Ref: Mission 15.2
+
 ## [MISSION 15.1] - 2025-07-18
 
 ### Changed
