@@ -1,3 +1,14 @@
+## [MISSION 14.1] - 2025-07-17
+
+### Changed
+- **feat(trace):** Implémentation finale de la trace avec traversée des passifs
+  - Correction de la logique de liaison dans `_link_topology` pour gérer les `items_id` textuels et numériques.
+  - Correction de la recherche des sockets de départ dans `TraceCommand`.
+  - Implémentation de la logique de "traversée" pour les équipements passifs (Walloutlets, Patch Panels) en se basant sur la convention de nommage IN/OUT des ports.
+  - La commande `trace` est maintenant capable de suivre un chemin complet à travers l'infrastructure physique.
+
+Ref: Mission 14.1
+
 ## [MISSION 13.11] - 2025-07-17
 
 ### Changed

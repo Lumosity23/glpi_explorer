@@ -62,35 +62,34 @@ class TopologyCache:
             live.update(final_panel)
 
     def _link_topology(self):
-        # Réinitialiser l'index
-        self.equipment_to_sockets_map = {}
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        # Dictionnaire inversé pour trouver un ID d'équipement par son nom
-        name_to_id_map = {getattr(eq, 'name', '').lower(): eq_id for eq_id, eq in all_equipment.items()}
+        equipment_by_name = {getattr(eq, 'name', '').lower(): eq for eq in all_equipment.values()}
 
         # --- ÉTAPE 1: Construire l'index Équipement -> Sockets ---
         for socket_id, socket in self.sockets.items():
             parent_id_or_name = getattr(socket, 'items_id', None)
-            parent_id = None
+            parent_item = None
             
-            # Si c'est un entier, c'est l'ID
+            # Trouver le parent, que l'ID soit un entier ou un nom
             if isinstance(parent_id_or_name, int):
-                parent_id = parent_id_or_name
-            # Si c'est une chaîne, on cherche l'ID correspondant
+                parent_item = all_equipment.get(parent_id_or_name)
             elif isinstance(parent_id_or_name, str):
-                parent_id = name_to_id_map.get(parent_id_or_name.lower())
+                parent_item = equipment_by_name.get(parent_id_or_name.lower())
 
-            if parent_id and parent_id > 0:
-                if parent_id not in self.equipment_to_sockets_map:
-                    self.equipment_to_sockets_map[parent_id] = []
-                self.equipment_to_sockets_map[parent_id].append(socket_id)
-
-        # --- ÉTAPE 2: Lier les Sockets entre eux via les Câbles ---
-        # (Cette partie reste inchangée)
+            if parent_item:
+                parent_id = getattr(parent_item, 'id', None)
+                if parent_id:
+                    if parent_id not in self.equipment_to_sockets_map:
+                        self.equipment_to_sockets_map[parent_id] = []
+                    self.equipment_to_sockets_map[parent_id].append(socket_id)
+                # Lier le parent au socket pour une navigation facile
+                socket.parent_item = parent_item
+        
+        # --- ÉTAPE 2: Lier les Sockets via les Câbles (ne change pas) ---
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\\Socket':
+                if link.get('rel') == 'Glpi\Socket':
                     try:
                         link_socket_id = int(link['href'].split('/')[-1])
                         socket_ids.append(link_socket_id)
