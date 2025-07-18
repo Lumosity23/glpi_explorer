@@ -38,6 +38,14 @@ class TraceCommand(BaseCommand):
             self.console.print(Panel(f"Aucun socket trouvé pour {start_item.name} dans le cache.", border_style="yellow"))
             return
 
+        trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
+        trace_table.add_column("Étape")
+        trace_table.add_column("Équipement")
+        trace_table.add_column("Port")
+        trace_table.add_column("Câble")
+        trace_table.add_column("Équipement Suivant")
+        trace_table.add_column("Port Suivant")
+
         current_socket = start_sockets[0]
         step = 1
         visited_sockets = set()
