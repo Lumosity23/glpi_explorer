@@ -1,3 +1,13 @@
+## [MISSION 16.2] - 2025-07-18
+
+### Added
+- **feat(debug):** Création d'un banc de test dédié pour l'algorithme de trace
+  - Création de `trace_validator.py` pour tester de manière isolée la logique de `TopologyLinker.get_next_hop`.
+  - Le script charge le cache et exécute la boucle de trace manuellement, en affichant un rapport de débogage détaillé pour chaque étape.
+  - Cet outil nous permettra de perfectionner l'algorithme de trace et de valider son comportement avant de l'intégrer dans l'interface utilisateur principale.
+
+Ref: Mission 16.2
+
 ## [MISSION 15.6] - 2025-07-18
 
 ### Changed
