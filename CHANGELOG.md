@@ -1,3 +1,14 @@
+## [MISSION 15.4] - 2025-07-18
+
+### Changed
+- **fix(trace):** Polissage final de l'affichage de la commande trace
+  - Fusion de la première étape de la trace en une seule ligne pour une meilleure lisibilité.
+  - Ajout de la détection de boucles pour arrêter la trace proprement et éviter les répétitions infinies.
+  - L'affichage de la traversée des équipements passifs a été rendu plus compact et s'affiche maintenant sur une seule ligne.
+  - La commande `trace` est maintenant considérée comme fonctionnellement complète et stable.
+
+Ref: Mission 15.4
+
 ## [MISSION 15.3] - 2025-07-18
 
 ### Changed
