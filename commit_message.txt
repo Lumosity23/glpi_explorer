@@ -1,0 +1,10 @@
+feat(trace): Finalisation et polissage de la commande trace
+
+- Refonte complète de `get_next_hop` dans le TopologyLinker pour une gestion robuste et distincte des connexions physiques, des traversées de passifs et des hubs.
+- Correction de la logique de traversée des Hubs (IN -> OUT).
+- L'affichage de la commande `trace` a été entièrement revu pour être plus compact et lisible.
+- Les traversées d'équipements passifs s'affichent désormais sur une seule ligne.
+- La trace gère maintenant les fins de ligne et les boucles de manière propre.
+- La commande `trace` est maintenant considérée comme stable et fonctionnellement complète.
+
+Ref: Mission 15.6

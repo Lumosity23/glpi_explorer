@@ -1,3 +1,16 @@
+## [MISSION 15.6] - 2025-07-18
+
+### Changed
+- **feat(trace):** Finalisation et polissage de la commande trace
+  - Refonte complète de `get_next_hop` dans le TopologyLinker pour une gestion robuste et distincte des connexions physiques, des traversées de passifs et des hubs.
+  - Correction de la logique de traversée des Hubs (IN -> OUT).
+  - L'affichage de la commande `trace` a été entièrement revu pour être plus compact et lisible.
+  - Les traversées d'équipements passifs s'affichent désormais sur une seule ligne.
+  - La trace gère maintenant les fins de ligne et les boucles de manière propre.
+  - La commande `trace` est maintenant considérée comme stable et fonctionnellement complète.
+
+Ref: Mission 15.6
+
 ## [MISSION 15.5] - 2025-07-18
 
 ### Changed
@@ -23,7 +36,7 @@ Ref: Mission 15.4
 ## [MISSION 15.3] - 2025-07-18
 
 ### Changed
-- **feat(trace):** Ajout de la logique de traversée des Hubs et corrections
+- **feat(trace)::** Ajout de la logique de traversée des Hubs et corrections
   - Le `TopologyLinker` gère maintenant la logique de concentration des Hubs (IN -> OUT).
   - La commande `trace` a été ajustée pour mieux gérer l'affichage du premier et du dernier hop.
   - Correction de bugs mineurs qui causaient l'affichage de "Parent Inconnu" et de câbles manquants.

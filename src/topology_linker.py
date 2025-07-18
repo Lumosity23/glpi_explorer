@@ -78,32 +78,43 @@ class TopologyLinker:
 
 
     def get_next_hop(self, current_socket):
-        parent = self.find_parent_for_socket(current_socket)
+        # --- ÉTAPE 1: Trouver la connexion physique via le câble ---
+        connection = self.find_connection_for_socket(current_socket)
+        if not connection:
+            return {'type': 'end', 'reason': 'FIN DE LIGNE'}
+            
+        next_socket = connection['other_socket']
+        cable = connection['via_cable']
+        next_parent = self.find_parent_for_socket(next_socket)
+
+        if not next_parent:
+             return {'type': 'end', 'reason': 'Parent du socket suivant introuvable'}
+
+        # --- ÉTAPE 2: Décider du "saut" logique en fonction du type de parent ---
         
-        # --- CAS 1: On est sur un équipement passif ---
-        if parent and getattr(parent, 'itemtype', None) == 'PassiveDCEquipment':
-            if " IN" in current_socket.name.upper():
-                out_name = current_socket.name.upper().replace(" IN", " OUT")
-                sockets_on_parent = self.find_sockets_for_item(parent)
+        # CAS A: Équipement passif (Walloutlet, Patch Panel)
+        if getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment':
+            if " IN" in next_socket.name.upper():
+                out_name = next_socket.name.upper().replace(" IN", " OUT")
+                sockets_on_parent = self.find_sockets_for_item(next_parent)
                 out_socket = next((s for s in sockets_on_parent if s.name.upper() == out_name), None)
                 if out_socket:
-                    return {'type': 'internal', 'socket': out_socket}
+                    # On a traversé, le prochain hop part du port OUT
+                    return {'type': 'traversal', 'from_socket': next_socket, 'to_socket': out_socket, 'via_device': next_parent}
+        
+        # CAS B: Hub Ethernet
+        if getattr(next_parent, 'itemtype', None) == 'NetworkEquipment' and getattr(next_parent, 'name', '').upper().startswith('HB'):
+            sockets_on_hub = self.find_sockets_for_item(next_parent)
+            if not sockets_on_hub: return {'type': 'end', 'reason': 'Hub sans sockets'}
 
-        # --- CAS 2: On est sur un Hub ---
-        if parent and getattr(parent, 'itemtype', None) == 'NetworkEquipment' and getattr(parent, 'name', '').upper().startswith('HB'):
-            sockets_on_hub = self.find_sockets_for_item(parent)
             # Trouver le port OUT (plus grand numéro)
             out_socket = max(sockets_on_hub, key=lambda s: int(''.join(filter(str.isdigit, s.name)) or 0))
-
-            # Si on est sur un port IN, on saute au port OUT.
-            if current_socket != out_socket:
-                return {'type': 'internal', 'socket': out_socket}
-            # Si on est déjà sur le port OUT, la trace continue normalement par le câble.
-
-        # --- CAS 3: Connexion physique normale ---
-        connection = self.find_connection_for_socket(current_socket)
-        if connection:
-            return {'type': 'connection', 'socket': connection['other_socket'], 'via': connection['via_cable']}
             
-        # --- Fin de la ligne ---
-        return None
+            # Si on arrive sur un port IN, on saute au port OUT
+            if next_socket != out_socket:
+                return {'type': 'traversal', 'from_socket': next_socket, 'to_socket': out_socket, 'via_device': next_parent}
+            # Si on arrive sur le port OUT d'un Hub, on continue la connexion physique
+            # (Ce cas est géré par le CAS C)
+
+        # CAS C: Connexion standard (Switch, PC, ou sortie d'un passif/hub)
+        return {'type': 'connection', 'next_socket': next_socket, 'via_cable': cable}
