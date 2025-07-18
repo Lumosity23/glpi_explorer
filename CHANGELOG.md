@@ -1,3 +1,14 @@
+## [MISSION 15.5] - 2025-07-18
+
+### Changed
+- **feat(trace):** Finalisation de la commande trace
+  - Implémentation complète de la logique de traversée des Hubs (IN -> OUT) dans le TopologyLinker.
+  - Simplification de l'affichage des traversées internes pour une meilleure lisibilité.
+  - Correction de la logique de la boucle pour un affichage propre du premier et du dernier hop, et pour gérer les fins de trace.
+  - La commande `trace` est maintenant considérée comme stable et fonctionnellement complète.
+
+Ref: Mission 15.5
+
 ## [MISSION 15.4] - 2025-07-18
 
 ### Changed
