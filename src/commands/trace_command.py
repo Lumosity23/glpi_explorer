@@ -56,27 +56,32 @@ class TraceCommand(BaseCommand):
             parent_name = getattr(parent, 'name', 'Parent Inconnu')
             socket_name = getattr(current_socket, 'name', 'Socket Inconnu')
             
+            hop = linker.get_next_hop(current_socket)
+            
+            via_str = ""
+            next_socket = None
+
+            if not hop:
+                via_str = "[yellow]FIN DE TRACE[/yellow]"
+            elif hop['type'] == 'connection':
+                cable_name = getattr(hop['via'], 'name', 'N/A')
+                via_str = f"[green]{cable_name}[/green]"
+                next_socket = hop['socket']
+            elif hop['type'] == 'internal':
+                via_str = "[italic blue](Interne)[/italic blue]"
+                next_socket = hop['socket']
+
             trace_table.add_row(
                 str(step),
                 parent_name,
                 socket_name,
-                "..." # Placeholder
+                via_str
             )
 
-            hop = linker.get_next_hop(current_socket)
-            
-            if not hop:
-                trace_table.rows[-1].cells[3] = "[yellow]FIN DE TRACE[/yellow]"
+            if not next_socket:
                 break
-            
-            if hop['type'] == 'connection':
-                cable_name = getattr(hop['via'], 'name', 'N/A')
-                trace_table.rows[-1].cells[3] = f"[green]{cable_name}[/green]"
-                current_socket = hop['socket']
-            elif hop['type'] == 'internal':
-                trace_table.rows[-1].cells[3] = "[italic blue](Interne)[/italic blue]"
-                current_socket = hop['socket']
-            
+                
+            current_socket = next_socket
             step += 1
             
         self.console.print(trace_table)
