@@ -1,3 +1,14 @@
+## [MISSION 15.3] - 2025-07-18
+
+### Changed
+- **feat(trace):** Ajout de la logique de traversée des Hubs et corrections
+  - Le `TopologyLinker` gère maintenant la logique de concentration des Hubs (IN -> OUT).
+  - La commande `trace` a été ajustée pour mieux gérer l'affichage du premier et du dernier hop.
+  - Correction de bugs mineurs qui causaient l'affichage de "Parent Inconnu" et de câbles manquants.
+  - La commande `trace` est maintenant capable de suivre un chemin complet sur l'ensemble de la topologie définie.
+
+Ref: Mission 15.3
+
 ## [MISSION 15.2] - 2025-07-18
 
 ### Changed

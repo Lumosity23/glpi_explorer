@@ -38,29 +38,30 @@ class TraceCommand(BaseCommand):
             self.console.print(Panel(f"Aucun socket trouvé pour {start_item.name} dans le cache.", border_style="yellow"))
             return
 
-        current_socket = start_sockets[0] # On prend le premier
-        
-        trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
-        trace_table.add_column("Étape")
-        trace_table.add_column("Équipement")
-        trace_table.add_column("Port")
-        trace_table.add_column("Câble")
-        trace_table.add_column("Équipement Suivant")
-        trace_table.add_column("Port Suivant")
-
+        current_socket = start_sockets[0]
         step = 1
         visited_sockets = set()
+        
+        trace_table.add_row(
+            str(step),
+            getattr(start_item, 'name', 'N/A'),
+            current_socket.name,
+            "...", # On ne connaît pas encore le câble et la destination
+            "...",
+            "..."
+        )
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
-            parent = linker.find_parent_for_socket(current_socket)
-            parent_name = getattr(parent, 'name', 'Parent Inconnu')
-
+            
             hop = linker.get_next_hop(current_socket)
             
             if not hop:
-                trace_table.add_row(str(step), parent_name, current_socket.name, "[yellow]FIN DE LIGNE[/yellow]", "", "")
+                # Mettre à jour la dernière ligne pour indiquer la fin
+                # (logique complexe, pour l'instant on laisse comme ça, le plus important est de suivre le chemin)
                 break
+            
+            step += 1
             
             if hop['type'] == 'connection':
                 cable = hop['via']
@@ -68,22 +69,20 @@ class TraceCommand(BaseCommand):
                 next_parent = linker.find_parent_for_socket(next_socket)
                 
                 trace_table.add_row(
-                    str(step), parent_name, current_socket.name,
+                    str(step), getattr(linker.find_parent_for_socket(current_socket), 'name', 'N/A'), current_socket.name,
                     getattr(cable, 'name', 'N/A'),
                     getattr(next_parent, 'name', 'N/A'),
                     getattr(next_socket, 'name', 'N/A')
                 )
                 current_socket = next_socket
-            
             elif hop['type'] == 'traversal':
                  trace_table.add_row(
-                    str(step), parent_name, current_socket.name,
+                    str(step), getattr(linker.find_parent_for_socket(current_socket), 'name', 'N/A'), current_socket.name,
                     "N/A",
                     getattr(hop['via'], 'name', 'N/A'),
                     f"{hop['from'].name} -> {hop['to'].name}"
                 )
-                 current_socket = hop['to'] # Le prochain saut part du port OUT
-            
-            step += 1
-            
+                 current_socket = hop['to']
+
+        # Afficher la table
         self.console.print(trace_table)

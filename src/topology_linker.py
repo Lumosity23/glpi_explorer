@@ -83,20 +83,49 @@ class TopologyLinker:
         if not connection:
             return None # Fin de ligne
 
-        next_socket = connection['other_socket']
-        next_parent = self.find_parent_for_socket(next_socket)
+        next_socket_initial = connection['other_socket']
+        next_parent = self.find_parent_for_socket(next_socket_initial)
 
         # Si on arrive sur un passif, on le "traverse"
         if next_parent and getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment':
-            if " IN" in next_socket.name.upper():
-                out_port_name = next_socket.name.upper().replace(" IN", " OUT")
+            if " IN" in next_socket_initial.name.upper():
+                out_port_name = next_socket_initial.name.upper().replace(" IN", " OUT")
                 # Trouver le port OUT sur le même appareil
                 sockets_of_passive = self.find_sockets_for_item(next_parent)
                 out_socket = next((s for s in sockets_of_passive if s.name.upper() == out_port_name), None)
                 
                 if out_socket:
                     # On a traversé, le prochain hop part du port OUT
-                    return {'type': 'traversal', 'from': next_socket, 'to': out_socket, 'via': next_parent}
-                
-        # Dans tous les autres cas, le prochain hop est simplement la connexion physique
-        return {'type': 'connection', 'socket': next_socket, 'via': connection['via_cable']}
+                    return {'type': 'traversal', 'from': next_socket_initial, 'to': out_socket, 'via': next_parent}
+        
+        # Est-ce qu'on a atterri sur un Hub ?
+        # On l'identifie par son itemtype et le préfixe "HB" dans son nom.
+        if next_parent and getattr(next_parent, 'itemtype', None) == 'NetworkEquipment' and getattr(next_parent, 'name', '').upper().startswith('HB'):
+            
+            # Trouver tous les sockets de ce hub
+            sockets_of_hub = self.find_sockets_for_item(next_parent)
+            if not sockets_of_hub: return next_socket_initial # Sécurité
+
+            # Trouver le port OUT (celui avec le plus grand numéro de port)
+            out_socket = None
+            max_port_num = -1
+            for s in sockets_of_hub:
+                # Extraire le numéro du nom du port, ex: "HB eth port 5 OUT" -> 5
+                try:
+                    port_num = int(''.join(filter(str.isdigit, s.name)))
+                    if port_num > max_port_num:
+                        max_port_num = port_num
+                        out_socket = s
+                except ValueError:
+                    continue
+
+            # Si on est arrivé sur un port IN et qu'on a trouvé un port OUT
+            if " IN" in next_socket_initial.name.upper() and out_socket:
+                return {'type': 'traversal', 'from': next_socket_initial, 'to': out_socket, 'via': next_parent}
+            
+            # Si on est arrivé sur le port OUT, la trace s'arrête de ce côté
+            if next_socket_initial == out_socket:
+                return None
+        
+        # Dans tous les autres cas, on retourne la connexion physique
+        return {'type': 'connection', 'socket': next_socket_initial, 'via': connection['via_cable']}
