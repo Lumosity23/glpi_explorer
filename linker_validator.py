@@ -38,7 +38,7 @@ def main():
 
     hop = linker.get_next_hop(start_socket)
 
-    console.print("\n[bold yellow]--- Résultat de get_next_hop() ---")
+    console.print("\n[bold yellow]--- Résultat de get_next_hop() ---[/bold yellow]")
     if not hop:
         console.print("  Résultat : None")
     else:
@@ -46,7 +46,7 @@ def main():
         if hop['type'] == 'connection':
             console.print(f"  Via Câble    : {hop['via_cable'].name}")
             console.print(f"  Vers Socket  : {hop['next_socket'].name}")
-        elif hop['type'] == 'traversal']:
+        elif hop['type'] == 'traversal':
             console.print(f"  Via Équipement : {hop['via_device'].name}")
             console.print(f"  De Socket      : {hop['from_socket'].name}")
             console.print(f"  À Socket       : {hop['to_socket'].name}")

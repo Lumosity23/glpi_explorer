@@ -45,8 +45,9 @@ class TopologyLinker:
         
         return None
 
+
     def find_sockets_for_item(self, item_obj):
-        # ... (cette méthode est correcte) ...
+        # ... (code existant) ...
         item_id = getattr(item_obj, 'id', None)
         item_name = getattr(item_obj, 'name', '').lower()
         if not (item_id or item_name): return []
@@ -59,7 +60,7 @@ class TopologyLinker:
         return found_sockets
 
     def find_connection_for_socket(self, start_socket):
-        # ... (cette méthode est correcte) ...
+        # ... (code existant) ...
         start_socket_id = getattr(start_socket, 'id', None)
         if not start_socket_id: return None
         for cable in self.cache.cables.values():
@@ -70,81 +71,53 @@ class TopologyLinker:
                 if other_socket:
                     return {'via_cable': cable, 'other_socket': other_socket}
         return None
-
+        
     def _get_hub_out_socket(self, hub_equip):
-        """Trouve le port OUT d'un hub (nommé 'OUT' ou numéro le plus élevé)."""
+        # ... (code existant) ...
         sockets_on_hub = self.find_sockets_for_item(hub_equip)
         if not sockets_on_hub: return None
-        
         out_socket = None
         max_num = -1
-
-        # Priorité 1: Chercher un port nommé "OUT"
         for s in sockets_on_hub:
-            if "OUT" in s.name.upper():
-                return s
-
-        # Priorité 2: Chercher le port avec le numéro le plus élevé
-        for s in sockets_on_hub:
+            if "OUT" in s.name.upper(): return s
             try:
-                # Extrait le dernier nombre trouvé dans le nom du port
-                numbers = [int(part) for part in s.name.replace("-", " ").split() if part.isdigit()]
+                numbers = [int(part) for part in s.name.split() if part.isdigit()]
                 if not numbers: continue
                 port_num = numbers[-1]
                 if port_num > max_num:
                     max_num = port_num
                     out_socket = s
-            except (ValueError, IndexError):
-                continue
+            except (ValueError, IndexError): continue
         return out_socket
 
     def _get_passive_out_socket(self, passive_equip, in_socket):
-        """Trouve le port OUT correspondant à un port IN sur un passif."""
-        # Logique simple basée sur le remplacement de "IN" par "OUT"
-        if "IN" not in in_socket.name.upper(): return None
-        
-        # Gère des variations comme "Port 1 IN" -> "Port 1 OUT"
-        # ou "IN 1" -> "OUT 1"
-        out_name = in_socket.name.upper().replace("IN", "OUT")
-        
+        # ... (code existant) ...
+        if " IN" not in in_socket.name.upper(): return None
+        out_name = in_socket.name.upper().replace(" IN", " OUT")
         sockets_on_passive = self.find_sockets_for_item(passive_equip)
         return next((s for s in sockets_on_passive if s.name.upper() == out_name), None)
 
     def get_next_hop(self, current_socket):
         """Calcule le prochain saut logique à partir d'un socket."""
-        
-        # --- ÉTAPE 1: D'abord, regarder si on est sur un port qui doit être traversé ---
         parent = self.find_parent_for_socket(current_socket)
-        if parent:
-            # CAS A: Traversée d'équipement passif (on part d'un port OUT)
-            if getattr(parent, 'itemtype', None) == 'PassiveDCEquipment' and " OUT" in current_socket.name.upper():
-                pass # On ne traverse pas, on cherche le câble connecté
-            
-            # CAS B: Traversée de Hub (on part d'un port IN)
-            elif getattr(parent, 'itemtype', None) == 'NetworkEquipment' and getattr(parent, 'name', '').upper().startswith('HB'):
-                # Si on est sur un port IN, on doit sauter vers le port OUT
-                out_socket = self._get_hub_out_socket(parent)
-                if out_socket and current_socket.id != out_socket.id:
-                    return {'type': 'traversal', 'from_socket': current_socket, 'to_socket': out_socket, 'via_device': parent}
+        if not parent:
+            return {'type': 'end', 'reason': 'Parent du socket actuel introuvable'}
 
-        # --- ÉTAPE 2: Si pas de traversée, chercher une connexion physique via un câble ---
-        connection = self.find_connection_for_socket(current_socket)
-        if not connection:
-            return {'type': 'end', 'reason': 'FIN DE LIGNE'}
-            
-        next_socket = connection['other_socket']
-        cable = connection['via_cable']
-        next_parent = self.find_parent_for_socket(next_socket)
-
-        if not next_parent:
-             return {'type': 'end', 'reason': 'Parent du socket suivant introuvable'}
-
-        # --- ÉTAPE 3: Décider si le *prochain* hop est une traversée ---
-        # Si on arrive sur un passif via un port IN, c'est une traversée
-        if getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment' and " IN" in next_socket.name.upper():
-            out_socket = self._get_passive_out_socket(next_parent, next_socket)
+        # CAS A: Traversée d'équipement passif
+        if getattr(parent, 'itemtype', None) == 'PassiveDCEquipment' and " IN" in current_socket.name.upper():
+            out_socket = self._get_passive_out_socket(parent, current_socket)
             if out_socket:
-                return {'type': 'traversal_entry', 'entry_socket': next_socket, 'exit_socket': out_socket, 'via_device': next_parent, 'via_cable': cable}
+                return {'type': 'traversal', 'from_socket': current_socket, 'to_socket': out_socket, 'via_device': parent}
+        
+        # CAS B: Traversée de Hub
+        if getattr(parent, 'itemtype', None) == 'NetworkEquipment' and getattr(parent, 'name', '').upper().startswith('HB') and " IN" in current_socket.name.upper():
+            out_socket = self._get_hub_out_socket(parent)
+            if out_socket and current_socket.id != out_socket.id:
+                return {'type': 'traversal', 'from_socket': current_socket, 'to_socket': out_socket, 'via_device': parent}
 
-        # --- ÉTAPE 4: Si rien de spécial, c'est une connexion standard ---
-        return {'type': 'connection', 'next_socket': next_socket, 'via_cable': cable}
+        # Si pas de traversée, chercher une connexion physique
+        connection = self.find_connection_for_socket(current_socket)
+        if connection:
+            return {'type': 'connection', 'next_socket': connection['other_socket'], 'via_cable': connection['via_cable']}
+            
+        return {'type': 'end', 'reason': 'FIN DE LIGNE'}

@@ -60,10 +60,10 @@ class TraceCommand(BaseCommand):
             elif hop and hop['type'] == 'traversal':
                 trace_table.add_row(
                     str(step), getattr(parent, 'name', 'N/A'), 
-                    f"[bold]{current_socket.name}[/bold] -> [bold]{hop['to'].name}[/bold]",
-                    f"([italic blue]Interne à {getattr(hop['via'], 'name', 'N/A')}[/italic blue])"
+                    f"[bold]{hop['from_socket'].name}[/bold] -> [bold]{hop['to_socket'].name}[/bold]",
+                    f"([italic blue]Interne à {getattr(hop['via_device'], 'name', 'N/A')}[/italic blue])"
                 )
-                current_socket = hop['to']
+                current_socket = hop['to_socket']
             
             else: # Fin de trace
                 reason = hop.get('reason', 'FIN') if hop else 'FIN'
