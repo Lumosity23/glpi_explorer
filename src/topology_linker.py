@@ -113,27 +113,38 @@ class TopologyLinker:
     def get_next_hop(self, current_socket):
         """Calcule le prochain saut logique à partir d'un socket."""
         
-        # 1. Tenter une traversée interne d'abord
+        # --- ÉTAPE 1: D'abord, regarder si on est sur un port qui doit être traversé ---
         parent = self.find_parent_for_socket(current_socket)
-        if not parent:
-            return {'type': 'end', 'reason': 'Parent du socket actuel introuvable'}
-
-        # CAS A: Équipement passif
-        if getattr(parent, 'itemtype', None) == 'PassiveDCEquipment':
-            if " IN" in current_socket.name.upper():
-                out_socket = self._get_passive_out_socket(parent, current_socket)
-                if out_socket:
-                    return {'type': 'traversal', 'from': current_socket, 'to': out_socket, 'via': parent}
-        
-        # CAS B: Hub
-        if getattr(parent, 'itemtype', None) == 'NetworkEquipment' and getattr(parent, 'name', '').upper().startswith('HB'):
-            out_socket = self._get_hub_out_socket(parent)
-            if out_socket and current_socket.id != out_socket.id:
-                return {'type': 'traversal', 'from': current_socket, 'to': out_socket, 'via': parent}
-
-        # 2. Si pas de traversée, chercher une connexion physique
-        connection = self.find_connection_for_socket(current_socket)
-        if connection:
-            return {'type': 'connection', 'next_socket': connection['other_socket'], 'via_cable': connection['via_cable']}
+        if parent:
+            # CAS A: Traversée d'équipement passif (on part d'un port OUT)
+            if getattr(parent, 'itemtype', None) == 'PassiveDCEquipment' and " OUT" in current_socket.name.upper():
+                pass # On ne traverse pas, on cherche le câble connecté
             
-        return {'type': 'end', 'reason': 'FIN DE LIGNE'}
+            # CAS B: Traversée de Hub (on part d'un port IN)
+            elif getattr(parent, 'itemtype', None) == 'NetworkEquipment' and getattr(parent, 'name', '').upper().startswith('HB'):
+                # Si on est sur un port IN, on doit sauter vers le port OUT
+                out_socket = self._get_hub_out_socket(parent)
+                if out_socket and current_socket.id != out_socket.id:
+                    return {'type': 'traversal', 'from_socket': current_socket, 'to_socket': out_socket, 'via_device': parent}
+
+        # --- ÉTAPE 2: Si pas de traversée, chercher une connexion physique via un câble ---
+        connection = self.find_connection_for_socket(current_socket)
+        if not connection:
+            return {'type': 'end', 'reason': 'FIN DE LIGNE'}
+            
+        next_socket = connection['other_socket']
+        cable = connection['via_cable']
+        next_parent = self.find_parent_for_socket(next_socket)
+
+        if not next_parent:
+             return {'type': 'end', 'reason': 'Parent du socket suivant introuvable'}
+
+        # --- ÉTAPE 3: Décider si le *prochain* hop est une traversée ---
+        # Si on arrive sur un passif via un port IN, c'est une traversée
+        if getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment' and " IN" in next_socket.name.upper():
+            out_socket = self._get_passive_out_socket(next_parent, next_socket)
+            if out_socket:
+                return {'type': 'traversal_entry', 'entry_socket': next_socket, 'exit_socket': out_socket, 'via_device': next_parent, 'via_cable': cable}
+
+        # --- ÉTAPE 4: Si rien de spécial, c'est une connexion standard ---
+        return {'type': 'connection', 'next_socket': next_socket, 'via_cable': cable}

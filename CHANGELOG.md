@@ -1,3 +1,13 @@
+## [MISSION 17.3] - 2025-07-20
+
+### Fixed
+- **fix(linker):** Correction de la logique de traversée des équipements
+  - Refonte de la méthode `get_next_hop` dans `TopologyLinker` pour gérer correctement la priorité des opérations (traversée interne vs. connexion physique).
+  - Correction de la logique de traversée pour les hubs et les équipements passifs.
+  - Amélioration du script `linker_validator.py` pour tester spécifiquement la sortie de `get_next_hop`.
+
+Ref: Mission 17.3
+
 ## [MISSION 17.2] - 2025-07-20
 
 ### feat(trace): Implémentation finale de la commande trace
@@ -32,7 +42,7 @@ Ref: Mission 16.2
 
 ### Changed
 - **feat(trace):** Finalisation et polissage de la commande trace
-  - Refonte complète de `get_next_hop` dans le TopologyLinker pour une gestion robuste et distincte des connexions physiques, des traversées de passifs et des hubs.
+  - Refonte complète de `get_next_hop` dans le TopologyLinker pour une gestion robuste et distincte des connexions physiques, les traversées de passifs et les hubs.
   - Correction de la logique de traversée des Hubs (IN -> OUT).
   - L'affichage de la commande `trace` a été entièrement revu pour être plus compact et lisible.
   - Les traversées d'équipements passifs s'affichent désormais sur une seule ligne.

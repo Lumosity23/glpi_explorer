@@ -13,10 +13,10 @@ console = Console()
 
 def main():
     if len(sys.argv) != 2:
-        console.print("[bold red]Usage: python linker_validator.py <ID_SOCKET>[/bold red]")
+        console.print("[bold red]Usage: python linker_validator.py <ID_SOCKET_DE_DEPART>[/bold red]")
         return
     
-    socket_id_to_test = int(sys.argv[1])
+    start_socket_id = int(sys.argv[1])
 
     # --- Chargement ---
     config = ConfigManager().load_config()
@@ -28,31 +28,34 @@ def main():
     console.print("[green]Cache chargé et Linker initialisé.[/green]\n")
     
     # --- Validation ---
-    console.print(Panel(f"Validation pour le Socket ID : [bold cyan]{socket_id_to_test}[/bold cyan]"))
+    console.print(Panel(f"Validation de la logique 'get_next_hop' depuis le Socket ID: [bold cyan]{start_socket_id}[/bold cyan]"))
     
-    # Test 1: Trouver le socket
-    socket_obj = cache.sockets.get(socket_id_to_test)
-    if not socket_obj:
-        console.print(f"[bold red]ÉCHEC :[/bold red] Socket {socket_id_to_test} non trouvé dans le cache.")
+    start_socket = cache.sockets.get(start_socket_id)
+    if not start_socket:
+        console.print(f"[bold red]ERREUR :[/bold red] Socket {start_socket_id} non trouvé.")
         return
-    console.print(f"[green]SUCCÈS :[/green] Socket trouvé : '{socket_obj.name}'")
+    console.print(f"Socket de départ : '{start_socket.name}' sur '{getattr(linker.find_parent_for_socket(start_socket), 'name', 'Parent Inconnu')}'")
 
-    # Test 2: Trouver le parent
-    parent = linker.find_parent_for_socket(socket_obj)
-    if not parent:
-        console.print(f"[bold red]ÉCHEC :[/bold red] Parent pour le socket '{socket_obj.name}' non trouvé.")
-        console.print(f"   (items_id du socket: {getattr(socket_obj, 'items_id', 'N/A')})")
-        return
-    console.print(f"[green]SUCCÈS :[/green] Parent trouvé : '{parent.name}' (Type: {parent.itemtype})")
+    hop = linker.get_next_hop(start_socket)
 
-    # Test 3: Trouver la connexion
-    connection = linker.find_connection_for_socket(socket_obj)
-    if not connection:
-        console.print(f"[yellow]INFO :[/yellow] Pas de connexion trouvée pour ce socket (Fin de ligne).")
+    console.print("\n[bold yellow]--- Résultat de get_next_hop() ---")
+    if not hop:
+        console.print("  Résultat : None")
     else:
-        other_socket = connection['other_socket']
-        other_parent = linker.find_parent_for_socket(other_socket)
-        console.print(f"[green]SUCCÈS :[/green] Connecté via '{connection['via_cable'].name}' à '{other_socket.name}' sur '{getattr(other_parent, 'name', 'Parent Inconnu')}'")
+        console.print(f"  Type de saut : [bold green]{hop.get('type')}[/bold green]")
+        if hop['type'] == 'connection':
+            console.print(f"  Via Câble    : {hop['via_cable'].name}")
+            console.print(f"  Vers Socket  : {hop['next_socket'].name}")
+        elif hop['type'] == 'traversal']:
+            console.print(f"  Via Équipement : {hop['via_device'].name}")
+            console.print(f"  De Socket      : {hop['from_socket'].name}")
+            console.print(f"  À Socket       : {hop['to_socket'].name}")
+        elif hop['type'] == 'traversal_entry':
+            console.print(f"  Via Câble      : {hop['via_cable'].name}")
+            console.print(f"  Arrivée sur    : {hop['entry_socket'].name} (sur {hop['via_device'].name})")
+            console.print(f"  Sortie par     : {hop['exit_socket'].name}")
+        elif hop['type'] == 'end':
+            console.print(f"  Raison       : {hop.get('reason')}")
 
     api_client.close_session()
 
