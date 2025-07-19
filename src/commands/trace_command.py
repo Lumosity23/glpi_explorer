@@ -1,4 +1,4 @@
-        # src/commands/trace_command.py
+# src/commands/trace_command.py
 from .base_command import BaseCommand
 from ..topology_linker import TopologyLinker
 from rich.panel import Panel
@@ -20,76 +20,56 @@ class TraceCommand(BaseCommand):
             return
         
         linker = TopologyLinker(self.cache)
-        start_item = linker.find_item(self.TYPE_ALIASES.get(user_type_alias.lower()), item_name)
+        itemtype = self.TYPE_ALIASES.get(user_type_alias.lower())
+        start_item = linker.find_item(itemtype, item_name)
         if not start_item:
-            self.console.print(Panel(f"Objet '{item_name}' non trouvé dans le cache.", title="[red]Erreur[/red]"))
+            self.console.print(Panel(f"Objet '{item_name}' non trouvé.", title="[red]Erreur[/red]"))
             return
 
         start_sockets = linker.find_sockets_for_item(start_item)
         if not start_sockets:
-            self.console.print(Panel(f"Aucun socket physique trouvé pour {start_item.name}.", border_style="yellow"))
+            self.console.print(Panel(f"Aucun socket trouvé pour {start_item.name}.", border_style="yellow"))
             return
 
-        # Pour l'instant, on prend le premier socket. Le choix interactif est pour plus tard.
         current_socket = start_sockets[0]
         
         trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
         trace_table.add_column("Étape", justify="right")
         trace_table.add_column("Équipement")
         trace_table.add_column("Port / Traversée")
-        trace_table.add_column("Via (Câble)")
+        trace_table.add_column("Via")
         
         visited_sockets = set()
         step = 1
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
-            
             parent = linker.find_parent_for_socket(current_socket)
+
+            hop = linker.get_next_hop(current_socket)
             
-            # --- Traitement du hop actuel ---
-            connection = linker.find_connection_for_socket(current_socket)
-            if not connection:
-                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, "[yellow]FIN DE LIGNE[/yellow]")
+            if hop and hop['type'] == 'connection':
+                next_socket = hop['next_socket']
+                next_parent = linker.find_parent_for_socket(next_socket)
+                trace_table.add_row(
+                    str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
+                    f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
+                )
+                current_socket = next_socket
+            
+            elif hop and hop['type'] == 'traversal':
+                trace_table.add_row(
+                    str(step), getattr(parent, 'name', 'N/A'), 
+                    f"[bold]{current_socket.name}[/bold] -> [bold]{hop['to'].name}[/bold]",
+                    f"([italic blue]Interne à {getattr(hop['via'], 'name', 'N/A')}[/italic blue])"
+                )
+                current_socket = hop['to']
+            
+            else: # Fin de trace
+                reason = hop.get('reason', 'FIN') if hop else 'FIN'
+                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{reason}[/yellow]")
                 break
             
-            cable = connection['via_cable']
-            next_socket = connection['other_socket']
-            
-            # --- Logique de traversée / concentration ---
-            next_parent = linker.find_parent_for_socket(next_socket)
-            
-            # Cas A: Équipement passif
-            if next_parent and getattr(next_parent, 'itemtype', None) == 'PassiveDCEquipment' and " IN" in next_socket.name.upper():
-                out_socket = linker._get_passive_out_socket(next_parent, next_socket)
-                if out_socket:
-                    trace_table.add_row(
-                        str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
-                        f"[green]{getattr(cable, 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan] | [bold]{next_socket.name} -> {out_socket.name}[/bold]"
-                    )
-                    current_socket = out_socket
-                    step += 1
-                    continue
-            
-            # Cas B: Hub
-            if next_parent and getattr(next_parent, 'itemtype', None) == 'NetworkEquipment' and getattr(next_parent, 'name', '').upper().startswith('HB'):
-                out_socket = linker._get_hub_out_socket(next_parent)
-                # Si on arrive sur un port IN, on saute au OUT
-                if out_socket and next_socket != out_socket:
-                    trace_table.add_row(
-                        str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
-                        f"[green]{getattr(cable, 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan] | [bold]{next_socket.name} -> {out_socket.name}[/bold]"
-                    )
-                    current_socket = out_socket
-                    step += 1
-                    continue
-
-            # Cas C: Connexion normale
-            trace_table.add_row(
-                str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
-                f"[green]{getattr(cable, 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan] | [bold]{next_socket.name}[/bold]"
-            )
-            current_socket = next_socket
             step += 1
         
         self.console.print(trace_table)

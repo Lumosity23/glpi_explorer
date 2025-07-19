@@ -1,3 +1,13 @@
+## [MISSION 17.2] - 2025-07-20
+
+### feat(trace): Implémentation finale de la commande trace
+
+- Le `TopologyLinker` contient maintenant une méthode `get_next_hop` robuste qui gère les connexions physiques, les traversées de passifs et la concentration des hubs.
+- La commande `trace` a été entièrement réécrite pour utiliser ce linker, avec un affichage clair et concis.
+- La commande `trace` est maintenant considérée comme fonctionnellement complète et stable.
+
+Ref: Mission 17.2
+
 ## [MISSION 17.1] - 2025-07-20
 
 ### Fixed
@@ -1302,7 +1312,6 @@ Correction et fiabilisation de la connexion API et du processus de configuration
 ### Objectif de la Phase
 
 Remplacer la configuration par fichier .env par un processus de configuration interactif et persistant au premier lancement de l'application.
-
 ### Modifications Apportées
 
 - **`requirements.txt`**: Suppression de `python-dotenv`.
