@@ -46,28 +46,27 @@ class TraceCommand(BaseCommand):
             visited_sockets.add(current_socket.id)
             parent = linker.find_parent_for_socket(current_socket)
 
-            # On affiche la ligne pour le point actuel
-            trace_table.add_row(
-                str(step),
-                getattr(parent, 'name', 'N/A'),
-                current_socket.name,
-                "..." # Placeholder
-            )
-
             hop = linker.get_next_hop(current_socket)
             
             if not hop or hop['type'] == 'end':
-                trace_table.rows[-1].cells[3] = "[bold yellow]DESTINATION FINALE[/bold yellow]"
+                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, "[bold yellow]DESTINATION FINALE[/bold yellow]")
                 break
             
-            if hop['type'] == 'connection':
+            elif hop['type'] == 'connection':
                 next_socket = hop['next_socket']
                 next_parent = linker.find_parent_for_socket(next_socket)
-                trace_table.rows[-1].cells[3] = f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
+                trace_table.add_row(
+                    str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
+                    f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
+                )
                 current_socket = next_socket
             
             elif hop['type'] == 'traversal':
-                trace_table.rows[-1].cells[3] = f"([italic blue]Interne à {getattr(hop['via_device'], 'name', 'N/A')}[/italic blue])"
+                trace_table.add_row(
+                    str(step), getattr(parent, 'name', 'N/A'), 
+                    f"[bold]{hop['from_socket'].name}[/bold] -> [bold]{hop['to_socket'].name}[/bold]",
+                    f"([italic blue]Interne à {getattr(hop['via_device'], 'name', 'N/A')}[/italic blue])"
+                )
                 current_socket = hop['to_socket']
             
             step += 1
