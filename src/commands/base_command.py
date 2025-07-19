@@ -11,28 +11,30 @@ from src.api_client import ApiClient
 from src.config_manager import ConfigManager
 
 class BaseCommand:
+    TYPE_ALIASES = {
+        'computer': 'Computer', 'pc': 'Computer',
+        'monitor': 'Monitor', 'screen': 'Monitor',
+        'networkequipment': 'NetworkEquipment', 'network': 'NetworkEquipment',
+        'switch': 'NetworkEquipment', 'sw': 'NetworkEquipment',
+        'hub': 'NetworkEquipment', 'hb': 'NetworkEquipment',
+        'peripheral': 'Peripheral',
+        'phone': 'Phone',
+        'printer': 'Printer',
+        'software': 'Software',
+        'ticket': 'Ticket',
+        'user': 'User',
+        'patchpanel': 'PassiveDCEquipment', 'patch': 'PassiveDCEquipment', 'pp': 'PassiveDCEquipment',
+        'walloutlet': 'PassiveDCEquipment', 'wo': 'PassiveDCEquipment',
+        'cable': 'Cable', 'cb': 'Cable',
+        'socket': 'Glpi\\Socket', 'so': 'Glpi\\Socket',
+        'networkport': 'NetworkPort', 'np': 'NetworkPort',
+    }
+
     def __init__(self, api_client, console, cache):
         self.api_client = api_client
         self.console = console
         self.cache = cache
-        self.TYPE_ALIASES = {
-            'computer': 'Computer', 'pc': 'Computer',
-            'monitor': 'Monitor', 'screen': 'Monitor',
-            'networkequipment': 'NetworkEquipment', 'network': 'NetworkEquipment',
-            'switch': 'NetworkEquipment', 'sw': 'NetworkEquipment',
-            'hub': 'NetworkEquipment', 'hb': 'NetworkEquipment',
-            'peripheral': 'Peripheral',
-            'phone': 'Phone',
-            'printer': 'Printer',
-            'software': 'Software',
-            'ticket': 'Ticket',
-            'user': 'User',
-            'patchpanel': 'PassiveDCEquipment', 'patch': 'PassiveDCEquipment', 'pp': 'PassiveDCEquipment',
-            'walloutlet': 'PassiveDCEquipment', 'wo': 'PassiveDCEquipment',
-            'cable': 'Cable', 'cb': 'Cable',
-            'socket': 'Glpi\\Socket', 'so': 'Glpi\\Socket',
-            'networkport': 'NetworkPort', 'np': 'NetworkPort',
-        }
+
 
     def get_target_dict(self, glpi_itemtype: str) -> dict:
         if glpi_itemtype == 'Computer': return self.cache.computers

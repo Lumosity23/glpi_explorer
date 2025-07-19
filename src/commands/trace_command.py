@@ -1,4 +1,4 @@
-# src/commands/trace_command.py
+        # src/commands/trace_command.py
 from .base_command import BaseCommand
 from ..topology_linker import TopologyLinker
 from rich.panel import Panel

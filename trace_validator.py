@@ -10,6 +10,7 @@ from api_client import ApiClient
 from config_manager import ConfigManager
 from topology_cache import TopologyCache
 from topology_linker import TopologyLinker
+from commands.base_command import BaseCommand
 
 console = Console()
 
@@ -29,8 +30,17 @@ def main():
     linker = TopologyLinker(cache)
     console.print("[green]Cache chargé et Linker initialisé.[/green]\n")
 
+    # --- DEBUG: Afficher tous les équipements et sockets ---
+    console.print(Panel("[bold yellow]--- ÉQUIPEMENTS DANS LE CACHE ---[/bold yellow]"))
+    all_equip = {**cache.computers, **cache.network_equipments, **cache.passive_devices}
+    for eid, equip in all_equip.items():
+        print(f"  - [ID: {eid}] {getattr(equip, 'name', 'N/A')} (Type: {getattr(equip, 'itemtype', 'N/A')})")
+    console.print(Panel("[bold yellow]--- SOCKETS DANS LE CACHE ---[/bold yellow]"))
+    for sid, sock in cache.sockets.items():
+        print(f"  - [ID: {sid}] {getattr(sock, 'name', 'N/A')} (Parent ID: {getattr(sock, 'items_id', 'N/A')}, Parent Type: {getattr(sock, 'itemtype', 'N/A')})")
+
     # --- ÉTAPE 2: Démarrage de la trace ---
-    itemtype = linker.cache.TYPE_ALIASES.get(user_type_alias.lower()) # Correction
+    itemtype = BaseCommand.TYPE_ALIASES.get(user_type_alias.lower())
     start_item = linker.find_item(itemtype, item_name)
     if not start_item:
         console.print(f"[red]Objet de départ '{item_name}' non trouvé.[/red]")
@@ -59,6 +69,7 @@ def main():
         print("\n" + "="*50)
         print(f"[bold]ÉTAPE {len(trace_steps) + 1}[/bold]")
         print(f"  - Socket Actuel : {current_socket.name} (ID: {current_socket.id})")
+        print(f"  - Détails du Socket : {current_socket}")
         print(f"  - Parent Trouvé : {getattr(parent, 'name', 'AUCUN')}")
         print(f"  - Résultat de get_next_hop() : {hop}")
         
