@@ -1,3 +1,13 @@
+## [MISSION 17.1] - 2025-07-20
+
+### Fixed
+- **fix(linker):** Correction de la recherche de parent et ajout d'un banc de test
+  - Création de `linker_validator.py`, un script de test dédié pour valider la logique du TopologyLinker en isolation.
+  - Correction définitive de la méthode `find_parent_for_socket` pour qu'elle gère correctement les parents identifiés par un ID numérique ou par un nom textuel.
+  - Cette modification résout le bug persistant du "Parent Inconnu".
+
+Ref: Mission 17.1
+
 ## [MISSION 16.2] - 2025-07-18
 
 ### Added
@@ -24,7 +34,7 @@ Ref: Mission 15.6
 ## [MISSION 15.5] - 2025-07-18
 
 ### Changed
-- **feat(trace):** Finalisation de la commande trace
+- **feat(trace)::** Finalisation de la commande trace
   - Implémentation complète de la logique de traversée des Hubs (IN -> OUT) dans le TopologyLinker.
   - Simplification de l'affichage des traversées internes pour une meilleure lisibilité.
   - Correction de la logique de la boucle pour un affichage propre du premier et du dernier hop, et pour gérer les fins de trace.
