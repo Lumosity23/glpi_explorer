@@ -35,40 +35,46 @@ class TraceCommand(BaseCommand):
         
         trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
         trace_table.add_column("Étape", justify="right")
+        trace_table.add_column("Localisation")
         trace_table.add_column("Équipement")
         trace_table.add_column("Port / Traversée")
-        trace_table.add_column("Via")
         
         visited_sockets = set()
         step = 1
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
+            
             parent = linker.find_parent_for_socket(current_socket)
+            parent_name = getattr(parent, 'name', 'Parent Inconnu')
+            parent_location = getattr(parent, 'locations_id', 'N/A')
+            socket_name = getattr(current_socket, 'name', 'Socket Inconnu')
 
             hop = linker.get_next_hop(current_socket)
             
+            # Afficher la ligne pour le point de départ du "hop"
+            trace_table.add_row(str(step), parent_location, parent_name, socket_name)
+
             if not hop or hop['type'] == 'end':
-                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, "[bold yellow]DESTINATION FINALE[/bold yellow]")
+                trace_table.add_row("", "", "", f"[bold yellow]--> {hop.get('reason', 'FIN DE TRACE')}[/bold yellow]")
+                break
+
+            next_socket_for_loop_check = hop.get('to_socket') or hop.get('next_socket')
+            if next_socket_for_loop_check and next_socket_for_loop_check.id in visited_sockets:
+                trace_table.add_row("", "", "", "[bold red]--> BOUCLE DÉTECTÉE, FIN DE TRACE[/bold red]")
                 break
             
-            elif hop['type'] == 'connection':
-                next_socket = hop['next_socket']
-                next_parent = linker.find_parent_for_socket(next_socket)
-                trace_table.add_row(
-                    str(step), getattr(parent, 'name', 'N/A'), current_socket.name,
-                    f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
-                )
-                current_socket = next_socket
-            
+            if hop['type'] == 'connection':
+                current_socket = hop['next_socket']
             elif hop['type'] == 'traversal':
+                # Pour les traversées, on ajoute une ligne spéciale et on saute au port de sortie
+                device_name = getattr(hop['via_device'], 'name', 'N/A')
                 trace_table.add_row(
-                    str(step), getattr(parent, 'name', 'N/A'), 
-                    f"[bold]{hop['from_socket'].name}[/bold] -> [bold]{hop['to_socket'].name}[/bold]",
-                    f"([italic blue]Interne à {getattr(hop['via_device'], 'name', 'N/A')}[/italic blue])"
+                    "", "", f"  [italic]-> Traversée de {device_name}[/italic]",
+                    f"{hop['from_socket'].name} -> {hop['to_socket'].name}"
                 )
                 current_socket = hop['to_socket']
             
             step += 1
-        
+            
         self.console.print(trace_table)

@@ -1,3 +1,15 @@
+## [MISSION 17.7] - 2025-07-20
+
+### Fixed
+- **fix(trace):** Correction finale et définitive de la commande trace
+  - Remplacement complet de la logique d'exécution de `trace` par une version stable.
+  - Correction de la méthode `find_parent_for_socket` pour résoudre le bug "Parent Inconnu".
+  - L'affichage gère maintenant correctement les fins de ligne et les boucles.
+  - L'affichage des traversées d'équipements passifs et des hubs est clarifié et compacté.
+  - Ajout de la colonne "Localisation" pour chaque étape de la trace.
+
+Ref: Mission 17.7
+
 ## [MISSION 17.3] - 2025-07-20
 
 ### Fixed

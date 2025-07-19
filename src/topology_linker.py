@@ -30,19 +30,14 @@ class TopologyLinker:
         return None
 
     def find_parent_for_socket(self, socket_obj):
-        """Trouve l'équipement parent d'un socket. CORRECTION FINALE."""
+        """Trouve l'équipement parent d'un socket. VERSION BLINDÉE."""
         parent_id_or_name = getattr(socket_obj, 'items_id', None)
-        
-        # Cas 1: L'ID est un entier, on cherche par ID dans toutes les sources pour éviter les collisions
         if isinstance(parent_id_or_name, int):
-            return self.cache.computers.get(parent_id_or_name) or \
-                   self.cache.network_equipments.get(parent_id_or_name) or \
-                   self.cache.passive_devices.get(parent_id_or_name)
-        
-        # Cas 2: L'ID est un nom, on cherche par nom dans notre map corrigée
+            return self._all_equipment.get(parent_id_or_name)
         elif isinstance(parent_id_or_name, str):
-            return self._name_to_equip_map.get(parent_id_or_name.lower().strip())
-        
+            # NORMALISATION : enlever les espaces et mettre en minuscule
+            clean_name = parent_id_or_name.strip().lower()
+            return self._name_to_equip_map.get(clean_name)
         return None
 
 
