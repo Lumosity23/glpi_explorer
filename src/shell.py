@@ -1,4 +1,4 @@
-from rich.console import Console
+from rich.console import Console, Group
 from rich.panel import Panel
 from src.api_client import ApiClient
 from src.config_manager import ConfigManager
@@ -11,6 +11,7 @@ import os
 from pathlib import Path
 from rich.text import Text
 from rich.align import Align
+from rich.live import Live
 
 class GLPIExplorerShell:
     def __init__(self):
@@ -23,8 +24,7 @@ class GLPIExplorerShell:
         self.aliases = {}
         self.shared_state = {}
 
-    def _display_welcome_logo(self):
-        """Affiche le panneau de bienvenue avec le logo."""
+    def _get_logo_text(self):
         logo = """
          ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
         ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
@@ -33,13 +33,7 @@ class GLPIExplorerShell:
         ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║  ██║███████╗██║  ██║
          ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
         """
-        logo_text = Text(logo, justify="center", style="bold blue")
-        panel = Panel(
-            Align.center(logo_text),
-            title="Bienvenue dans GLPI Explorer",
-            subtitle="v0.1"
-        )
-        self.console.print(panel)
+        return Text(logo, justify="center", style="bold blue")
 
     def _load_commands(self):
         self.commands = {}
@@ -94,20 +88,29 @@ class GLPIExplorerShell:
 
         cache_path = Path.home() / ".cache" / "glpi-explorer" / "topology.pkl"
 
-        self.console.print("[cyan]Vérification du cache local...[/cyan]")
-        self.cache = TopologyCache.load_from_disk(cache_path)
+        logo_text = self._get_logo_text()
+        status_text = Text("", justify="center")
+        display_group = Group(logo_text, Align.center(status_text))
+        panel = Panel(display_group, title="Bienvenue dans GLPI Explorer", subtitle="v0.1")
 
-        if self.cache:
-            self.console.print("[green]Cache local chargé avec succès.[/green]")
-            self.cache.api_client = self.api_client
-            self.cache.console = self.console
-        else:
-            self.console.print("[yellow]Aucun cache local valide trouvé. Lancement du chargement initial depuis l'API...[/yellow]")
-            self.cache = TopologyCache(self.api_client, cache_file=cache_path)
-            self.cache.load_from_api(self.console)
-            self.cache.save_to_disk()
+        with Live(panel, console=self.console, transient=True) as live:
+            status_text.plain = "[cyan]Vérification du cache local...[/cyan]"
+            live.update(panel)
+            self.cache = TopologyCache.load_from_disk(cache_path)
 
-        self._display_welcome_logo()
+            if self.cache:
+                status_text.plain = "[green]Cache local chargé avec succès.[/green]"
+                live.update(panel)
+                self.cache.api_client = self.api_client
+                self.cache.console = self.console
+            else:
+                status_text.plain = "[yellow]Aucun cache local valide trouvé. Lancement du chargement...[/yellow]"
+                live.update(panel)
+                self.cache = TopologyCache(self.api_client, cache_file=cache_path)
+                self.cache.load_from_api(self.console, live, panel, status_text)
+                self.cache.save_to_disk()
+
+        self.console.print(panel)
         self._load_commands()
 
         while True:

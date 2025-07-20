@@ -38,19 +38,8 @@ class TopologyCache:
         self.api_client = None
         self.console = None
 
-    def load_from_api(self, console):
+    def load_from_api(self, console, live, panel, status_text):
         self.console = console
-
-        logo = """
-         ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
-        ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
-        ██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝ ██████╔╝██║     ██║   ██║██████╔╝█████╗  ██████╔╝
-        ██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗ ██╔═══╝ ██║     ██║   ██║██╔══██╗██╔══╝  ██╔══██╗
-        ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║  ██║███████╗██║  ██║
-         ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
-        """
-
-        logo_text = Text(logo, justify="center", style="bold blue")
 
         progress_bar = Progress(
             SpinnerColumn(),
@@ -59,21 +48,30 @@ class TopologyCache:
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         )
         
-        loading_group = Group(logo_text, progress_bar)
-        panel = Panel(Align.center(loading_group))
+        main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
 
-        with Live(panel, console=console, redirect_stderr=False) as live:
-            main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
+        # Mettre à jour le contenu du Live pour inclure la barre de progression
+        logo_text = panel.renderable.renderables[0]
+        display_group = Group(logo_text, Align.center(status_text), progress_bar)
+        panel.renderable = display_group
+        live.update(panel)
 
-            self._load_computers(progress_bar, main_task)
-            self._load_network_equipments(progress_bar, main_task)
-            self._load_passive_devices(progress_bar, main_task)
-            self._load_cables(progress_bar, main_task)
-            self._load_sockets(progress_bar, main_task)
-            self._load_network_ports(progress_bar, main_task)
-            self._build_topology_graph()
+        self._load_computers(progress_bar, main_task, live, panel, status_text)
+        self._load_network_equipments(progress_bar, main_task, live, panel, status_text)
+        self._load_passive_devices(progress_bar, main_task, live, panel, status_text)
+        self._load_cables(progress_bar, main_task, live, panel, status_text)
+        self._load_sockets(progress_bar, main_task, live, panel, status_text)
+        self._load_network_ports(progress_bar, main_task, live, panel, status_text)
+        
+        status_text.plain = "[cyan]Construction du graphe de topologie...[/cyan]"
+        live.update(panel)
+        self._build_topology_graph()
 
-            
+        status_text.plain = "[green]Chargement terminé avec succès.[/green]"
+        # Retirer la barre de progression à la fin
+        display_group = Group(logo_text, Align.center(status_text))
+        panel.renderable = display_group
+        live.update(panel)
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide
@@ -162,13 +160,14 @@ class TopologyCache:
         
         return flattened_ports
 
-    def _load_computers(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Computers...")
+    def _load_computers(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des ordinateurs...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Ordinateurs", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -182,13 +181,14 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_network_equipments(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Network Equipments...")
+    def _load_network_equipments(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des équipements réseau...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Équipements réseau", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -202,13 +202,14 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_passive_devices(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Passive Devices...")
+    def _load_passive_devices(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des équipements passifs...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Équipements passifs", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -220,13 +221,14 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_cables(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Cables...")
+    def _load_cables(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des câbles...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Câbles", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -238,13 +240,14 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_sockets(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Sockets...")
+    def _load_sockets(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des sockets...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Sockets", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -256,13 +259,14 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_network_ports(self, progress, main_task_id):
-        progress.update(main_task_id, description="[cyan]Network Ports...")
+    def _load_network_ports(self, progress, main_task_id, live, panel, status_text):
+        status_text.plain = "[cyan]Chargement des ports réseau...[/cyan]"
+        live.update(panel)
         id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
         if not id_list:
             progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Chargement des détails...", total=len(id_list))
+        sub_task = progress.add_task("Ports réseau", total=len(id_list))
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
