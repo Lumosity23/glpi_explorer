@@ -22,7 +22,7 @@ class GLPIExplorerShell:
         self.prompt_session = PromptSession(history=self.history)
         self.commands = {}
         self.aliases = {}
-        self.shared_state = {}
+        self.shared_state = {'shell': self}
 
     def _get_logo_text(self):
         logo = """
@@ -72,6 +72,22 @@ class GLPIExplorerShell:
         required_keys = ["url", "app_token", "user_token"]
         return all(key in config and config[key] for key in required_keys)
 
+    def perform_full_refresh(self):
+        """Effectue un rechargement complet du cache depuis l'API avec l'UI."""
+        logo_text = self._get_logo_text()
+        status_text = Text("", justify="center")
+        display_group = Group(logo_text, Align.center(status_text))
+        panel = Panel(display_group, title="Bienvenue dans GLPI Explorer", subtitle="v0.1")
+
+        with Live(panel, console=self.console, transient=True) as live:
+            status_text = Text.from_markup("[yellow]Lancement du rafraîchissement...[/yellow]", justify="center")
+            display_group.renderables[1] = Align.center(status_text)
+            live.update(panel)
+            
+            self.cache = TopologyCache(self.api_client, self.cache.cache_file if self.cache else None)
+            self.cache.load_from_api(self.console, live, panel, display_group)
+            self.cache.save_to_disk()
+
     def run(self):
         config_manager = ConfigManager()
         config = config_manager.load_config()
@@ -106,12 +122,7 @@ class GLPIExplorerShell:
                 self.cache.api_client = self.api_client
                 self.cache.console = self.console
             else:
-                status_text = Text.from_markup("[yellow]Aucun cache local valide trouvé. Lancement du chargement...[/yellow]", justify="center")
-                display_group.renderables[1] = Align.center(status_text)
-                live.update(panel)
-                self.cache = TopologyCache(self.api_client, cache_file=cache_path)
-                self.cache.load_from_api(self.console, live, panel, display_group)
-                self.cache.save_to_disk()
+                self.perform_full_refresh()
 
         self.console.print(panel)
         self._load_commands()
