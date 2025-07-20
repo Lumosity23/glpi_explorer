@@ -261,7 +261,7 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def save_to_disk():
+    def save_to_disk(self):
         """Sauvegarde l'état actuel du cache dans un fichier pickle."""
         try:
             cache_dir = os.path.dirname(self.cache_file)
