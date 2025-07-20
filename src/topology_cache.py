@@ -19,6 +19,24 @@ class TopologyCache:
         self.sockets = {}
         self.network_ports = {}
         self.equipment_to_sockets_map = {}
+        self.console = None
+
+    def __getstate__(self):
+        """Exclut les attributs non sérialisables de la sauvegarde pickle."""
+        state = self.__dict__.copy()
+        # Retirer les entrées non sérialisables.
+        if 'api_client' in state:
+            del state['api_client']
+        if 'console' in state:
+            del state['console']
+        return state
+
+    def __setstate__(self, state):
+        """Restaure l'instance après la désérialisation."""
+        self.__dict__.update(state)
+        # Rajouter les attributs non sérialisés.
+        self.api_client = None
+        self.console = None
 
     def load_from_api(self, console):
         self.console = console
