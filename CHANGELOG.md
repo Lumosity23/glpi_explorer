@@ -1,3 +1,13 @@
+## [MISSION 17.8] - 2025-07-20
+
+### style(trace): Amélioration visuelle de l'affichage des traversées
+
+- Les lignes indiquant une traversée d'équipement interne (passifs, hubs) dans la sortie de la commande `trace` sont maintenant stylisées.
+- Utilisation d'un style 'dim' pour les distinguer visuellement des sauts de connexion physique.
+- Cette modification améliore significativement la lisibilité de la trace.
+
+Ref: Mission 17.8
+
 ## [MISSION 17.7] - 2025-07-20
 
 ### Fixed

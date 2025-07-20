@@ -67,11 +67,18 @@ class TraceCommand(BaseCommand):
             if hop['type'] == 'connection':
                 current_socket = hop['next_socket']
             elif hop['type'] == 'traversal':
-                # Pour les traversées, on ajoute une ligne spéciale et on saute au port de sortie
                 device_name = getattr(hop['via_device'], 'name', 'N/A')
+                
+                # Le style à appliquer à toute la ligne
+                line_style = "dim" # Effet grisé, discret mais visible
+                
+                # Créez la ligne avec le style
                 trace_table.add_row(
-                    "", "", f"  [italic]-> Traversée de {device_name}[/italic]",
-                    f"{hop['from_socket'].name} -> {hop['to_socket'].name}"
+                    "", # Pas de numéro d'étape
+                    f"  -> Traversée de {device_name}",
+                    f"{hop['from_socket'].name} -> {hop['to_socket'].name}",
+                    "",
+                    style=line_style
                 )
                 current_socket = hop['to_socket']
             
