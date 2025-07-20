@@ -46,6 +46,7 @@ class TopologyCache:
         self.cables.clear()
         self.sockets.clear()
         self.network_ports.clear()
+        self.equipment_to_sockets_map.clear()
 
     def load_from_api(self, console, live=None, panel=None, display_group=None):
         # ÉTAPE 1: Vider l'état actuel

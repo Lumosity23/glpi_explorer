@@ -1,3 +1,13 @@
+## [MISSION 18.5] - 2025-07-21
+
+### fix(cache): Correction du bug de référence obsolète lors du refresh
+
+- La méthode `perform_full_refresh` dans le Shell ne crée plus une nouvelle instance du cache.
+- La méthode `load_from_api` du `TopologyCache` a été modifiée pour vider ses propres données ("mise à jour en place") avant de les recharger.
+- Cette modification garantit que toutes les commandes, qui partagent la même instance de cache, voient les données mises à jour immédiatement après un `refresh`.
+
+Ref: Mission 18.5
+
 ## [MISSION 18.4] - 2025-07-21
 
 ### fix(cache): Assurer la mise à jour en temps réel du cache après un refresh

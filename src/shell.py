@@ -84,7 +84,6 @@ class GLPIExplorerShell:
             display_group.renderables[1] = Align.center(status_text)
             live.update(panel)
             
-            self.cache = TopologyCache(self.api_client, self.cache.cache_file if self.cache else None)
             self.cache.load_from_api(self.console, live, panel, display_group)
             self.cache.save_to_disk()
 
