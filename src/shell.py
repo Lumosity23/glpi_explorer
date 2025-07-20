@@ -8,6 +8,7 @@ from prompt_toolkit.history import InMemoryHistory
 from prompt_toolkit.formatted_text import FormattedText
 import importlib
 import os
+from pathlib import Path
 
 class GLPIExplorerShell:
     def __init__(self):
@@ -71,8 +72,21 @@ class GLPIExplorerShell:
             self.console.print(Panel("[bold red]Échec de la connexion.[/bold red]", title="[red]Erreur[/red]"))
             return
 
-        self.cache = TopologyCache(self.api_client)
-        self.cache.load_from_api(self.console)
+        cache_path = Path.home() / ".cache" / "glpi-explorer" / "topology.pkl"
+
+        self.console.print("[cyan]Vérification du cache local...[/cyan]")
+        self.cache = TopologyCache.load_from_disk(cache_path)
+
+        if self.cache:
+            self.console.print("[green]Cache local chargé avec succès.[/green]")
+            self.cache.api_client = self.api_client
+            self.cache.console = self.console
+        else:
+            self.console.print("[yellow]Aucun cache local valide trouvé. Lancement du chargement initial depuis l'API...[/yellow]")
+            self.cache = TopologyCache(self.api_client, cache_file=cache_path)
+            self.cache.load_from_api(self.console)
+            self.cache.save_to_disk()
+
         self._load_commands()
 
         while True:

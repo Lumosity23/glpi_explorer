@@ -6,6 +6,7 @@ from rich.console import Console, Group
 from rich.text import Text
 from rich.live import Live
 from rich.align import Align
+import os
 
 class TopologyCache:
     def __init__(self, api_client, cache_file='topology_cache.pkl'):
@@ -64,7 +65,7 @@ class TopologyCache:
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        name_to_id_map = {getattr(eq, 'name', ''): eq_id for eq_id, eq in all_equipment.items()}
+        name_to_id_map = {getattr(eq, 'name', '').lower(): eq_id for eq_id, eq in all_equipment.items()}
 
         # --- Étape 1: Initialisation des attributs sur tous les objets ---
         for equip in all_equipment.values():
@@ -95,7 +96,8 @@ class TopologyCache:
                 parent_equip = all_equipment.get(parent_id_or_name)
             elif isinstance(parent_id_or_name, str):
                 parent_id = name_to_id_map.get(parent_id_or_name.lower())
-                parent_equip = all_equipment.get(parent_id)
+                if parent_id:
+                    parent_equip = all_equipment.get(parent_id)
 
             if parent_equip:
                 socket.parent = parent_equip
@@ -259,14 +261,27 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def save_to_disk(self):
-        with open(self.cache_file, 'wb') as f:
-            pickle.dump(self, f)
-
-    @staticmethod
-    def load_from_disk(cache_file='topology_cache.pkl'):
+    def save_to_disk():
+        """Sauvegarde l'état actuel du cache dans un fichier pickle."""
         try:
-            with open(cache_file, 'rb') as f:
-                return pickle.load(f)
-        except FileNotFoundError:
-            return None
+            cache_dir = os.path.dirname(self.cache_file)
+            if not os.path.exists(cache_dir):
+                os.makedirs(cache_dir)
+            with open(self.cache_file, 'wb') as f:
+                pickle.dump(self, f)
+            # self.console.print("[dim]Cache sauvegardé sur le disque.[/dim]")
+        except Exception as e:
+            # self.console.print(f"[red]Erreur lors de la sauvegarde du cache : {e}[/red]")
+            pass
+
+    @classmethod
+    def load_from_disk(cls, cache_file):
+        """Charge une instance de TopologyCache depuis un fichier pickle."""
+        if os.path.exists(cache_file):
+            try:
+                with open(cache_file, 'rb') as f:
+                    return pickle.load(f)
+            except Exception:
+                # Si le fichier est corrompu, on retourne None
+                return None
+        return None

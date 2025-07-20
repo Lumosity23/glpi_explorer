@@ -1,3 +1,15 @@
+## [MISSION 18.2] - 2025-07-20
+
+### feat(cache): Implémentation du cache persistant sur disque
+
+- Le `TopologyCache` peut maintenant être sauvegardé (`save_to_disk`) et rechargé (`load_from_disk`) en utilisant pickle.
+- L'application vérifie au démarrage s'il existe un fichier de cache valide.
+- Si oui, elle le charge, ce qui rend le démarrage quasi-instantané.
+- Si non (premier lancement ou cache corrompu), elle effectue le chargement complet depuis l'API et sauvegarde le nouveau cache sur le disque pour les utilisations futures.
+- Cette modification améliore drastiquement le temps de démarrage de l'application après le premier lancement.
+
+Ref: Mission 18.2
+
 ## [MISSION 18.1] - 2025-07-20
 
 ### feat(get): Ajout de la commande interactive `get step`
