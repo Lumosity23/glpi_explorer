@@ -73,12 +73,7 @@ class TopologyCache:
             self._load_network_ports(progress_bar, main_task)
             self._build_topology_graph()
 
-            final_panel = Panel(
-                Align.center(logo_text),
-                title="Bienvenue dans GLPI Explorer",
-                subtitle="v0.1"
-            )
-            live.update(final_panel)
+            
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide

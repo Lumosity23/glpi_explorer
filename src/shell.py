@@ -9,6 +9,8 @@ from prompt_toolkit.formatted_text import FormattedText
 import importlib
 import os
 from pathlib import Path
+from rich.text import Text
+from rich.align import Align
 
 class GLPIExplorerShell:
     def __init__(self):
@@ -20,6 +22,24 @@ class GLPIExplorerShell:
         self.commands = {}
         self.aliases = {}
         self.shared_state = {}
+
+    def _display_welcome_logo(self):
+        """Affiche le panneau de bienvenue avec le logo."""
+        logo = """
+         ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
+        ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
+        ██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝ ██████╔╝██║     ██║   ██║██████╔╝█████╗  ██████╔╝
+        ██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗ ██╔═══╝ ██║     ██║   ██║██╔══██╗██╔══╝  ██╔══██╗
+        ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║  ██║███████╗██║  ██║
+         ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+        """
+        logo_text = Text(logo, justify="center", style="bold blue")
+        panel = Panel(
+            Align.center(logo_text),
+            title="Bienvenue dans GLPI Explorer",
+            subtitle="v0.1"
+        )
+        self.console.print(panel)
 
     def _load_commands(self):
         self.commands = {}
@@ -87,6 +107,7 @@ class GLPIExplorerShell:
             self.cache.load_from_api(self.console)
             self.cache.save_to_disk()
 
+        self._display_welcome_logo()
         self._load_commands()
 
         while True:
