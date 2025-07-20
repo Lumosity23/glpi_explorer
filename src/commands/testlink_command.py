@@ -4,8 +4,8 @@ from ..topology_linker import TopologyLinker # Notez l'import relatif
 from rich.panel import Panel
 
 class TestlinkCommand(BaseCommand):
-    def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state):
+        super().__init__(api_client, console, cache, shared_state)
         self.name = "testlink"
         self.description = "Teste un lien de topologie à partir d'un ID de socket."
         self.aliases = ["tl"]

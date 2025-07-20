@@ -2,8 +2,8 @@ import os
 from src.commands.base_command import BaseCommand
 
 class ClearCommand(BaseCommand):
-    def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state):
+        super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["cls"]
         
     def get_help_message(self):

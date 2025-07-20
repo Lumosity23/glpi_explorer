@@ -36,9 +36,10 @@ class TraceCommand(BaseCommand):
         
         trace_table = Table(title=f"Trace depuis {start_item.name}", expand=True)
         trace_table.add_column("Étape", justify="right")
+        trace_table.add_column("Localisation")
         trace_table.add_column("Équipement")
         trace_table.add_column("Port")
-        trace_table.add_column("Via (Câble)")
+        trace_table.add_column("Via (Câble)") # Renommée pour la clarté
 
         self.last_trace_result = []
         visited_sockets = set()
@@ -46,8 +47,8 @@ class TraceCommand(BaseCommand):
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
-            
             parent = linker.find_parent_for_socket(current_socket)
+            
             hop = linker.get_next_hop(current_socket)
             
             self.last_trace_result.append({
@@ -55,21 +56,41 @@ class TraceCommand(BaseCommand):
                 'parent': parent,
                 'hop': hop
             })
+            
+            # --- LOGIQUE D'AFFICHAGE CORRIGÉE ---
+            if hop and hop['type'] == 'traversal':
+                # Pour une traversée, on affiche la ligne AVANT de changer de socket
+                trace_table.add_row(
+                    str(step),
+                    getattr(parent, 'locations_id', 'N/A'),
+                    getattr(parent, 'name', 'N/A'),
+                    f"{current_socket.name} -> {hop['to_socket'].name}",
+                    "[italic blue](Interne)[/italic blue]"
+                )
+                current_socket = hop['to_socket'] # On saute directement au port de sortie
+            else:
+                # Pour une connexion ou une fin de ligne
+                cable_info = ""
+                if hop and hop['type'] == 'connection':
+                    next_socket = hop['next_socket']
+                    next_parent = linker.find_parent_for_socket(next_socket)
+                    cable_name = getattr(hop['via_cable'], 'name', 'N/A')
+                    cable_info = f"[green]{cable_name}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
+                else:
+                    cable_info = f"[yellow]{hop.get('reason', 'FIN DE TRACE') if hop else 'FIN DE TRACE'}[/yellow]"
+                
+                trace_table.add_row(
+                    str(step),
+                    getattr(parent, 'locations_id', 'N/A'),
+                    getattr(parent, 'name', 'N/A'),
+                    current_socket.name,
+                    cable_info
+                )
 
-            if not hop or hop['type'] == 'end':
-                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN')}[/yellow]")
-                break
-            
-            if hop['type'] == 'connection':
-                cable_name = getattr(hop['via_cable'], 'name', 'Câble Inconnu')
-                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, f"[green]{cable_name}[/green]")
+                if not hop or hop['type'] == 'end':
+                    break
                 current_socket = hop['next_socket']
-            
-            elif hop['type'] == 'traversal':
-                trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, "[italic blue](Interne)[/italic blue]")
-                trace_table.add_row("", f"  -> [dim]Traversée de {getattr(hop['via_device'], 'name', 'N/A')}[/dim]", f"[dim]{hop['from_socket'].name} -> {hop['to_socket'].name}[/dim]", "")
-                current_socket = hop['to_socket']
-            
+
             step += 1
             
         self.shared_state['last_trace'] = self.last_trace_result

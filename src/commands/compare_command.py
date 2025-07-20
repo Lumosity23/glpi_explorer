@@ -6,8 +6,8 @@ from rich.text import Text
 from rich import box
 
 class CompareCommand(BaseCommand):
-    def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state):
+        super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["cp"]
 
     def get_help_message(self):

@@ -5,8 +5,8 @@ from rich import print_json
 import types
 
 class DebugCommand(BaseCommand):
-    def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state):
+        super().__init__(api_client, console, cache, shared_state)
         self.name = "debug"
         self.description = "Inspecte le cache de topologie ou l'index."
         self.aliases = ["dbg"]
