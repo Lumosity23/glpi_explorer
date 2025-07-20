@@ -38,7 +38,20 @@ class TopologyCache:
         self.api_client = None
         self.console = None
 
-    def load_from_api(self, console, live, panel, display_group):
+    def _clear_data(self):
+        """Vide tous les dictionnaires de données du cache."""
+        self.computers.clear()
+        self.network_equipments.clear()
+        self.passive_devices.clear()
+        self.cables.clear()
+        self.sockets.clear()
+        self.network_ports.clear()
+
+    def load_from_api(self, console):
+        # ÉTAPE 1: Vider l'état actuel
+        self._clear_data()
+
+        # ÉTAPE 2: Remplir avec les nouvelles données
         self.console = console
 
         progress_bar = Progress(
@@ -48,6 +61,12 @@ class TopologyCache:
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         )
         
+        # Dummy display group for compatibility
+        display_group = Group()
+        panel = Panel(display_group, border_style="blue", title="[bold blue]GLPI Explorer[/bold blue]", expand=False)
+        live = Live(panel, console=console, screen=True, redirect_stderr=False, vertical_overflow="visible")
+        live.start()
+
         main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
 
         display_group.renderables.append(progress_bar)
@@ -61,14 +80,15 @@ class TopologyCache:
         self._load_network_ports(progress_bar, main_task, live, panel, display_group)
         
         status_text = Text.from_markup("[cyan]Construction du graphe de topologie...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        # display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         self._build_topology_graph()
 
         status_text = Text.from_markup("[green]Chargement terminé avec succès.[/green]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
-        display_group.renderables.pop() # Retirer la barre de progression
+        # display_group.renderables[1] = Align.center(status_text)
+        # display_group.renderables.pop() # Retirer la barre de progression
         live.update(panel)
+        live.stop()
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide

@@ -1,3 +1,13 @@
+## [MISSION 18.4] - 2025-07-21
+
+### fix(cache): Assurer la mise à jour en temps réel du cache après un refresh
+
+- La méthode `load_from_api` dans `TopologyCache` a été modifiée pour mettre à jour les données "en place" (`.clear()` puis remplissage) au lieu de créer une nouvelle instance.
+- Cette modification résout le bug où les commandes continuaient d'utiliser une référence obsolète du cache après une commande `refresh`.
+- Les changements sont maintenant visibles immédiatement par toutes les commandes sans nécessiter de redémarrage.
+
+Ref: Mission 18.4
+
 ## [MISSION 18.2] - 2025-07-20
 
 ### feat(cache): Implémentation du cache persistant sur disque
