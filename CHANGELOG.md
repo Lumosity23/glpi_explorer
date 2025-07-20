@@ -1,3 +1,13 @@
+## [MISSION 17.9] - 2025-07-20
+
+### feat(trace): Ajout de la colonne Câble et amélioration de l'affichage
+
+- La table de résultats de la commande `trace` inclut maintenant une colonne "Via (Câble)" pour afficher le câble utilisé à chaque saut physique.
+- L'affichage des traversées internes a été rendu plus compact pour une meilleure lisibilité.
+- La colonne "Localisation" a été supprimée pour simplifier la sortie.
+
+Ref: Mission 17.9
+
 ## [MISSION 17.8] - 2025-07-20
 
 ### style(trace): Amélioration visuelle de l'affichage des traversées
