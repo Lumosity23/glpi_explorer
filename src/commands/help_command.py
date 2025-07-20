@@ -3,8 +3,8 @@ from rich.table import Table
 from rich.panel import Panel
 
 class HelpCommand(BaseCommand):
-    def __init__(self, api_client, console, cache, commands_map):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state, commands_map):
+        super().__init__(api_client, console, cache, shared_state)
         self.commands_map = commands_map
         self.aliases = ["h"]
 

@@ -1,3 +1,14 @@
+## [MISSION 18.1] - 2025-07-20
+
+### feat(get): Ajout de la commande interactive `get step`
+
+- Création d'une nouvelle sous-commande `get step <numero>` pour afficher les détails d'une étape de la dernière trace.
+- Mise en place d'un état partagé (`shared_state`) dans le shell pour permettre la communication entre les commandes.
+- La commande `trace` stocke maintenant le résultat de la dernière trace dans l'état partagé.
+- La commande `get step` lit ces informations pour afficher les détails de l'équipement, du port et du câble pour une étape donnée.
+
+Ref: Mission 18.1
+
 ## [MISSION 17.9] - 2025-07-20
 
 ### feat(trace): Ajout de la colonne Câble et amélioration de l'affichage
@@ -956,7 +967,7 @@ Rendre l'affichage de la commande `get` adaptatif. Il doit choisir la meilleure 
 
 ### Justification Technique
 
-L'affichage en une seule table était illisible pour les équipements complexes comme les switchs avec de nombreux ports. Cette nouvelle approche adaptative garantit que les informations sont toujours présentées de manière claire et lisible, quelle que soit la complexité de l'équipement, améliorant ainsi considérablement l'expérience utilisateur.
+L'ancien affichage en une seule table était illisible pour les équipements complexes comme les switchs avec de nombreux ports. Cette nouvelle approche adaptative garantit que les informations sont toujours présentées de manière claire et lisible, quelle que soit la complexité de l'équipement, améliorant ainsi considérablement l'expérience utilisateur.
 
 ## [MISSION 6.2] - 2025-07-09 - par Gemini
 

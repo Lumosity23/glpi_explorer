@@ -18,6 +18,7 @@ class GLPIExplorerShell:
         self.prompt_session = PromptSession(history=self.history)
         self.commands = {}
         self.aliases = {}
+        self.shared_state = {}
 
     def _load_commands(self):
         self.commands = {}
@@ -36,7 +37,7 @@ class GLPIExplorerShell:
                     if command_name == 'help':
                         continue
 
-                    instance = command_class(self.api_client, self.console, self.cache)
+                    instance = command_class(self.api_client, self.console, self.cache, self.shared_state)
                     self.commands[command_name] = instance
                     if hasattr(instance, 'aliases') and instance.aliases:
                         for alias in instance.aliases:
@@ -46,7 +47,7 @@ class GLPIExplorerShell:
 
         try:
             from src.commands.help_command import HelpCommand
-            self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.commands)
+            self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.shared_state, self.commands)
         except Exception as e:
             self.console.print(Panel(f"Avertissement: Impossible de charger la commande 'help'. Erreur: {e}", title="[yellow]Chargement Commande[/yellow]"))
 

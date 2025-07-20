@@ -5,9 +5,10 @@ from rich.panel import Panel
 from rich.table import Table
 
 class TraceCommand(BaseCommand):
-    def __init__(self, api_client, console, cache):
-        super().__init__(api_client, console, cache)
+    def __init__(self, api_client, console, cache, shared_state):
+        super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["tr"]
+        self.last_trace_result = []
 
     def get_help_message(self):
         return { "description": "Suit le chemin réseau d'un équipement.", "usage": "trace <type> <nom_objet>" }
@@ -39,6 +40,7 @@ class TraceCommand(BaseCommand):
         trace_table.add_column("Port")
         trace_table.add_column("Via (Câble)")
 
+        self.last_trace_result = []
         visited_sockets = set()
         step = 1
 
@@ -48,6 +50,12 @@ class TraceCommand(BaseCommand):
             parent = linker.find_parent_for_socket(current_socket)
             hop = linker.get_next_hop(current_socket)
             
+            self.last_trace_result.append({
+                'socket': current_socket,
+                'parent': parent,
+                'hop': hop
+            })
+
             if not hop or hop['type'] == 'end':
                 trace_table.add_row(str(step), getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN')}[/yellow]")
                 break
@@ -64,4 +72,5 @@ class TraceCommand(BaseCommand):
             
             step += 1
             
+        self.shared_state['last_trace'] = self.last_trace_result
         self.console.print(trace_table)

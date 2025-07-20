@@ -30,10 +30,11 @@ class BaseCommand:
         'networkport': 'NetworkPort', 'np': 'NetworkPort',
     }
 
-    def __init__(self, api_client, console, cache):
+    def __init__(self, api_client, console, cache, shared_state):
         self.api_client = api_client
         self.console = console
         self.cache = cache
+        self.shared_state = shared_state
 
 
     def get_target_dict(self, glpi_itemtype: str) -> dict:
