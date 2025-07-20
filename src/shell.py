@@ -94,20 +94,23 @@ class GLPIExplorerShell:
         panel = Panel(display_group, title="Bienvenue dans GLPI Explorer", subtitle="v0.1")
 
         with Live(panel, console=self.console, transient=True) as live:
-            status_text.plain = "[cyan]Vérification du cache local...[/cyan]"
+            status_text = Text.from_markup("[cyan]Vérification du cache local...[/cyan]", justify="center")
+            display_group.renderables[1] = Align.center(status_text)
             live.update(panel)
             self.cache = TopologyCache.load_from_disk(cache_path)
 
             if self.cache:
-                status_text.plain = "[green]Cache local chargé avec succès.[/green]"
+                status_text = Text.from_markup("[green]Cache local chargé avec succès.[/green]", justify="center")
+                display_group.renderables[1] = Align.center(status_text)
                 live.update(panel)
                 self.cache.api_client = self.api_client
                 self.cache.console = self.console
             else:
-                status_text.plain = "[yellow]Aucun cache local valide trouvé. Lancement du chargement...[/yellow]"
+                status_text = Text.from_markup("[yellow]Aucun cache local valide trouvé. Lancement du chargement...[/yellow]", justify="center")
+                display_group.renderables[1] = Align.center(status_text)
                 live.update(panel)
                 self.cache = TopologyCache(self.api_client, cache_file=cache_path)
-                self.cache.load_from_api(self.console, live, panel, status_text)
+                self.cache.load_from_api(self.console, live, panel, display_group)
                 self.cache.save_to_disk()
 
         self.console.print(panel)

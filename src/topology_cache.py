@@ -38,7 +38,7 @@ class TopologyCache:
         self.api_client = None
         self.console = None
 
-    def load_from_api(self, console, live, panel, status_text):
+    def load_from_api(self, console, live, panel, display_group):
         self.console = console
 
         progress_bar = Progress(
@@ -50,27 +50,24 @@ class TopologyCache:
         
         main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
 
-        # Mettre à jour le contenu du Live pour inclure la barre de progression
-        logo_text = panel.renderable.renderables[0]
-        display_group = Group(logo_text, Align.center(status_text), progress_bar)
-        panel.renderable = display_group
+        display_group.renderables.append(progress_bar)
         live.update(panel)
 
-        self._load_computers(progress_bar, main_task, live, panel, status_text)
-        self._load_network_equipments(progress_bar, main_task, live, panel, status_text)
-        self._load_passive_devices(progress_bar, main_task, live, panel, status_text)
-        self._load_cables(progress_bar, main_task, live, panel, status_text)
-        self._load_sockets(progress_bar, main_task, live, panel, status_text)
-        self._load_network_ports(progress_bar, main_task, live, panel, status_text)
+        self._load_computers(progress_bar, main_task, live, panel, display_group)
+        self._load_network_equipments(progress_bar, main_task, live, panel, display_group)
+        self._load_passive_devices(progress_bar, main_task, live, panel, display_group)
+        self._load_cables(progress_bar, main_task, live, panel, display_group)
+        self._load_sockets(progress_bar, main_task, live, panel, display_group)
+        self._load_network_ports(progress_bar, main_task, live, panel, display_group)
         
-        status_text.plain = "[cyan]Construction du graphe de topologie...[/cyan]"
+        status_text = Text.from_markup("[cyan]Construction du graphe de topologie...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         self._build_topology_graph()
 
-        status_text.plain = "[green]Chargement terminé avec succès.[/green]"
-        # Retirer la barre de progression à la fin
-        display_group = Group(logo_text, Align.center(status_text))
-        panel.renderable = display_group
+        status_text = Text.from_markup("[green]Chargement terminé avec succès.[/green]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
+        display_group.renderables.pop() # Retirer la barre de progression
         live.update(panel)
 
     def _build_topology_graph(self):
@@ -160,8 +157,9 @@ class TopologyCache:
         
         return flattened_ports
 
-    def _load_computers(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des ordinateurs...[/cyan]"
+    def _load_computers(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des ordinateurs...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
         if not id_list:
@@ -181,8 +179,9 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_network_equipments(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des équipements réseau...[/cyan]"
+    def _load_network_equipments(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des équipements réseau...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
         if not id_list:
@@ -202,8 +201,9 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_passive_devices(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des équipements passifs...[/cyan]"
+    def _load_passive_devices(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des équipements passifs...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
         if not id_list:
@@ -221,8 +221,9 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_cables(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des câbles...[/cyan]"
+    def _load_cables(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des câbles...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
         if not id_list:
@@ -240,8 +241,9 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_sockets(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des sockets...[/cyan]"
+    def _load_sockets(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des sockets...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
         if not id_list:
@@ -259,8 +261,9 @@ class TopologyCache:
         progress.remove_task(sub_task)
         progress.advance(main_task_id)
 
-    def _load_network_ports(self, progress, main_task_id, live, panel, status_text):
-        status_text.plain = "[cyan]Chargement des ports réseau...[/cyan]"
+    def _load_network_ports(self, progress, main_task_id, live, panel, display_group):
+        status_text = Text.from_markup("[cyan]Chargement des ports réseau...[/cyan]", justify="center")
+        display_group.renderables[1] = Align.center(status_text)
         live.update(panel)
         id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
         if not id_list:
