@@ -1,3 +1,14 @@
+## [MISSION 18.6] - 2025-07-21
+
+### feat(cache): Implémentation de la détection de changements et de la commande 'changes'
+
+- La commande `refresh` compare maintenant l'état du cache avant et après le rechargement pour détecter les ajouts et suppressions.
+- Un journal des changements est maintenu dans le cache.
+- Création de la commande `changes` pour afficher ce journal à l'utilisateur.
+- Ajout d'un indicateur de notification visuel (Δ) dans le prompt du shell.
+
+Ref: Mission 18.6
+
 ## [MISSION 18.5] - 2025-07-21
 
 ### fix(cache): Correction du bug de référence obsolète lors du refresh

@@ -19,6 +19,7 @@ class TopologyCache:
         self.sockets = {}
         self.network_ports = {}
         self.equipment_to_sockets_map = {}
+        self.changelog = []
         self.console = None
 
     def __getstate__(self):
@@ -49,6 +50,14 @@ class TopologyCache:
         self.equipment_to_sockets_map.clear()
 
     def load_from_api(self, console, live=None, panel=None, display_group=None):
+        # Store old data for comparison
+        old_computers = self.computers.copy()
+        old_network_equipments = self.network_equipments.copy()
+        old_passive_devices = self.passive_devices.copy()
+        old_cables = self.cables.copy()
+        old_sockets = self.sockets.copy()
+        old_network_ports = self.network_ports.copy()
+
         # ÉTAPE 1: Vider l'état actuel
         self._clear_data()
 
@@ -108,6 +117,17 @@ class TopologyCache:
 
         if manage_live:
             live.stop()
+        
+        # Compare old and new data to populate changelog
+        self.changelog = []
+        self._compare_data(old_computers, self.computers, 'Computer')
+        self._compare_data(old_network_equipments, self.network_equipments, 'NetworkEquipment')
+        self._compare_data(old_passive_devices, self.passive_devices, 'PassiveDCEquipment')
+        self._compare_data(old_cables, self.cables, 'Cable')
+        self._compare_data(old_sockets, self.sockets, 'Glpi\\Socket')
+        self._compare_data(old_network_ports, self.network_ports, 'NetworkPort')
+        
+        return len(self.changelog)
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide
@@ -332,6 +352,32 @@ class TopologyCache:
         except Exception as e:
             # self.console.print(f"[red]Erreur lors de la sauvegarde du cache : {e}[/red]")
             pass
+
+    def _compare_data(self, old_data, new_data, item_type):
+        old_ids = set(old_data.keys())
+        new_ids = set(new_data.keys())
+
+        added_ids = new_ids - old_ids
+        removed_ids = old_ids - new_ids
+
+        for item_id in added_ids:
+            item = new_data[item_id]
+            self.changelog.append({'action': 'AJOUT', 'type': item_type, 'id': item_id, 'name': getattr(item, 'name', 'N/A')})
+
+        for item_id in removed_ids:
+            item = old_data[item_id]
+            self.changelog.append({'action': 'SUPPRESSION', 'type': item_type, 'id': item_id, 'name': getattr(item, 'name', 'N/A')})
+
+        # For modified items, we would need to compare attributes, which is more complex.
+        # For now, we focus on additions and deletions as per the prompt.
+        # If needed, this section can be expanded to detect modifications.
+        # common_ids = old_ids.intersection(new_ids)
+        # for item_id in common_ids:
+        #     old_item = old_data[item_id]
+        #     new_item = new_data[item_id]
+        #     # Simple comparison for demonstration, can be expanded
+        #     if getattr(old_item, 'name', None) != getattr(new_item, 'name', None):
+        #         self.changelog.append({'action': 'MODIFICATION', 'type': item_type, 'id': item_id, 'name': getattr(new_item, 'name', 'N/A')})
 
     @classmethod
     def load_from_disk(cls, cache_file):

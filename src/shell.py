@@ -22,7 +22,7 @@ class GLPIExplorerShell:
         self.prompt_session = PromptSession(history=self.history)
         self.commands = {}
         self.aliases = {}
-        self.shared_state = {'shell': self}
+        self.shared_state = {'shell': self, 'change_count': 0}
 
     def _get_logo_text(self):
         logo = """
@@ -84,8 +84,9 @@ class GLPIExplorerShell:
             display_group.renderables[1] = Align.center(status_text)
             live.update(panel)
             
-            self.cache.load_from_api(self.console, live, panel, display_group)
+            change_count = self.cache.load_from_api(self.console, live, panel, display_group)
             self.cache.save_to_disk()
+            self.shared_state['change_count'] = change_count
 
     def run(self):
         config_manager = ConfigManager()
@@ -138,7 +139,8 @@ class GLPIExplorerShell:
 
         while True:
             try:
-                prompt_message = FormattedText([('bold cyan', '(glpi-explorer)> ')])
+                change_indicator = " (Δ)" if self.shared_state['change_count'] > 0 else ""
+                prompt_message = FormattedText([('bold cyan', f'(glpi-explorer){change_indicator}> ')])
                 full_command = self.prompt_session.prompt(prompt_message).strip()
 
                 if not full_command:
