@@ -7,7 +7,7 @@ from rich.console import Console
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
-from shell import GLPIExplorerShell
+from src.shell import GLPIExplorerShell
 
 class TestShellInteraction(unittest.TestCase):
 
@@ -46,7 +46,7 @@ class TestShellInteraction(unittest.TestCase):
         test_console = Console(file=string_io, force_terminal=True, width=120)
 
         # --- Run the shell ---
-        shell = GLPIExplorerShell(console=test_console)
+        shell = GLPIExplorerShell()
         shell.run()
 
         # --- Assertions ---
