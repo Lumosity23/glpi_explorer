@@ -85,7 +85,7 @@ class GLPIExplorerShell:
             live.update(panel)
             
             self.cache = TopologyCache(self.api_client, self.cache.cache_file if self.cache else None)
-            self.cache.load_from_api(self.console)
+            self.cache.load_from_api(self.console, live, panel, display_group)
             self.cache.save_to_disk()
 
     def run(self):
