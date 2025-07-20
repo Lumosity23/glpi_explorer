@@ -47,12 +47,21 @@ class TopologyCache:
         self.sockets.clear()
         self.network_ports.clear()
 
-    def load_from_api(self, console):
+    def load_from_api(self, console, live=None, panel=None, display_group=None):
         # ÉTAPE 1: Vider l'état actuel
         self._clear_data()
 
         # ÉTAPE 2: Remplir avec les nouvelles données
         self.console = console
+
+        # --- Gestion de l'affichage --- 
+        # Si un objet Live n'est pas fourni, on en crée un pour cette méthode.
+        manage_live = live is None
+        if manage_live:
+            display_group = Group()
+            panel = Panel(display_group, border_style="blue", title="[bold blue]GLPI Explorer[/bold blue]", expand=False)
+            live = Live(panel, console=console, screen=True, redirect_stderr=False, vertical_overflow="visible")
+            live.start()
 
         progress_bar = Progress(
             SpinnerColumn(),
@@ -61,17 +70,13 @@ class TopologyCache:
             TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
         )
         
-        # Dummy display group for compatibility
-        display_group = Group()
-        panel = Panel(display_group, border_style="blue", title="[bold blue]GLPI Explorer[/bold blue]", expand=False)
-        live = Live(panel, console=console, screen=True, redirect_stderr=False, vertical_overflow="visible")
-        live.start()
-
         main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
+        if display_group:
+            display_group.renderables.append(progress_bar)
+        if panel:
+            live.update(panel)
 
-        display_group.renderables.append(progress_bar)
-        live.update(panel)
-
+        # --- Chargement des données ---
         self._load_computers(progress_bar, main_task, live, panel, display_group)
         self._load_network_equipments(progress_bar, main_task, live, panel, display_group)
         self._load_passive_devices(progress_bar, main_task, live, panel, display_group)
@@ -79,16 +84,29 @@ class TopologyCache:
         self._load_sockets(progress_bar, main_task, live, panel, display_group)
         self._load_network_ports(progress_bar, main_task, live, panel, display_group)
         
-        status_text = Text.from_markup("[cyan]Construction du graphe de topologie...[/cyan]", justify="center")
-        # display_group.renderables[1] = Align.center(status_text)
-        live.update(panel)
+        # --- Finalisation ---
+        if display_group:
+            status_text = Text.from_markup("[cyan]Construction du graphe de topologie...[/cyan]", justify="center")
+            # Mettre à jour le bon élément dans le groupe
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+        if panel:
+            live.update(panel)
         self._build_topology_graph()
 
-        status_text = Text.from_markup("[green]Chargement terminé avec succès.[/green]", justify="center")
-        # display_group.renderables[1] = Align.center(status_text)
-        # display_group.renderables.pop() # Retirer la barre de progression
-        live.update(panel)
-        live.stop()
+        if display_group:
+            status_text = Text.from_markup("[green]Chargement terminé avec succès.[/green]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            if progress_bar in display_group.renderables:
+                display_group.renderables.remove(progress_bar)
+        if panel:
+            live.update(panel)
+
+        if manage_live:
+            live.stop()
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide

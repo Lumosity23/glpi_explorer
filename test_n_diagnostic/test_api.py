@@ -2,13 +2,7 @@ import sys
 import os
 
 # Ajouter le répertoire src au PYTHONPATH pour les imports
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
-
-from rich.console import Console
-from rich.panel import Panel
-from rich.rule import Rule
-from api_client import ApiClient
-from config_manager import ConfigManager
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src')))
 
 
 if __name__ == "__main__":

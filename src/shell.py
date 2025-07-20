@@ -85,7 +85,7 @@ class GLPIExplorerShell:
             live.update(panel)
             
             self.cache = TopologyCache(self.api_client, self.cache.cache_file if self.cache else None)
-            self.cache.load_from_api(self.console, live, panel, display_group)
+            self.cache.load_from_api(self.console)
             self.cache.save_to_disk()
 
     def run(self):
@@ -122,7 +122,17 @@ class GLPIExplorerShell:
                 self.cache.api_client = self.api_client
                 self.cache.console = self.console
             else:
-                self.perform_full_refresh()
+                status_text = Text.from_markup("[yellow]Cache non trouvé. Lancement du chargement initial...[/yellow]", justify="center")
+                display_group.renderables[1] = Align.center(status_text)
+                live.update(panel)
+                
+                self.cache = TopologyCache(self.api_client, cache_path)
+                self.cache.load_from_api(self.console, live, panel, display_group)
+                self.cache.save_to_disk()
+
+                status_text = Text.from_markup("[green]Chargement initial terminé.[/green]", justify="center")
+                display_group.renderables[1] = Align.center(status_text)
+                live.update(panel)
 
         self.console.print(panel)
         self._load_commands()
