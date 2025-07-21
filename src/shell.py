@@ -26,7 +26,8 @@ class GLPIExplorerShell:
         self.prompt_session = PromptSession(history=self.history)
         self.commands = {}
         self.aliases = {}
-        self.shared_state = {'shell': self, 'change_count': 0}
+        self.changelog_lock = threading.Lock()
+        self.shared_state = {'shell': self, 'change_count': 0, 'changelog_lock': self.changelog_lock}
         self.is_running = False
 
     def _get_logo_text(self):
@@ -130,7 +131,8 @@ class GLPIExplorerShell:
         while self.is_running:
             time.sleep(300)
             if self.is_running:
-                self.perform_full_refresh(is_manual=False)
+                with self.changelog_lock:
+                    self.perform_full_refresh(is_manual=False)
 
     def run(self):
         config_manager = ConfigManager()

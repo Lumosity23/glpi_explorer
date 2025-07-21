@@ -117,7 +117,7 @@ class TopologyCache:
 
     def compare_and_log_changes(self, old_data):
         """Compare l'état actuel avec un état précédent et met à jour le changelog."""
-        self.changelog = [] # Réinitialiser à chaque refresh
+        new_changes = []
         new_data = self.get_all_data_copy()
 
         all_item_types = set(old_data.keys()) | set(new_data.keys())
@@ -132,7 +132,7 @@ class TopologyCache:
             # Détecter les suppressions
             for removed_id in old_ids - new_ids:
                 item = old_items_dict[removed_id]
-                self.changelog.append({
+                new_changes.append({
                     'action': 'SUPPRESSION',
                     'type': itemtype, 'id': removed_id,
                     'name': getattr(item, 'name', 'N/A'),
@@ -143,7 +143,7 @@ class TopologyCache:
             for item_id in new_ids:
                 new_item = new_items_dict[item_id]
                 if item_id not in old_ids:
-                    self.changelog.append({
+                    new_changes.append({
                         'action': 'AJOUT',
                         'type': itemtype, 'id': item_id,
                         'name': getattr(new_item, 'name', 'N/A'),
@@ -158,14 +158,15 @@ class TopologyCache:
                             if isinstance(old_value, (str, int, float)) and old_value != new_value:
                                 changed_fields[key] = {'from': old_value, 'to': new_value}
                         
-                        self.changelog.append({
+                        new_changes.append({
                             'action': 'MODIFICATION',
                             'type': itemtype, 'id': item_id,
                             'name': getattr(new_item, 'name', 'N/A'),
                             'date_mod_glpi': getattr(new_item, 'date_mod', 'N/A'),
                             'changes': changed_fields
                         })
-        return len(self.changelog)
+        self.changelog.extend(new_changes)
+        return len(new_changes)
 
     def _build_topology_graph(self):
         # Dictionnaires globaux pour un accès rapide
