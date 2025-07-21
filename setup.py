@@ -11,12 +11,12 @@ setup(
     description='Un outil CLI pour explorer et analyser une infrastructure réseau GLPI.',
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
-    url='https://github.com/Timo-AI/GLPI-Explorer', # URL du dépôt GitHub
+    url='https://github.com/Lumosity23/glpi_explorer.git', # URL du dépôt GitHub
     packages=find_packages(),
     install_requires=required,
     entry_points={
         'console_scripts': [
-                'glpi=main:main',
+                'glpi = src.__main__:main',
             ],
     },
     classifiers=[
