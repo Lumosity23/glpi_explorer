@@ -1,5 +1,7 @@
 import threading
 import time
+import requests
+from packaging.version import parse as parse_version
 from rich.console import Console, Group
 from rich.panel import Panel
 from src.api_client import ApiClient
@@ -78,6 +80,25 @@ class GLPIExplorerShell:
             return False
         required_keys = ["url", "app_token", "user_token"]
         return all(key in config and config[key] for key in required_keys)
+
+    def _check_for_updates(self):
+        """Vérifie s'il existe une nouvelle version sur GitHub."""
+        CURRENT_VERSION = "0.1.0"
+        REPO_URL = "https://api.github.com/repos/Timo-AI/GLPI-Explorer/releases/latest"
+        
+        try:
+            response = requests.get(REPO_URL, timeout=2)
+            response.raise_for_status()
+            latest_version_str = response.json()['tag_name'].lstrip('v')
+            
+            if parse_version(latest_version_str) > parse_version(CURRENT_VERSION):
+                update_message = (
+                    f"Une nouvelle version ({latest_version_str}) est disponible!\n"
+                    f"Pour mettre à jour, exécutez : [bold]pip install --upgrade git+https://github.com/Timo-AI/GLPI-Explorer.git[/bold]"
+                )
+                self.console.print(Panel(update_message, title="[bold yellow]Mise à jour disponible[/bold yellow]", border_style="yellow"))
+        except (requests.exceptions.RequestException, KeyError):
+            pass
 
     def perform_full_refresh(self, is_manual=False):
         if is_manual:
@@ -158,6 +179,7 @@ class GLPIExplorerShell:
                 live.update(panel)
 
         self.console.print(panel)
+        self._check_for_updates()
         self._load_commands()
 
         self.console.print("[dim]Lancement du service de rafraîchissement en arrière-plan...[/dim]")

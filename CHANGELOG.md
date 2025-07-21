@@ -1,3 +1,14 @@
+## [MISSION 20.2] - 2025-07-21
+
+### feat(packaging): Rendre l'application installable et ajout de la vérification des mises à jour
+
+- Ajout d'un fichier `setup.py` pour packager l'application.
+- Création du point d'entrée `glpi` pour un lancement global.
+- Implémentation d'une vérification de version au démarrage qui interroge l'API GitHub pour notifier l'utilisateur des nouvelles releases.
+- Mise à jour de la documentation (`README.md`) avec les nouvelles instructions d'installation et d'utilisation.
+
+Ref: Mission 20.2
+
 ## [MISSION 19.4] - 2025-07-21
 
 ### feat(cache): Implémentation du refresh automatique en arrière-plan

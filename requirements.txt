@@ -1,4 +1,4 @@
 rich
 requests
 prompt-toolkit
-
+packaging

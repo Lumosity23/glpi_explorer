@@ -30,26 +30,33 @@ Que ce soit pour un diagnostic rapide, un audit de conformité, ou la conception
 
 ---
 
-## 🛠️ Installation et Configuration
+## 🛠️ Installation et Utilisation
 
-1.  **Cloner le dépôt :**
-    ```bash
-    git clone [URL_DU_DEPOT]
-    cd glpi-explorer
-    ```
+### Installation
 
-2.  **Installer les dépendances :**
-    ```bash
-    pip install -r requirements.txt
-    ```
+Pour installer GLPI Explorer, utilisez pip avec l'URL du dépôt Git :
 
-3.  **Lancer l'application :**
-    ```bash
-    python main.py
-    ```
+```bash
+pip install git+https://github.com/Timo-AI/GLPI-Explorer.git
+```
 
-4.  **Configuration Initiale :**
-    Au premier lancement, l'application vous guidera pour configurer les accès à votre API GLPI (URL, App-Token, User-Token). Ces informations sont stockées localement dans `~/.config/glpi-explorer/config.json`.
+Pour mettre à jour vers la dernière version :
+
+```bash
+pip install --upgrade git+https://github.com/Timo-AI/GLPI-Explorer.git
+```
+
+### Lancement
+
+Une fois installé, vous pouvez lancer l'application de n'importe où avec la commande :
+
+```bash
+glpi
+```
+
+### Configuration Initiale
+
+Au premier lancement, l'application vous guidera pour configurer les accès à votre API GLPI (URL, App-Token, User-Token). Ces informations sont stockées localement dans `~/.config/glpi-explorer/config.json`.
 
 ---
 

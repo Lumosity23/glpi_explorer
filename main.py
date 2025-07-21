@@ -1,5 +1,8 @@
 from src.shell import GLPIExplorerShell
 
-if __name__ == "__main__":
+def main():
     shell = GLPIExplorerShell()
     shell.run()
+
+if __name__ == "__main__":
+    main()
