@@ -139,8 +139,14 @@ class GLPIExplorerShell:
 
         while True:
             try:
-                change_indicator = " (Δ)" if self.shared_state['change_count'] > 0 else ""
-                prompt_message = FormattedText([('bold cyan', f'(glpi-explorer){change_indicator}> ')])
+                change_count = self.shared_state.get('change_count', 0)
+                prompt_parts = [('bold cyan', '(glpi-explorer)')]
+                if change_count > 0:
+                    prompt_parts.append(('', '|'))
+                    prompt_parts.append(('bold yellow', f'Δ{change_count}'))
+                prompt_parts.append(('', '> '))
+                
+                prompt_message = FormattedText(prompt_parts)
                 full_command = self.prompt_session.prompt(prompt_message).strip()
 
                 if not full_command:

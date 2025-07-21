@@ -168,12 +168,23 @@ class TopologyCache:
                     old_item = old_items_dict[added_id]
                     new_item = new_items_dict[added_id]
                     if getattr(old_item, 'date_mod', None) != getattr(new_item, 'date_mod', None):
+                        # --- DÉBUT DE LA MODIFICATION ---
+                        changed_fields = {}
+                        # Comparer les attributs simples pour trouver les différences
+                        for key, old_value in vars(old_item).items():
+                            new_value = getattr(new_item, key, None)
+                            # On ne compare que les types simples pour l'instant
+                            if isinstance(old_value, (str, int, float)) and old_value != new_value:
+                                changed_fields[key] = {'from': old_value, 'to': new_value}
+                        
                         self.changelog.append({
                             'action': 'MODIFICATION',
                             'type': itemtype,
                             'id': added_id,
-                            'name': getattr(new_item, 'name', 'N/A')
+                            'name': getattr(new_item, 'name', 'N/A'),
+                            'changes': changed_fields # On stocke les changements détaillés
                         })
+                        # --- FIN DE LA MODIFICATION ---
         
         return len(self.changelog)
 
