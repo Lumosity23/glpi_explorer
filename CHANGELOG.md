@@ -1,3 +1,14 @@
+## [MISSION 19.5] - 2025-07-21
+
+### fix(cache): Synchronisation thread-safe du journal des changements
+
+- Ajout d'un `threading.Lock` pour protéger l'accès au `changelog` et au `change_count`, résolvant les problèmes de concurrence (race conditions).
+- La commande `changes` et le thread de refresh utilisent maintenant ce verrou pour garantir la cohérence des données.
+- La logique de mise à jour du changelog est maintenant additive (`.extend()`) pour éviter que les `refresh` n'effacent les changements non lus.
+- Le système de notification est désormais fiable dans un environnement multi-thread.
+
+Ref: Mission 19.5
+
 ## [MISSION 20.2] - 2025-07-21
 
 ### feat(packaging): Rendre l'application installable et ajout de la vérification des mises à jour
