@@ -1,3 +1,14 @@
+## [MISSION 19.4] - 2025-07-21
+
+### feat(cache): Implémentation du refresh automatique en arrière-plan
+
+- Ajout d'un thread d'arrière-plan qui exécute la logique de `refresh` toutes les 5 minutes.
+- La mise à jour automatique est silencieuse et ne bloque pas l'interface utilisateur.
+- Le prompt se met à jour dynamiquement avec le compteur de changements (Δ) dès que des modifications sont détectées en arrière-plan.
+- L'application est maintenant capable de maintenir un état du cache à jour de manière proactive.
+
+Ref: Mission 19.4
+
 ## [MISSION 19.3] - 2025-07-21
 
 ### fix(help): Correction de l'aide pour 'changes' et de l'alias pour 'help'

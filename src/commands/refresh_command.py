@@ -16,6 +16,6 @@ class RefreshCommand(BaseCommand):
     def execute(self, args):
         shell = self.shared_state.get('shell')
         if shell:
-            shell.perform_full_refresh(is_manual_refresh=True)
+            shell.perform_full_refresh(is_manual=True)
         else:
             self.console.print("[red]Erreur: Impossible d'accéder au shell pour le rafraîchissement.[/red]")

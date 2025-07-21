@@ -51,32 +51,22 @@ class TopologyCache:
         self.equipment_to_sockets_map.clear()
 
     def load_from_api(self, console, live=None, panel=None, display_group=None):
-        # ÉTAPE 1: Vider l'état actuel
         self._clear_data()
-
-        # ÉTAPE 2: Remplir avec les nouvelles données
         self.console = console
 
-        # --- Gestion de l'affichage --- 
-        # Si un objet Live n'est pas fourni, on en crée un pour cette méthode.
-        manage_live = live is None
-        if manage_live:
-            display_group = Group()
-            panel = Panel(display_group, border_style="blue", title="[bold blue]GLPI Explorer[/bold blue]", expand=False)
-            live = Live(panel, console=console, screen=True, redirect_stderr=False, vertical_overflow="visible")
-            live.start()
+        use_live_display = live is not None and panel is not None and display_group is not None
 
-        progress_bar = Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
-        )
-        
-        main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
-        if display_group:
+        progress_bar = None
+        main_task = None
+        if use_live_display:
+            progress_bar = Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
+            )
+            main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
             display_group.renderables.append(progress_bar)
-        if panel:
             live.update(panel)
 
         # --- Chargement des données ---
@@ -88,28 +78,31 @@ class TopologyCache:
         self._load_network_ports(progress_bar, main_task, live, panel, display_group)
         
         # --- Finalisation ---
-        if display_group:
+        if use_live_display:
             status_text = Text.from_markup("[cyan]Construction du graphe de topologie...[/cyan]", justify="center")
-            # Mettre à jour le bon élément dans le groupe
             if len(display_group.renderables) > 1:
-                display_group.renderables[1] = Align.center(status_text)
+                for i, item in enumerate(display_group.renderables):
+                    if isinstance(item, Align):
+                        display_group.renderables[i] = Align.center(status_text)
+                        break
+                else:
+                     display_group.renderables.insert(1, Align.center(status_text))
             else:
                 display_group.renderables.append(Align.center(status_text))
-        if panel:
             live.update(panel)
+
         self._build_topology_graph()
 
-        if display_group:
+        if use_live_display:
             status_text = Text.from_markup("[green]Chargement terminé avec succès.[/green]", justify="center")
             if len(display_group.renderables) > 1:
-                display_group.renderables[1] = Align.center(status_text)
+                for i, item in enumerate(display_group.renderables):
+                    if isinstance(item, Align):
+                        display_group.renderables[i] = Align.center(status_text)
+                        break
             if progress_bar in display_group.renderables:
                 display_group.renderables.remove(progress_bar)
-        if panel:
             live.update(panel)
-
-        if manage_live:
-            live.stop()
 
     def get_all_data_copy(self):
         """Retourne une copie des dictionnaires de données principaux."""
@@ -262,17 +255,21 @@ class TopologyCache:
         return flattened_ports
 
     def _load_computers(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des ordinateurs...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des ordinateurs...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+        
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Ordinateurs", total=len(id_list))
+
+        sub_task = progress.add_task("Ordinateurs", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -282,22 +279,27 @@ class TopologyCache:
                     item_obj = types.SimpleNamespace(**details)
                     item_obj.ports = self._process_and_flatten_ports(details)
                     self.computers[item_id] = item_obj
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def _load_network_equipments(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des équipements réseau...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des équipements réseau...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
         id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Équipements réseau", total=len(id_list))
+
+        sub_task = progress.add_task("Équipements réseau", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -307,22 +309,27 @@ class TopologyCache:
                     item_obj = types.SimpleNamespace(**details)
                     item_obj.ports = self._process_and_flatten_ports(details)
                     self.network_equipments[item_id] = item_obj
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def _load_passive_devices(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des équipements passifs...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des équipements passifs...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
         id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Équipements passifs", total=len(id_list))
+
+        sub_task = progress.add_task("Équipements passifs", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -330,22 +337,27 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'PassiveDCEquipment'
                     self.passive_devices[item_id] = types.SimpleNamespace(**details)
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def _load_cables(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des câbles...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des câbles...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
         id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Câbles", total=len(id_list))
+
+        sub_task = progress.add_task("Câbles", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -353,22 +365,27 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'Cable'
                     self.cables[item_id] = types.SimpleNamespace(**details)
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def _load_sockets(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des sockets...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des sockets...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
         id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Sockets", total=len(id_list))
+
+        sub_task = progress.add_task("Sockets", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -376,22 +393,27 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'Glpi\\Socket'
                     self.sockets[item_id] = types.SimpleNamespace(**details)
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def _load_network_ports(self, progress, main_task_id, live, panel, display_group):
-        status_text = Text.from_markup("[cyan]Chargement des ports réseau...[/cyan]", justify="center")
-        if len(display_group.renderables) > 1:
-            display_group.renderables[1] = Align.center(status_text)
-        else:
-            display_group.renderables.append(Align.center(status_text))
-        live.update(panel)
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des ports réseau...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
         id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
         if not id_list:
-            progress.advance(main_task_id)
+            if use_live_display: progress.advance(main_task_id)
             return
-        sub_task = progress.add_task("Ports réseau", total=len(id_list))
+
+        sub_task = progress.add_task("Ports réseau", total=len(id_list)) if use_live_display else None
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
@@ -399,9 +421,10 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'NetworkPort'
                     self.network_ports[item_id] = types.SimpleNamespace(**details)
-            progress.advance(sub_task)
-        progress.remove_task(sub_task)
-        progress.advance(main_task_id)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
 
     def save_to_disk(self):
         """Sauvegarde uniquement les données de topologie, pas l'état de la session."""
