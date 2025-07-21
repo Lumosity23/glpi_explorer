@@ -37,13 +37,13 @@ Que ce soit pour un diagnostic rapide, un audit de conformité, ou la conception
 Pour installer GLPI Explorer, utilisez pip avec l'URL du dépôt Git :
 
 ```bash
-pip install git+https://github.com/Timo-AI/GLPI-Explorer.git
+pip install git+https://github.com/Lumosity23/glpi_explorer.git
 ```
 
 Pour mettre à jour vers la dernière version :
 
 ```bash
-pip install --upgrade git+https://github.com/Timo-AI/GLPI-Explorer.git
+pip install --upgrade git+https://github.com/Lumosity23/glpi_explorer.git
 ```
 
 ### Lancement
