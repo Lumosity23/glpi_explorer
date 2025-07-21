@@ -2,6 +2,8 @@
 
 **Un outil CLI et une plateforme de visualisation pour explorer, auditer et gérer votre infrastructure réseau directement depuis GLPI.**
 
+![Ecran de demarage de GLPI-Explorer](/DOCS/Screenshot%20from%202025-07-21%2023-03-26.png)
+
 ---
 
 ## ✨ Vision
@@ -57,9 +59,7 @@ Que ce soit pour un diagnostic rapide, un audit de conformité, ou la conception
 ```bash
 # Lister les 5 premiers ordinateurs
 (glpi-explorer)> list pc
-
-# Lister tous les switchs
-(glpi-explorer)> ls sw -na 
+ 
 ```
 
 ### Obtenir les détails d'un équipement
@@ -84,7 +84,7 @@ Que ce soit pour un diagnostic rapide, un audit de conformité, ou la conception
 
 L'objectif à long terme est d'intégrer un éditeur visuel accessible via la commande `map --serve`. Cette interface permettra de visualiser, de modifier et de construire la topologie réseau de manière intuitive.
 
-*(Ici, vous pourrez insérer une des images générées par DeepSeek)*
+
 ![Maquette de l'interface network-map](/DOCS/Screenshot%20from%202025-07-21%2022-49-19.png)
 
 ---
