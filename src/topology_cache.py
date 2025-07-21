@@ -404,26 +404,41 @@ class TopologyCache:
         progress.advance(main_task_id)
 
     def save_to_disk(self):
-        """Sauvegarde l'état actuel du cache dans un fichier pickle."""
+        """Sauvegarde uniquement les données de topologie, pas l'état de la session."""
+        data_to_save = {
+            'computers': self.computers,
+            'network_equipments': self.network_equipments,
+            'passive_devices': self.passive_devices,
+            'cables': self.cables,
+            'sockets': self.sockets,
+            'network_ports': self.network_ports
+        }
         try:
             cache_dir = os.path.dirname(self.cache_file)
             if not os.path.exists(cache_dir):
                 os.makedirs(cache_dir)
             with open(self.cache_file, 'wb') as f:
-                pickle.dump(self, f)
-            # self.console.print("[dim]Cache sauvegardé sur le disque.[/dim]")
+                pickle.dump(data_to_save, f)
         except Exception as e:
-            # self.console.print(f"[red]Erreur lors de la sauvegarde du cache : {e}[/red]")
             pass
 
     @classmethod
-    def load_from_disk(cls, cache_file):
-        """Charge une instance de TopologyCache depuis un fichier pickle."""
+    def load_from_disk(cls, cache_file, api_client, console):
+        """Charge les données depuis le disque et retourne une NOUVELLE instance de cache."""
         if os.path.exists(cache_file):
             try:
                 with open(cache_file, 'rb') as f:
-                    return pickle.load(f)
+                    saved_data = pickle.load(f)
+                
+                new_cache = cls(api_client, cache_file=cache_file)
+                new_cache.console = console
+                new_cache.computers = saved_data.get('computers', {})
+                new_cache.network_equipments = saved_data.get('network_equipments', {})
+                new_cache.passive_devices = saved_data.get('passive_devices', {})
+                new_cache.cables = saved_data.get('cables', {})
+                new_cache.sockets = saved_data.get('sockets', {})
+                new_cache.network_ports = saved_data.get('network_ports', {})
+                return new_cache
             except Exception:
-                # Si le fichier est corrompu, on retourne None
                 return None
         return None

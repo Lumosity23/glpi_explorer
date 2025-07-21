@@ -26,7 +26,7 @@ class GLPIExplorerShell:
 
     def _get_logo_text(self):
         logo = """
-         ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
+        ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
         ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
         ██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝ ██████╔╝██║     ██║   ██║██████╔╝█████╗  ██████╔╝
         ██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗ ██╔═══╝ ██║     ██║   ██║██╔══██╗██╔══╝  ██╔══██╗
@@ -123,7 +123,7 @@ class GLPIExplorerShell:
             status_text = Text.from_markup("[cyan]Vérification du cache local...[/cyan]", justify="center")
             display_group.renderables[1] = Align.center(status_text)
             live.update(panel)
-            self.cache = TopologyCache.load_from_disk(cache_path)
+            self.cache = TopologyCache.load_from_disk(cache_path, self.api_client, self.console)
 
             if self.cache:
                 status_text = Text.from_markup("[green]Cache local chargé avec succès.[/green]", justify="center")
