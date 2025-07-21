@@ -16,8 +16,6 @@ class RefreshCommand(BaseCommand):
     def execute(self, args):
         shell = self.shared_state.get('shell')
         if shell:
-            change_count = self.cache.refresh_from_api(self.console)
-            self.shared_state['change_count'] = change_count
-            self.console.print(Panel(f"[bold green]Le cache a été mis à jour avec succès depuis GLPI.[/bold green]\n{change_count} changements détectés.", title="[green]Rafraîchissement Terminé[/green]"))
+            shell.perform_full_refresh(is_manual_refresh=True)
         else:
             self.console.print("[red]Erreur: Impossible d'accéder au shell pour le rafraîchissement.[/red]")
