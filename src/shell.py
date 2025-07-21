@@ -72,21 +72,31 @@ class GLPIExplorerShell:
         required_keys = ["url", "app_token", "user_token"]
         return all(key in config and config[key] for key in required_keys)
 
-    def perform_full_refresh(self):
-        """Effectue un rechargement complet du cache depuis l'API avec l'UI."""
+    def perform_full_refresh(self, is_manual_refresh=False):
         logo_text = self._get_logo_text()
         status_text = Text("", justify="center")
         display_group = Group(logo_text, Align.center(status_text))
         panel = Panel(display_group, title="Bienvenue dans GLPI Explorer", subtitle="v0.1")
 
         with Live(panel, console=self.console, transient=True) as live:
-            status_text = Text.from_markup("[yellow]Lancement du rafraîchissement...[/yellow]", justify="center")
-            display_group.renderables[1] = Align.center(status_text)
-            live.update(panel)
+            old_data = self.cache.get_all_data_copy()
             
-            change_count = self.cache.load_from_api(self.console, live, panel, display_group)
+            # Recharger le cache depuis l'API
+            # La méthode load_from_api doit maintenant accepter les arguments de Live
+            self.cache.load_from_api(self.console, live, panel, display_group) 
+            
+            num_changes = self.cache.compare_and_log_changes(old_data)
+            self.shared_state['change_count'] += num_changes
+            
+            # SAUVEGARDE CRUCIALE DU NOUVEAU CACHE SUR LE DISQUE
             self.cache.save_to_disk()
-            self.shared_state['change_count'] = change_count
+            
+            if is_manual_refresh:
+                # Mettre à jour le message dans le Live display
+                final_message = f"[bold green]Rafraîchissement terminé. {num_changes} changement(s) détecté(s).[/bold green]"
+                status_text = Text.from_markup(final_message, justify="center")
+                display_group.renderables[1] = Align.center(status_text)
+                live.update(panel)
 
     def run(self):
         config_manager = ConfigManager()

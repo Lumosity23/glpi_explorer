@@ -12,36 +12,32 @@ class ChangesCommand(BaseCommand):
     def execute(self, args):
         changelog = self.cache.changelog
         if not changelog:
-            self.console.print(Panel("Aucun changement détecté...", title="[blue]Information[/blue]"))
+            self.console.print(Panel("Aucun changement détecté depuis le dernier rafraîchissement.", title="[blue]Information[/blue]"))
             return
 
         table = Table(title="Changements Détectés", expand=True)
-        table.add_column("Action")
+        table.add_column("Action", style="yellow")
         table.add_column("Type")
         table.add_column("ID")
         table.add_column("Nom")
+        table.add_column("Date Modif. (GLPI)", style="dim") # NOUVELLE COLONNE
         table.add_column("Détails de la Modification")
 
         for change in changelog:
             details_str = ""
             if change['action'] == 'MODIFICATION':
                 changes = change.get('changes', {})
-                details_parts = []
-                for field, values in changes.items():
-                    details_parts.append(f"{field}: [red]{values['from']}[/red] -> [green]{values['to']}[/green]")
+                changes.pop('date_mod', None) # Ne pas afficher date_mod dans les détails
+                details_parts = [f"{field}: [red]{values['from']}[/red] -> [green]{values['to']}[/green]" for field, values in changes.items()]
                 details_str = "\n".join(details_parts)
 
             table.add_row(
-                change['action'],
-                change['type'],
-                str(change['id']),
-                change['name'],
-                details_str
+                change['action'], change['type'], str(change['id']),
+                change['name'], change.get('date_mod_glpi', 'N/A'), details_str
             )
         
         self.console.print(table)
         
-        # Vider le journal après affichage
         self.cache.changelog.clear()
         self.shared_state['change_count'] = 0
-        self.console.print(Panel("Journal des changements effacé.", title="[dim]Nettoyage[/dim]"))
+        self.console.print(Panel("Journal des changements effacé.", title="[dim]Nettoyage[/dim]", border_style="dim"))

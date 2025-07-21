@@ -1,3 +1,4 @@
+from datetime import datetime
 import pickle
 import types
 from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
@@ -110,11 +111,9 @@ class TopologyCache:
         if manage_live:
             live.stop()
 
-    def refresh_from_api(self, console, live=None, panel=None, display_group=None):
-        """Met à jour le cache depuis l'API et détecte les changements."""
-        
-        # --- ÉTAPE 1: Sauvegarder l'état actuel ---
-        old_data = {
+    def get_all_data_copy(self):
+        """Retourne une copie des dictionnaires de données principaux."""
+        return {
             'Computer': {k: v for k, v in self.computers.items()},
             'NetworkEquipment': {k: v for k, v in self.network_equipments.items()},
             'PassiveDCEquipment': {k: v for k, v in self.passive_devices.items()},
@@ -122,23 +121,16 @@ class TopologyCache:
             'Glpi\\Socket': {k: v for k, v in self.sockets.items()},
             'NetworkPort': {k: v for k, v in self.network_ports.items()},
         }
-        
-        # --- ÉTAPE 2: Recharger le cache ---
-        # Cette partie est maintenant dans une méthode de chargement qui vide puis remplit
-        self.load_from_api(console, live, panel, display_group)
 
-        # --- ÉTAPE 3: Comparer l'ancien et le nouvel état ---
-        self.changelog = [] # Réinitialiser le journal des changements
-        new_data = {
-            'Computer': self.computers,
-            'NetworkEquipment': self.network_equipments,
-            'PassiveDCEquipment': self.passive_devices,
-            'Cable': self.cables,
-            'Glpi\\Socket': self.sockets,
-            'NetworkPort': self.network_ports,
-        }
+    def compare_and_log_changes(self, old_data):
+        """Compare l'état actuel avec un état précédent et met à jour le changelog."""
+        self.changelog = [] # Réinitialiser à chaque refresh
+        new_data = self.get_all_data_copy()
 
-        for itemtype, old_items_dict in old_data.items():
+        all_item_types = set(old_data.keys()) | set(new_data.keys())
+
+        for itemtype in all_item_types:
+            old_items_dict = old_data.get(itemtype, {})
             new_items_dict = new_data.get(itemtype, {})
             
             old_ids = set(old_items_dict.keys())
@@ -146,46 +138,40 @@ class TopologyCache:
 
             # Détecter les suppressions
             for removed_id in old_ids - new_ids:
+                item = old_items_dict[removed_id]
                 self.changelog.append({
                     'action': 'SUPPRESSION',
-                    'type': itemtype,
-                    'id': removed_id,
-                    'name': getattr(old_items_dict[removed_id], 'name', 'N/A')
+                    'type': itemtype, 'id': removed_id,
+                    'name': getattr(item, 'name', 'N/A'),
+                    'date_mod_glpi': getattr(item, 'date_mod', 'N/A')
                 })
 
             # Détecter les ajouts et les modifications
-            for added_id in new_ids:
-                if added_id not in old_ids:
-                    # C'est un ajout
+            for item_id in new_ids:
+                new_item = new_items_dict[item_id]
+                if item_id not in old_ids:
                     self.changelog.append({
                         'action': 'AJOUT',
-                        'type': itemtype,
-                        'id': added_id,
-                        'name': getattr(new_items_dict[added_id], 'name', 'N/A')
+                        'type': itemtype, 'id': item_id,
+                        'name': getattr(new_item, 'name', 'N/A'),
+                        'date_mod_glpi': getattr(new_item, 'date_mod', 'N/A')
                     })
                 else:
-                    # C'est un objet existant, vérifier s'il a été modifié
-                    old_item = old_items_dict[added_id]
-                    new_item = new_items_dict[added_id]
+                    old_item = old_items_dict[item_id]
                     if getattr(old_item, 'date_mod', None) != getattr(new_item, 'date_mod', None):
-                        # --- DÉBUT DE LA MODIFICATION ---
                         changed_fields = {}
-                        # Comparer les attributs simples pour trouver les différences
                         for key, old_value in vars(old_item).items():
                             new_value = getattr(new_item, key, None)
-                            # On ne compare que les types simples pour l'instant
                             if isinstance(old_value, (str, int, float)) and old_value != new_value:
                                 changed_fields[key] = {'from': old_value, 'to': new_value}
                         
                         self.changelog.append({
                             'action': 'MODIFICATION',
-                            'type': itemtype,
-                            'id': added_id,
+                            'type': itemtype, 'id': item_id,
                             'name': getattr(new_item, 'name', 'N/A'),
-                            'changes': changed_fields # On stocke les changements détaillés
+                            'date_mod_glpi': getattr(new_item, 'date_mod', 'N/A'),
+                            'changes': changed_fields
                         })
-                        # --- FIN DE LA MODIFICATION ---
-        
         return len(self.changelog)
 
     def _build_topology_graph(self):

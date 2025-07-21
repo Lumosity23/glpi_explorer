@@ -1,3 +1,23 @@
+## [MISSION 18.9] - 2025-07-21
+
+### feat(cache): Persistance du cache post-refresh et horodatage des changements
+
+- La commande `refresh` déclenche maintenant une sauvegarde du nouveau cache sur le disque, résolvant le bug de persistance des données.
+- Le journal des changements est enrichi pour stocker et afficher la date de modification (`date_mod`) de l'objet dans GLPI, fournissant un contexte temporel précis.
+- La commande `changes` a été mise à jour pour afficher cette nouvelle information dans une colonne dédiée.
+
+Ref: Mission 18.9
+
+## [MISSION 18.8] - 2025-07-21
+
+### feat(notifications): Amélioration des notifications de changement
+
+- **Prompt :** Le nombre de changements détectés est maintenant affiché directement dans le prompt (ex: `(glpi-explorer)|Δ3>`).
+- **Commande `changes` :** L'affichage de la commande `changes` a été amélioré pour montrer les détails des modifications (champ, ancienne valeur, nouvelle valeur).
+- **Cache :** Le `changelog` dans `TopologyCache` stocke maintenant des informations détaillées sur les champs modifiés.
+
+Ref: Mission 18.8
+
 ## [MISSION 18.6] - 2025-07-21
 
 ### feat(cache): Implémentation de la détection de changements et de la commande 'changes'
@@ -834,7 +854,7 @@ Ref: Mission 9.3
 
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
-- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
+- Le cache charge désormais les `Glpi\\Socket` en plus des autres équipements.
 - La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
 - La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
 - Ajout d'une logique de base pour la traversée des équipements passifs.
@@ -854,7 +874,7 @@ Intégration des `Sockets` physiques dans le cache de topologie pour corriger un
 
 - **`src/topology_cache.py`**:
     - Ajout d'un dictionnaire `self.sockets` pour stocker les `Sockets`.
-    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\Socket` depuis l'API.
+    - Implémentation d'une nouvelle méthode `_load_sockets` pour charger tous les objets `Glpi\\Socket` depuis l'API.
     - Refonte complète de la méthode `_link_topology` pour qu'elle connecte les `Sockets` entre eux en se basant sur les `sockets_id` des `Cables`.
     - Chaque `Socket` est maintenant lié à son équipement parent.
 
@@ -1038,7 +1058,7 @@ Refondre l'affichage de la commande `get` pour unifier les informations généra
 
 ### Justification Technique
 
-L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futurs.
+L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futures.
 
 ## [MISSION 5.3] - 2025-07-09 - par Manus
 
