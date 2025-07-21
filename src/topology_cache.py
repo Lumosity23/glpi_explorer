@@ -50,14 +50,6 @@ class TopologyCache:
         self.equipment_to_sockets_map.clear()
 
     def load_from_api(self, console, live=None, panel=None, display_group=None):
-        # Store old data for comparison
-        old_computers = self.computers.copy()
-        old_network_equipments = self.network_equipments.copy()
-        old_passive_devices = self.passive_devices.copy()
-        old_cables = self.cables.copy()
-        old_sockets = self.sockets.copy()
-        old_network_ports = self.network_ports.copy()
-
         # ÉTAPE 1: Vider l'état actuel
         self._clear_data()
 
@@ -117,15 +109,71 @@ class TopologyCache:
 
         if manage_live:
             live.stop()
+
+    def refresh_from_api(self, console, live=None, panel=None, display_group=None):
+        """Met à jour le cache depuis l'API et détecte les changements."""
         
-        # Compare old and new data to populate changelog
-        self.changelog = []
-        self._compare_data(old_computers, self.computers, 'Computer')
-        self._compare_data(old_network_equipments, self.network_equipments, 'NetworkEquipment')
-        self._compare_data(old_passive_devices, self.passive_devices, 'PassiveDCEquipment')
-        self._compare_data(old_cables, self.cables, 'Cable')
-        self._compare_data(old_sockets, self.sockets, 'Glpi\\Socket')
-        self._compare_data(old_network_ports, self.network_ports, 'NetworkPort')
+        # --- ÉTAPE 1: Sauvegarder l'état actuel ---
+        old_data = {
+            'Computer': {k: v for k, v in self.computers.items()},
+            'NetworkEquipment': {k: v for k, v in self.network_equipments.items()},
+            'PassiveDCEquipment': {k: v for k, v in self.passive_devices.items()},
+            'Cable': {k: v for k, v in self.cables.items()},
+            'Glpi\\Socket': {k: v for k, v in self.sockets.items()},
+            'NetworkPort': {k: v for k, v in self.network_ports.items()},
+        }
+        
+        # --- ÉTAPE 2: Recharger le cache ---
+        # Cette partie est maintenant dans une méthode de chargement qui vide puis remplit
+        self.load_from_api(console, live, panel, display_group)
+
+        # --- ÉTAPE 3: Comparer l'ancien et le nouvel état ---
+        self.changelog = [] # Réinitialiser le journal des changements
+        new_data = {
+            'Computer': self.computers,
+            'NetworkEquipment': self.network_equipments,
+            'PassiveDCEquipment': self.passive_devices,
+            'Cable': self.cables,
+            'Glpi\\Socket': self.sockets,
+            'NetworkPort': self.network_ports,
+        }
+
+        for itemtype, old_items_dict in old_data.items():
+            new_items_dict = new_data.get(itemtype, {})
+            
+            old_ids = set(old_items_dict.keys())
+            new_ids = set(new_items_dict.keys())
+
+            # Détecter les suppressions
+            for removed_id in old_ids - new_ids:
+                self.changelog.append({
+                    'action': 'SUPPRESSION',
+                    'type': itemtype,
+                    'id': removed_id,
+                    'name': getattr(old_items_dict[removed_id], 'name', 'N/A')
+                })
+
+            # Détecter les ajouts et les modifications
+            for added_id in new_ids:
+                if added_id not in old_ids:
+                    # C'est un ajout
+                    self.changelog.append({
+                        'action': 'AJOUT',
+                        'type': itemtype,
+                        'id': added_id,
+                        'name': getattr(new_items_dict[added_id], 'name', 'N/A')
+                    })
+                else:
+                    # C'est un objet existant, vérifier s'il a été modifié
+                    old_item = old_items_dict[added_id]
+                    new_item = new_items_dict[added_id]
+                    if getattr(old_item, 'date_mod', None) != getattr(new_item, 'date_mod', None):
+                        self.changelog.append({
+                            'action': 'MODIFICATION',
+                            'type': itemtype,
+                            'id': added_id,
+                            'name': getattr(new_item, 'name', 'N/A')
+                        })
         
         return len(self.changelog)
 
@@ -218,7 +266,10 @@ class TopologyCache:
 
     def _load_computers(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des ordinateurs...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('Computer', item_range="0-9999", only_id=True)
         if not id_list:
@@ -240,7 +291,10 @@ class TopologyCache:
 
     def _load_network_equipments(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des équipements réseau...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('NetworkEquipment', item_range="0-9999", only_id=True)
         if not id_list:
@@ -262,7 +316,10 @@ class TopologyCache:
 
     def _load_passive_devices(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des équipements passifs...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('PassiveDCEquipment', item_range="0-9999", only_id=True)
         if not id_list:
@@ -282,7 +339,10 @@ class TopologyCache:
 
     def _load_cables(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des câbles...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('Cable', item_range="0-9999", only_id=True)
         if not id_list:
@@ -302,7 +362,10 @@ class TopologyCache:
 
     def _load_sockets(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des sockets...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
         if not id_list:
@@ -322,7 +385,10 @@ class TopologyCache:
 
     def _load_network_ports(self, progress, main_task_id, live, panel, display_group):
         status_text = Text.from_markup("[cyan]Chargement des ports réseau...[/cyan]", justify="center")
-        display_group.renderables[1] = Align.center(status_text)
+        if len(display_group.renderables) > 1:
+            display_group.renderables[1] = Align.center(status_text)
+        else:
+            display_group.renderables.append(Align.center(status_text))
         live.update(panel)
         id_list = self.api_client.list_items('NetworkPort', item_range="0-9999", only_id=True)
         if not id_list:
@@ -352,32 +418,6 @@ class TopologyCache:
         except Exception as e:
             # self.console.print(f"[red]Erreur lors de la sauvegarde du cache : {e}[/red]")
             pass
-
-    def _compare_data(self, old_data, new_data, item_type):
-        old_ids = set(old_data.keys())
-        new_ids = set(new_data.keys())
-
-        added_ids = new_ids - old_ids
-        removed_ids = old_ids - new_ids
-
-        for item_id in added_ids:
-            item = new_data[item_id]
-            self.changelog.append({'action': 'AJOUT', 'type': item_type, 'id': item_id, 'name': getattr(item, 'name', 'N/A')})
-
-        for item_id in removed_ids:
-            item = old_data[item_id]
-            self.changelog.append({'action': 'SUPPRESSION', 'type': item_type, 'id': item_id, 'name': getattr(item, 'name', 'N/A')})
-
-        # For modified items, we would need to compare attributes, which is more complex.
-        # For now, we focus on additions and deletions as per the prompt.
-        # If needed, this section can be expanded to detect modifications.
-        # common_ids = old_ids.intersection(new_ids)
-        # for item_id in common_ids:
-        #     old_item = old_data[item_id]
-        #     new_item = new_data[item_id]
-        #     # Simple comparison for demonstration, can be expanded
-        #     if getattr(old_item, 'name', None) != getattr(new_item, 'name', None):
-        #         self.changelog.append({'action': 'MODIFICATION', 'type': item_type, 'id': item_id, 'name': getattr(new_item, 'name', 'N/A')})
 
     @classmethod
     def load_from_disk(cls, cache_file):

@@ -38,14 +38,14 @@ class CompareCommand(BaseCommand):
 
         # Render item 1 details
         display_object_1 = self._render_item_details_to_display_object(item1_details["details"], item1_details["glpi_itemtype"])
-        compare_table.add_row(Panel(display_object_1, title=f"[bold blue]{item1_details["canonical_item_name"]}[/bold blue]", box=box.MINIMAL))
+        compare_table.add_row(Panel(display_object_1, title=f"[bold blue]{item1_details['canonical_item_name']}[/bold blue]", box=box.MINIMAL))
 
         # Add a section separator
         compare_table.add_section()
 
         # Render item 2 details
         display_object_2 = self._render_item_details_to_display_object(item2_details["details"], item2_details["glpi_itemtype"])
-        compare_table.add_row(Panel(display_object_2, box=box.MINIMAL))
+        compare_table.add_row(Panel(display_object_2, title=f"[bold blue]{item2_details['canonical_item_name']}[/bold blue]", box=box.MINIMAL))
 
         self.console.print(Panel(compare_table, title="[bold cyan]Comparaison d'Équipements GLPI[/bold cyan]"))
 

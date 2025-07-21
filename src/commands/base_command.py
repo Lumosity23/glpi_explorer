@@ -114,7 +114,7 @@ class BaseCommand:
                 Panel(endpoints_table, title="[bold blue]Points de Connexion[/bold blue]", box=box.MINIMAL)
             )
         else:
-            table = Table(title=f"Détails de {getattr(details, "name", "N/A")}", expand=True)
+            table = Table(title=f"Détails de {getattr(details, 'name', 'N/A')}", expand=True)
             table.add_column("ID")
             table.add_column("Nom")
             table.add_column("Type")
