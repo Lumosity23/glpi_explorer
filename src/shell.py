@@ -62,7 +62,11 @@ class GLPIExplorerShell:
 
         try:
             from src.commands.help_command import HelpCommand
-            self.commands['help'] = HelpCommand(self.api_client, self.console, self.cache, self.shared_state, self.commands)
+            help_instance = HelpCommand(self.api_client, self.console, self.cache, self.shared_state, self.commands)
+            self.commands['help'] = help_instance
+            if hasattr(help_instance, 'aliases'):
+                for alias in help_instance.aliases:
+                    self.aliases[alias] = 'help'
         except Exception as e:
             self.console.print(Panel(f"Avertissement: Impossible de charger la commande 'help'. Erreur: {e}", title="[yellow]Chargement Commande[/yellow]"))
 

@@ -9,6 +9,12 @@ class ChangesCommand(BaseCommand):
         self.description = "Affiche les changements détectés lors du dernier rafraîchissement et les efface."
         self.aliases = ["c"]
 
+    def get_help_message(self):
+        return {
+            "description": "Affiche les changements détectés depuis le dernier rafraîchissement.",
+            "usage": "changes"
+        }
+
     def execute(self, args):
         changelog = self.cache.changelog
         if not changelog:

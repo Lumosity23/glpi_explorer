@@ -1,3 +1,13 @@
+## [MISSION 19.3] - 2025-07-21
+
+### fix(help): Correction de l'aide pour 'changes' et de l'alias pour 'help'
+
+- Ajout de la méthode `get_help_message` manquante à la commande `ChangesCommand`, ce qui résout l'erreur lors de l'appel à `help`.
+- Modification de la logique de chargement dans `shell.py` pour enregistrer correctement les alias de la commande `help` (comme 'h').
+- Le système d'aide est maintenant complet et toutes les commandes et alias sont fonctionnels.
+
+Ref: Mission 19.3
+
 ## [MISSION 19.2] - 2025-07-21
 
 ### feat(map): Implémentation de la commande 'map' interactive
@@ -75,7 +85,7 @@ Ref: Mission 18.4
 
 - Le `TopologyCache` peut maintenant être sauvegardé (`save_to_disk`) et rechargé (`load_from_disk`) en utilisant pickle.
 - L'application vérifie au démarrage s'il existe un fichier de cache valide.
-- Si oui, elle le charge, ce qui rend le démarrage quasi-instantané.
+- Si oui, elle le charge, ce qui rend le démarrage quasi-instantanné.
 - Si non (premier lancement ou cache corrompu), elle effectue le chargement complet depuis l'API et sauvegarde le nouveau cache sur le disque pour les utilisations futures.
 - Cette modification améliore drastiquement le temps de démarrage de l'application après le premier lancement.
 
@@ -1078,7 +1088,7 @@ Refondre l'affichage de la commande `get` pour unifier les informations généra
 
 ### Justification Technique
 
-L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futures.
+L'affichage précédent avec deux tables distinctes était moins efficace pour une consultation rapide. Le nouvel affichage unifié présente toutes les informations de manière hiérarchique et dense, ce qui rend l'inspection d'un équipement plus rapide et plus intuitive. La préparation pour l'affichage des connexions de câbles anticipe les besoins futurs.
 
 ## [MISSION 5.3] - 2025-07-09 - par Manus
 
