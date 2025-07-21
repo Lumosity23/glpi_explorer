@@ -1,3 +1,23 @@
+## [MISSION 19.2] - 2025-07-21
+
+### feat(map): Implémentation de la commande 'map' interactive
+
+- Création de la nouvelle commande `map` (alias `m`) pour explorer la topologie réseau de manière interactive à partir d'un équipement.
+- La commande permet de naviguer de port en port, affichant les détails de l'équipement actuel et les options de connexion.
+- Gère la recherche de l'équipement de départ et la navigation vers les équipements connectés via les ports et sockets.
+
+Ref: Mission 19.2
+
+## [MISSION 19.1] - 2025-07-21
+
+### fix(cache): Correction de la persistance du changelog
+
+- La logique de sauvegarde et de chargement du `TopologyCache` a été modifiée pour ne persister que les dictionnaires de données de topologie (ordinateurs, équipements réseau, etc.), et non l'état complet de l'objet.
+- Cela garantit que le `changelog` (journal des changements) est traité comme une information spécifique à la session et est réinitialisé à chaque démarrage de l'application, évitant ainsi la persistance indésirable des changements détectés lors des sessions précédentes.
+- Le chargement du cache depuis le disque crée désormais une nouvelle instance de `TopologyCache` et la peuple avec les données sauvegardées.
+
+Ref: Mission 19.1
+
 ## [MISSION 18.9] - 2025-07-21
 
 ### feat(cache): Persistance du cache post-refresh et horodatage des changements
