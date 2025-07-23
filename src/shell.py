@@ -31,19 +31,13 @@ class GLPIExplorerShell:
         self.is_running = False
 
     def _get_logo_text(self):
-        logo = """
-        
- ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗   
-██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝   
-██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝    
-██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗    
-   ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██╗
-    ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝
-                                                     
-
-        ------------- GLPI Explorer v0.1 -------------
-        Un outil CLI pour explorer et analyser une infrastructure réseau GLPI.
-        ------------- Développé par Timo -------------         
+        logo = """ 
+       ██████╗ ██╗     ██████╗ ██╗      ███████╗██╗  ██╗   
+      ██╔════╝ ██║     ██╔══██╗██║      ██╔════╝╚██╗██╔╝   
+    ██║  ███╗██║     ██████╔╝██║█████╗█████╗   ╚███╔╝    
+    ██║   ██║██║     ██╔═══╝ ██║╚════╝██╔══╝   ██╔██╗    
+        ╚██████╔╝███████╗██║     ██║      ███████╗██╔╝ ██╗██╗
+         ╚═════╝ ╚══════╝╚═╝     ╚═╝      ╚══════╝╚═╝  ╚═╝╚═╝      
         """
         return Text(logo, justify="center", style="bold blue")
 
@@ -139,6 +133,47 @@ class GLPIExplorerShell:
             if self.is_running:
                 with self.changelog_lock:
                     self.perform_full_refresh(is_manual=False)
+
+    def run_single_command(self, command):
+        config_manager = ConfigManager()
+        config = config_manager.load_config()
+
+        if not self._is_config_valid(config):
+            self.console.print(Panel("[bold blue]Configuration requise.[/bold blue]", expand=False))
+            config = config_manager.run_setup_interactive()
+            config_manager.save_config(config)
+
+        self.api_client = ApiClient(config)
+        if not self.api_client.connect():
+            self.console.print(Panel("[bold red]Échec de la connexion.[/bold red]", title="[red]Erreur[/red]"))
+            return
+
+        cache_path = Path.home() / ".cache" / "glpi-explorer" / "topology.pkl"
+        self.cache = TopologyCache.load_from_disk(cache_path, self.api_client, self.console)
+
+        if not self.cache:
+            self.console.print(Panel("[yellow]Cache non trouvé. Lancement du chargement initial...[/yellow]", title="[yellow]Avertissement[/yellow]"))
+            self.cache = TopologyCache(self.api_client, cache_path)
+            self.cache.load_from_api(self.console)
+            self.cache.save_to_disk()
+            self.console.print(Panel("[green]Chargement initial terminé.[/green]", title="[green]Succès[/green]"))
+
+        self._load_commands()
+
+        parts = command.split(maxsplit=1)
+        command_name = parts[0].lower()
+        args = parts[1] if len(parts) > 1 else ""
+
+        resolved_command_name = self.aliases.get(command_name, command_name)
+
+        self.shared_state['interactive'] = False
+        if resolved_command_name in self.commands:
+            self.commands[resolved_command_name].execute(args)
+        else:
+            self.console.print(Panel(f"[bold red]Commande inconnue:[/bold red] '{command_name}'.", title="[red]Erreur[/red]"))
+
+        if self.api_client:
+            self.api_client.close_session()
 
     def run(self):
         config_manager = ConfigManager()

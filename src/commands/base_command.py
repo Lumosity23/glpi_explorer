@@ -53,8 +53,8 @@ class BaseCommand:
     def get_help_message(self):
         raise NotImplementedError("Subclasses must provide a help message")
 
-    def _get_item_type(self, user_type_alias: str) -> str:
-        return self.TYPE_ALIASES.get(user_type_alias.lower(), user_type_alias)
+    def get_item_type_from_alias(self, alias: str) -> str:
+        return self.TYPE_ALIASES.get(alias.lower())
 
     def _display_error(self, message: str):
         self.console.print(Panel(Text(message, style="bold red"), title="[red]Erreur[/red]"))

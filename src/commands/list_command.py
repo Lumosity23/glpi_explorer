@@ -32,7 +32,7 @@ class ListCommand(BaseCommand):
             return
         
         user_type_alias = args.lower()
-        glpi_itemtype = self.TYPE_ALIASES.get(user_type_alias)
+        glpi_itemtype = self.get_item_type_from_alias(user_type_alias)
         if not glpi_itemtype:
             self.console.print(Panel(f"[bold red]Erreur:[/bold red] Type inconnu: \'{user_type_alias}\'", title="[red]Erreur[/red]"))
             return

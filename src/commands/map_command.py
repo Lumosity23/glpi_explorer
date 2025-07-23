@@ -58,65 +58,71 @@ class MapCommand(BaseCommand):
             return
 
         self.console.print(Panel(f"[bold green]Démarrage de l'exploration de la topologie à partir de:[/bold green] {start_item.name} ({start_item.itemtype})", title="[green]Exploration Topologique[/green]"))
-        self._interactive_map_session(start_item)
+        if self.shared_state.get('interactive', True):
+            self._interactive_map_session(start_item)
+        else:
+            self._display_map(start_item)
+
+    def _display_map(self, item):
+        self.console.print(Panel(f"[bold blue]Équipement Actuel:[/bold blue] {item.name} ({item.itemtype})", title="[blue]Navigation[/blue]"))
+        
+        ports = getattr(item, 'ports', [])
+        sockets = getattr(item, 'sockets', [])
+
+        if not ports and not sockets:
+            self.console.print(Panel("[bold yellow]Aucun port ou socket trouvé pour cet équipement.[/bold yellow]", title="[yellow]Information[/yellow]"))
+            return
+
+        table = Table(title="Ports et Sockets Disponibles", show_header=True, header_style="bold magenta")
+        table.add_column("Num", style="cyan", justify="right")
+        table.add_column("Type", style="green")
+        table.add_column("Nom", style="white")
+        table.add_column("Statut", style="yellow")
+        table.add_column("Connecté à", style="blue")
+
+        display_items = []
+        for p in ports:
+            display_items.append({'type': 'Port', 'obj': p})
+        for s in sockets:
+            display_items.append({'type': 'Socket', 'obj': s})
+        
+        for i, item_info in enumerate(display_items):
+            item_type = item_info['type']
+            item_obj = item_info['obj']
+            
+            status = "Libre"
+            connected_to = "N/A"
+
+            if item_type == 'Port':
+                if getattr(item_obj, 'socket', None):
+                    socket = item_obj.socket
+                    if getattr(socket, 'connection', None):
+                        status = "Connecté"
+                        conn_socket = socket.connection.get('to_socket')
+                        if conn_socket and getattr(conn_socket, 'parent', None):
+                            connected_to = f"{conn_socket.parent.name} (Port/Socket {getattr(conn_socket, 'name', conn_socket.id)})"
+            elif item_type == 'Socket':
+                if getattr(item_obj, 'connection', None):
+                    status = "Connecté"
+                    conn_socket = item_obj.connection.get('to_socket')
+                    if conn_socket and getattr(conn_socket, 'parent', None):
+                        connected_to = f"{conn_socket.parent.name} (Port/Socket {getattr(conn_socket, 'name', conn_socket.id)})"
+            
+            table.add_row(
+                str(i + 1),
+                item_type,
+                getattr(item_obj, 'name', str(getattr(item_obj, 'id', 'N/A'))),
+                status,
+                connected_to
+            )
+        
+        self.console.print(table)
 
     def _interactive_map_session(self, current_item):
         while True:
-            self.console.print(Panel(f"[bold blue]Équipement Actuel:[/bold blue] {current_item.name} ({current_item.itemtype})", title="[blue]Navigation[/blue]"))
-            
-            ports = getattr(current_item, 'ports', [])
-            sockets = getattr(current_item, 'sockets', [])
+            self._display_map(current_item)
 
-            if not ports and not sockets:
-                self.console.print(Panel("[bold yellow]Aucun port ou socket trouvé pour cet équipement.[/bold yellow]", title="[yellow]Information[/yellow]"))
-                break
-
-            table = Table(title="Ports et Sockets Disponibles", show_header=True, header_style="bold magenta")
-            table.add_column("Num", style="cyan", justify="right")
-            table.add_column("Type", style="green")
-            table.add_column("Nom", style="white")
-            table.add_column("Statut", style="yellow")
-            table.add_column("Connecté à", style="blue")
-
-            display_items = []
-            for p in ports:
-                display_items.append({'type': 'Port', 'obj': p})
-            for s in sockets:
-                display_items.append({'type': 'Socket', 'obj': s})
-            
-            for i, item_info in enumerate(display_items):
-                item_type = item_info['type']
-                item_obj = item_info['obj']
-                
-                status = "Libre"
-                connected_to = "N/A"
-
-                if item_type == 'Port':
-                    if getattr(item_obj, 'socket', None):
-                        socket = item_obj.socket
-                        if getattr(socket, 'connection', None):
-                            status = "Connecté"
-                            conn_socket = socket.connection.get('to_socket')
-                            if conn_socket and getattr(conn_socket, 'parent', None):
-                                connected_to = f"{conn_socket.parent.name} (Port/Socket {getattr(conn_socket, 'name', conn_socket.id)})"
-                elif item_type == 'Socket':
-                    if getattr(item_obj, 'connection', None):
-                        status = "Connecté"
-                        conn_socket = item_obj.connection.get('to_socket')
-                        if conn_socket and getattr(conn_socket, 'parent', None):
-                            connected_to = f"{conn_socket.parent.name} (Port/Socket {getattr(conn_socket, 'name', conn_socket.id)})"
-                
-                table.add_row(
-                    str(i + 1),
-                    item_type,
-                    getattr(item_obj, 'name', str(getattr(item_obj, 'id', 'N/A'))),
-                    status,
-                    connected_to
-                )
-            
-            self.console.print(table)
-
-            choice = Prompt.ask("[bold green]Choisissez un numéro de port/socket pour explorer (ou 'q' pour quitter, 'b' pour revenir à l'équipement précédent)[/bold green]", choices=[str(i+1) for i in range(len(display_items))] + ['q', 'b'])
+            choice = Prompt.ask("[bold green]Choisissez un numéro de port/socket pour explorer (ou 'q' pour quitter, 'b' pour revenir à l'équipement précédent)[/bold green]", choices=[str(i+1) for i in range(len(getattr(current_item, 'ports', [])) + len(getattr(current_item, 'sockets', [])))] + ['q', 'b'])
 
             if choice.lower() == 'q':
                 self.console.print(Panel("[bold yellow]Fin de l'exploration.[/bold yellow]", title="[yellow]Session Terminée[/yellow]"))
@@ -127,6 +133,14 @@ class MapCommand(BaseCommand):
             else:
                 try:
                     idx = int(choice) - 1
+                    display_items = []
+                    ports = getattr(current_item, 'ports', [])
+                    sockets = getattr(current_item, 'sockets', [])
+                    for p in ports:
+                        display_items.append({'type': 'Port', 'obj': p})
+                    for s in sockets:
+                        display_items.append({'type': 'Socket', 'obj': s})
+
                     selected_item_info = display_items[idx]
                     selected_obj = selected_item_info['obj']
 
