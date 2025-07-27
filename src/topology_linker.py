@@ -5,8 +5,7 @@ class TopologyLinker:
         self.cache = cache
         # Créer des maps inversées une seule fois pour la performance
         
-        # L'ancienne méthode de fusion écrasait les équipements ayant le même ID.
-        # self._all_equipment = {**self.cache.computers, **self.cache.network_equipments, **self.cache.passive_devices}
+        self._all_equipment = {**self.cache.computers, **self.cache.network_equipments, **self.cache.passive_devices}
         
         # CORRECTION: Construire la map de noms en itérant sur toutes les sources pour éviter les écrasements.
         self._name_to_equip_map = {}
