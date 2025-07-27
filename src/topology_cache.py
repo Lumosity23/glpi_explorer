@@ -32,6 +32,8 @@ class TopologyCache:
             del state['api_client']
         if 'console' in state:
             del state['console']
+        if 'linker' in state:
+            del state['linker']
         return state
 
     def __setstate__(self, state):

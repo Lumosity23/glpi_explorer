@@ -68,7 +68,7 @@ class GLPIExplorerShell:
 
         try:
             from src.commands.help_command import HelpCommand
-            help_instance = HelpCommand(self.api_client, self.console, self.cache, self.shared_state, self.commands)
+            help_instance = HelpCommand(self.api_client, self.console, self.cache, self.shared_state, self.commands, self.cache.linker)
             self.commands['help'] = help_instance
             if hasattr(help_instance, 'aliases'):
                 for alias in help_instance.aliases:

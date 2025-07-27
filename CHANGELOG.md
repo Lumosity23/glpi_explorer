@@ -8,6 +8,13 @@
     - Il annonce la traversée et continue automatiquement la navigation jusqu'au prochain équipement ACTIF.
 - L'exploration est maintenant plus fluide et logique.
 
+### fix(commands): Correction de l'initialisation des commandes avec le linker
+
+- Mise à jour des constructeurs `__init__` de toutes les commandes (`changes`, `clear`, `compare`, `debug`, `get`, `help`, `list`, `map`, `refresh`, `testlink`, `trace`) pour accepter le nouvel argument `linker`.
+- Correction de la méthode `_load_commands` dans `shell.py` pour passer correctement l'instance du `linker` aux commandes lors de leur initialisation.
+- Correction de la méthode `__setstate__` dans `topology_cache.py` pour réinitialiser correctement l'attribut `linker` après la désérialisation du cache.
+- Ajout de l'import de `TopologyLinker` dans `topology_cache.py`.
+
 Ref: Mission 21.4
 
 ## [MISSION 21.3] - 2025-07-27
@@ -1419,7 +1426,7 @@ Refonte de la commande `get` pour exiger la spécification du type d'objet, simp
   - Ajout d'une validation pour s'assurer que deux arguments sont fournis, avec un message d'erreur clair si ce n'est pas le cas.
   - Implémentation d'un dictionnaire `TYPE_ALIASES` pour mapper les alias utilisateur (`computer`, `pc`, etc.) aux `itemtypes` GLPI réels (`Computer`, `NetworkEquipment`, etc.).
   - Validation de l'alias de type fourni par l'utilisateur.
-  - Adaptation de l'appel à `api_client.search_item` pour utiliser le `itemtype` et le `item_name` extraits.
+  - Adaption de l'appel à `api_client.search_item` pour utiliser le `itemtype` et le `item_name` extraits.
 
 - **`src/api_client.py`**:
   - Renommage de la méthode `search_item_by_name` en `search_item`.
