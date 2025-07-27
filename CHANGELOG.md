@@ -744,11 +744,11 @@ Correction de la liaison Équipement-NetworkPort par nom.
 
 - **`src/topology_cache.py`**:
     - La méthode `_link_topology` gère maintenant le cas où l'API GLPI retourne le nom de l'équipement parent au lieu de son ID dans le champ `items_id` d'un objet NetworkPort.
-    - La liaison se fait désormais soit par ID numérique, soit par nom, ce qui résout la cause racine de l'échec de la commande `trace`.
+    - La liaison se fait désormais soit par ID numérique, soit par nom, ce qui résout la cause racine de la commande `trace`.
 
 ### Justification Technique
 
-Cette modification finale corrige la cause racine de l'échec de la commande `trace`.
+Cette modification finale corrige la cause racine de la commande `trace`.
 
 ## [MISSION 11.1] - 2025-07-15 - par Gemini
 
@@ -780,7 +780,7 @@ Refonte finale de la liaison de topologie hiérarchique.
 
 ### Justification Technique
 
-Cette modification finale corrige la cause racine de l'échec de la commande `trace`.
+Cette modification finale corrige la cause racine de la commande `trace`.
 
 ## [MISSION 10.6] - 2025-07-15 - par Gemini
 
@@ -795,7 +795,7 @@ Refonte finale de la liaison de topologie.
 
 ### Justification Technique
 
-Cette modification corrige la cause racine de l'échec de `trace` en assurant que chaque équipement est correctement associé à ses ports et sockets.
+Cette modification corrige la cause racine de `trace` en assurant que chaque équipement est correctement associé à ses ports et sockets.
 
 ## [MISSION 10.5] - 2025-07-15 - par Gemini
 
@@ -860,7 +860,7 @@ Correction de la Liaison Parent-Socket via le Nom
 
 ### Justification Technique
 
-Cette modification résout la cause racine de l'échec de la commande `trace`.
+Cette modification résout la cause racine de la commande `trace`.
 
 ## [MISSION 10.1] - 2025-07-14 - par Gemini
 
@@ -878,7 +878,7 @@ Refonte Finale du Cache avec Liaison Complète via NetworkPorts
 
 ### Justification Technique
 
-Cette modification résout la cause racine de l'échec de `trace` en établissant un modèle de données correct et complet.
+Cette modification résout la cause racine de `trace` en établissant un modèle de données correct et complet.
 
 BREAKING CHANGE: La structure du cache et la navigation sont entièrement nouvelles.
 
@@ -896,7 +896,7 @@ Correction Finale de la Liaison Parent-Socket
 
 ### Justification Technique
 
-Cette modification résout la cause racine de l'échec de la commande `trace` qui ne parvenait pas à trouver les sockets d'un équipement de départ.
+Cette modification résout la cause racine de la commande `trace` qui ne parvenait pas à trouver les sockets d'un équipement de départ.
 
 ## [MISSION 9.8] - 2025-07-14 - par Gemini
 ### Objectif de la Phase
@@ -916,7 +916,7 @@ fix(cache): Correction majeure de la liaison de topologie via les links
 
 - La méthode `_link_topology` n'utilise plus les champs `sockets_id_endpoint_*` qui contenaient des noms au lieu d'ID.
 - La logique parcourt maintenant le tableau `links` de chaque objet Câble pour extraire les ID de socket corrects depuis les `href`.
-- Cette correction résout la cause racine de l'échec de la commande `trace`.
+- Cette correction résout la cause racine de la commande `trace`.
 - Ajout d'un attribut `itemtype` à chaque objet du cache pour faciliter la navigation.
 
 Ref: Mission 9.7
@@ -956,7 +956,7 @@ Ref: Mission 9.3
 
 refactor(cache)!: Refonte de la topologie basée sur les Sockets
 
-- Le cache charge désormais les `Glpi\\Socket` en plus des autres équipements.
+- Le cache charge désormais les `Glpi\Socket` en plus des autres équipements.
 - La méthode `_link_topology` a été entièrement réécrite pour lier les `sockets` entre eux via les câbles, et pour lier chaque socket à son équipement parent.
 - La commande `trace` a été refondue pour naviguer sur ce nouveau modèle de données, en suivant les connexions de socket en socket.
 - Ajout d'une logique de base pour la traversée des équipements passifs.
@@ -1479,7 +1479,7 @@ Refactoring du client API pour une gestion correcte et encapsulée du `session_t
 
 - **`src/api_client.py`**: Le fichier a été entièrement réécrit pour avoir une seule classe `ApiClient`. La classe gère maintenant son propre `session_token` en interne après une connexion réussie. Les méthodes n'ont plus besoin de recevoir le token en paramètre.
 
-- **`src/shell.py`**: Mise à jour de toute la logique pour s'adapter au nouveau `ApiClient`. Le `session_token` n'est plus géré par le shell mais par le client API. La logique de connexion, de test, d'appel des commandes et de déconnexion a été simplifiée.
+- **`src/shell.py`**: Mise à jour de toute la logique pour s'adapter au nouveau `ApiClient`. Le `session_token` n'est plus géré par le shell but par le client API. La logique de connexion, de test, d'appel des commandes et de déconnexion a été simplifiée.
 
 ## [MISSION 1.2] - 2024-07-05 - par Manus
 
