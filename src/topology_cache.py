@@ -169,7 +169,7 @@ class TopologyCache:
         return len(new_changes)
 
     def _build_topology_graph(self):
-        # Dictionnaires globaux pour un accès rapide
+        # Dictionnaire global de tous les équipements
         all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
         name_to_id_map = {getattr(eq, 'name', '').lower(): eq_id for eq_id, eq in all_equipment.items()}
 
@@ -186,11 +186,18 @@ class TopologyCache:
             socket.connection = None
 
         # --- ÉTAPE 2: LIAISON PARENT-PORT & PARENT-SOCKET (LA CLÉ) ---
-        # On parcourt les ports, qui connaissent leur parent ID
+        # On parcourt les ports, qui connaissent leur parent ID (parfois par nom)
         for port in self.network_ports.values():
-            parent_id = getattr(port, 'items_id', None)
-            if parent_id in all_equipment:
-                parent_equip = all_equipment[parent_id]
+            parent_id_or_name = getattr(port, 'items_id', None)
+            parent_equip = None
+            if isinstance(parent_id_or_name, int):
+                parent_equip = all_equipment.get(parent_id_or_name)
+            elif isinstance(parent_id_or_name, str):
+                parent_id = name_to_id_map.get(parent_id_or_name.lower())
+                if parent_id:
+                    parent_equip = all_equipment.get(parent_id)
+            
+            if parent_equip:
                 port.parent = parent_equip
                 parent_equip.ports.append(port)
 
@@ -234,26 +241,7 @@ class TopologyCache:
     def get_sockets_for_item_id(self, item_id):
         return self.equipment_to_sockets_map.get(item_id, [])
 
-    def _process_and_flatten_ports(self, item_details):
-        flattened_ports = []
-        raw_ports_data = item_details.get("_networkports", {})
-        
-        if not raw_ports_data:
-            return flattened_ports
-
-        for port_type, port_list in raw_ports_data.items():
-            for port_data in port_list:
-                # Créer un objet simple avec uniquement les clés qui nous intéressent
-                port_obj = types.SimpleNamespace(
-                    id=port_data.get('id'),
-                    name=port_data.get('name'),
-                    mac=port_data.get('mac'),
-                    speed=port_data.get('speed')
-                    # Ajoutez d'autres clés si nécessaire
-                )
-                flattened_ports.append(port_obj)
-        
-        return flattened_ports
+    
 
     def _load_computers(self, progress, main_task_id, live, panel, display_group):
         use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
@@ -278,7 +266,6 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'Computer'
                     item_obj = types.SimpleNamespace(**details)
-                    item_obj.ports = self._process_and_flatten_ports(details)
                     self.computers[item_id] = item_obj
             if use_live_display: progress.advance(sub_task)
         if use_live_display:
@@ -308,7 +295,6 @@ class TopologyCache:
                 if details:
                     details['itemtype'] = 'NetworkEquipment'
                     item_obj = types.SimpleNamespace(**details)
-                    item_obj.ports = self._process_and_flatten_ports(details)
                     self.network_equipments[item_id] = item_obj
             if use_live_display: progress.advance(sub_task)
         if use_live_display:

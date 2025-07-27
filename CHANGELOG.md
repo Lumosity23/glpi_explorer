@@ -1,3 +1,13 @@
+## [MISSION 21.1] - 2025-07-27
+
+### fix(cache): Correction de la liaison Équipement-Port manquante
+
+- La méthode `_build_topology_graph` a été corrigée pour s'assurer que chaque objet équipement possède un attribut `ports` contenant la liste de ses NetworkPorts.
+- Cette liaison était manquante, ce qui expliquait pourquoi la commande `get` n'affichait pas les ports, alors qu'ils étaient présents dans le cache.
+- La commande `get` est maintenant capable d'afficher les détails complets des équipements à ports multiples comme les switchs.
+
+Ref: Mission 21.1
+
 ## [MISSION 19.5] - 2025-07-21
 
 ### fix(cache): Synchronisation thread-safe du journal des changements
