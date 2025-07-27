@@ -1,3 +1,25 @@
+## [MISSION 21.4] - 2025-07-27
+
+### feat(map): Ajout de la traversée automatique des équipements passifs
+
+- L'affichage de la commande `map` ne montre désormais que les Sockets physiques, pour plus de clarté.
+- La boucle de navigation a été rendue "intelligente" :
+    - Si un utilisateur choisit un port qui mène à un équipement passif (Patch Panel, etc.), l'outil ne s'arrête plus.
+    - Il annonce la traversée et continue automatiquement la navigation jusqu'au prochain équipement ACTIF.
+- L'exploration est maintenant plus fluide et logique.
+
+Ref: Mission 21.4
+
+## [MISSION 21.3] - 2025-07-27
+
+### fix(cache): Unification de la logique de recherche de parent
+
+- Création d'une méthode d'aide `_find_parent_in_cache` pour trouver un équipement parent par ID ou par Nom, gérant les incohérences de l'API GLPI.
+- La méthode `_build_topology_graph` a été refondue pour utiliser cette fonction unifiée pour toutes les liaisons de parenté (Équipement-Port et Équipement-Socket).
+- Cette correction résout la cause racine des attributs `ports` vides sur les équipements.
+
+Ref: Mission 21.3
+
 ## [MISSION 21.1] - 2025-07-27
 
 ### fix(cache): Correction de la liaison Équipement-Port manquante

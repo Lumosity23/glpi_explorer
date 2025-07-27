@@ -8,6 +8,7 @@ from rich.text import Text
 from rich.live import Live
 from rich.align import Align
 import os
+from src.topology_linker import TopologyLinker
 
 class TopologyCache:
     def __init__(self, api_client, cache_file='topology_cache.pkl'):
@@ -39,6 +40,9 @@ class TopologyCache:
         # Rajouter les attributs non sérialisés.
         self.api_client = None
         self.console = None
+        # Re-créer le linker après la désérialisation
+        from src.topology_linker import TopologyLinker
+        self.linker = TopologyLinker(self)
 
     def _clear_data(self):
         """Vide tous les dictionnaires de données du cache."""
@@ -168,12 +172,21 @@ class TopologyCache:
         self.changelog.extend(new_changes)
         return len(new_changes)
 
-    def _build_topology_graph(self):
-        # Dictionnaire global de tous les équipements
-        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
-        name_to_id_map = {getattr(eq, 'name', '').lower(): eq_id for eq_id, eq in all_equipment.items()}
+    def _find_parent_in_cache(self, id_or_name, all_equipment, name_to_id_map):
+        """Méthode d'aide unifiée pour trouver un parent."""
+        if isinstance(id_or_name, int):
+            return all_equipment.get(id_or_name)
+        elif isinstance(id_or_name, str):
+            parent_id = name_to_id_map.get(id_or_name.lower().strip())
+            if parent_id:
+                return all_equipment.get(parent_id)
+        return None
 
-        # --- Étape 1: Initialisation des attributs sur tous les objets ---
+    def _build_topology_graph(self):
+        all_equipment = {**self.computers, **self.network_equipments, **self.passive_devices}
+        name_to_id_map = {getattr(eq, 'name', '').lower().strip(): eq_id for eq_id, eq in all_equipment.items()}
+
+        # --- Initialisation ---
         for equip in all_equipment.values():
             equip.ports = []
             equip.sockets = []
@@ -185,42 +198,22 @@ class TopologyCache:
             socket.port = None
             socket.connection = None
 
-        # --- ÉTAPE 2: LIAISON PARENT-PORT & PARENT-SOCKET (LA CLÉ) ---
-        # On parcourt les ports, qui connaissent leur parent ID (parfois par nom)
+        # --- ÉTAPE 1: Lier Ports et Sockets à leurs Parents ---
         for port in self.network_ports.values():
             parent_id_or_name = getattr(port, 'items_id', None)
-            parent_equip = None
-            if isinstance(parent_id_or_name, int):
-                parent_equip = all_equipment.get(parent_id_or_name)
-            elif isinstance(parent_id_or_name, str):
-                parent_id = name_to_id_map.get(parent_id_or_name.lower())
-                if parent_id:
-                    parent_equip = all_equipment.get(parent_id)
-            
-            if parent_equip:
-                port.parent = parent_equip
-                parent_equip.ports.append(port)
+            parent = self._find_parent_in_cache(parent_id_or_name, all_equipment, name_to_id_map)
+            if parent:
+                port.parent = parent
+                parent.ports.append(port)
 
-        # On parcourt les sockets, qui connaissent aussi leur parent ID (parfois par nom)
         for socket in self.sockets.values():
             parent_id_or_name = getattr(socket, 'items_id', None)
-            parent_equip = None
-            if isinstance(parent_id_or_name, int):
-                parent_equip = all_equipment.get(parent_id_or_name)
-            elif isinstance(parent_id_or_name, str):
-                parent_id = name_to_id_map.get(parent_id_or_name.lower())
-                if parent_id:
-                    parent_equip = all_equipment.get(parent_id)
-
-            if parent_equip:
-                socket.parent = parent_equip
-                parent_equip.sockets.append(socket)
-                # On remplit notre index ici
-                if parent_equip.id not in self.equipment_to_sockets_map:
-                    self.equipment_to_sockets_map[parent_equip.id] = []
-                self.equipment_to_sockets_map[parent_equip.id].append(socket.id)
-
-        # --- ÉTAPE 3: LIAISON PORT-SOCKET ---
+            parent = self._find_parent_in_cache(parent_id_or_name, all_equipment, name_to_id_map)
+            if parent:
+                socket.parent = parent
+                parent.sockets.append(socket)
+        
+        # --- ÉTAPE 2: Lier Sockets et NetworkPorts ---
         for socket in self.sockets.values():
             port_id = getattr(socket, 'networkports_id', None)
             if port_id and port_id in self.network_ports:
@@ -228,9 +221,15 @@ class TopologyCache:
                 socket.port = network_port
                 network_port.socket = socket
 
-        # --- ÉTAPE 4: LIAISON CÂBLE-SOCKET ---
+        # --- ÉTAPE 3: Lier Sockets via Câbles ---
         for cable in self.cables.values():
-            socket_ids = [int(link['href'].split('/')[-1]) for link in getattr(cable, 'links', []) if link.get('rel') == 'Glpi\\Socket']
+            socket_ids = []
+            for link in getattr(cable, 'links', []):
+                if link.get('rel') == 'Glpi\\Socket':
+                    try:
+                        socket_ids.append(int(link['href'].split('/')[-1]))
+                    except (ValueError, IndexError):
+                        pass # Ignore malformed links
             if len(socket_ids) == 2:
                 socket_a = self.sockets.get(socket_ids[0])
                 socket_b = self.sockets.get(socket_ids[1])
@@ -448,6 +447,10 @@ class TopologyCache:
                 new_cache.cables = saved_data.get('cables', {})
                 new_cache.sockets = saved_data.get('sockets', {})
                 new_cache.network_ports = saved_data.get('network_ports', {})
+                
+                # Rebuild the topology graph after loading from disk
+                new_cache._build_topology_graph()
+                new_cache.linker = TopologyLinker(new_cache)
                 return new_cache
             except Exception:
                 return None

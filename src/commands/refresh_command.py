@@ -3,7 +3,7 @@ from .base_command import BaseCommand
 from rich.panel import Panel
 
 class RefreshCommand(BaseCommand):
-    def __init__(self, api_client, console, cache, shared_state=None):
+    def __init__(self, api_client, console, cache, shared_state=None, linker=None):
         super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["r"]
 

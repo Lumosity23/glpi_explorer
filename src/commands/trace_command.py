@@ -5,7 +5,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 class TraceCommand(BaseCommand):
-    def __init__(self, api_client, console, cache, shared_state):
+    def __init__(self, api_client, console, cache, shared_state, linker=None):
         super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["tr"]
         self.last_trace_result = []

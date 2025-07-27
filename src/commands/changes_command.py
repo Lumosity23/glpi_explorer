@@ -3,7 +3,7 @@ from rich.table import Table
 from rich.panel import Panel
 
 class ChangesCommand(BaseCommand):
-    def __init__(self, api_client, console, cache, shared_state):
+    def __init__(self, api_client, console, cache, shared_state, linker=None):
         super().__init__(api_client, console, cache, shared_state)
         self.name = "changes"
         self.description = "Affiche les changements détectés lors du dernier rafraîchissement et les efface."

@@ -58,7 +58,7 @@ class GLPIExplorerShell:
                     if command_name == 'help':
                         continue
 
-                    instance = command_class(self.api_client, self.console, self.cache, self.shared_state)
+                    instance = command_class(self.api_client, self.console, self.cache, self.shared_state, self.cache.linker)
                     self.commands[command_name] = instance
                     if hasattr(instance, 'aliases') and instance.aliases:
                         for alias in instance.aliases:

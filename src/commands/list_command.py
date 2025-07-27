@@ -5,7 +5,7 @@ from rich import box
 from src.api_client import ApiClient
 
 class ListCommand(BaseCommand):
-    def __init__(self, api_client, console, cache, shared_state):
+    def __init__(self, api_client, console, cache, shared_state, linker=None):
         super().__init__(api_client, console, cache, shared_state)
         self.aliases = ["ls"]
 
