@@ -1,3 +1,14 @@
+## [MISSION 21.7] - 2025-07-28
+
+### feat(map): Amélioration de la traversée des équipements passifs et affichage
+
+- La commande `map` traverse désormais automatiquement les équipements passifs (Patch Panels, Walloutlets) sans les proposer comme choix à l'utilisateur.
+- Chaque traversée d'équipement passif est signalée par une notification individuelle, incluant le nom de l'équipement et le port atteint.
+- Les équipements passifs traversés sont correctement ajoutés à l'historique de navigation pour le récapitulatif final.
+- L'affichage des ports des équipements passifs a été amélioré : si un port se termine par "OUT", il est affiché comme "OUT /IN" pour clarifier sa nature bidirectionnelle dans le contexte de la commande `map`.
+
+Ref: Mission 21.7
+
 ## [MISSION 21.6] - 2025-07-28
 
 ### refactor(linker): Séparation des logiques de trace ascendante et descendante

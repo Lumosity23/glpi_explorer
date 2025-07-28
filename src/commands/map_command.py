@@ -81,6 +81,11 @@ class MapCommand(BaseCommand):
         for i, socket in enumerate(sockets):
             status = "[red]Libre[/red]"
             connected_to = "N/A"
+            socket_name_display = getattr(socket, 'name', str(getattr(socket, 'id', 'N/A')))
+
+            # Add /IN to OUT ports on passive devices for display
+            if getattr(item, 'itemtype', None) == 'PassiveDCEquipment' and socket_name_display.upper().endswith("OUT"):
+                socket_name_display += " /IN"
 
             # On utilise le linker pour trouver la connexion
             connection = self.linker.find_connection_for_socket(socket)
@@ -95,7 +100,7 @@ class MapCommand(BaseCommand):
 
             table.add_row(
                 str(i + 1),
-                getattr(socket, 'name', str(getattr(socket, 'id', 'N/A'))),
+                socket_name_display,
                 status,
                 connected_to
             )
@@ -146,19 +151,25 @@ class MapCommand(BaseCommand):
                     
                     # --- DÉBUT DE LA NOUVELLE LOGIQUE DE "SOUS-TRACE" ---
                     
-                    # On stocke le point de départ de ce saut
-                    path_step = {'from_device': current_item, 'from_socket': selected_socket}
-                    
-                    current_hop_socket = selected_socket
-                    traversed_passives = [] # Pour stocker les passifs traversés
+                    # Initial step from the user's selection
+                    initial_from_device = current_item
+                    initial_from_socket = selected_socket
 
-                    # Boucle de traversée
+                    current_socket_for_hop = selected_socket # This socket is the starting point of the current connection search
+
                     while True:
-                        connection = self.linker.find_connection_for_socket(current_hop_socket)
+                        connection = self.linker.find_connection_for_socket(current_socket_for_hop)
                         if not connection:
-                            self.console.print(Panel(f"[yellow]Le port {current_hop_socket.name} n'est pas connecté. Fin du saut.[/yellow]"))
-                            current_item = getattr(current_hop_socket, 'parent', current_item)
-                            break 
+                            self.console.print(Panel(f"[yellow]Le port {current_socket_for_hop.name} n'est pas connecté. Fin du saut.[/yellow]"))
+                            # If this is the first connection attempt and it's not connected,
+                            # the current_item remains the initial_from_device.
+                            # If it's a subsequent hop (after a passive traversal),
+                            # current_item should be the parent of current_socket_for_hop.
+                            if not path_taken: # No hops recorded yet, meaning the initial selected socket is disconnected
+                                current_item = initial_from_device
+                            else: # Hops were recorded, so current_socket_for_hop is an intermediate socket
+                                current_item = self.linker.find_parent_for_socket(current_socket_for_hop)
+                            break
 
                         next_socket = connection['other_socket']
                         next_parent = self.linker.find_parent_for_socket(next_socket)
@@ -166,32 +177,35 @@ class MapCommand(BaseCommand):
                         if not next_parent:
                             self.console.print(Panel("Arrêt : Parent du socket introuvable. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
                             return
-                        
+
+                        # Record this hop
+                        path_taken.append({
+                            'from_device': self.linker.find_parent_for_socket(current_socket_for_hop),
+                            'from_socket': current_socket_for_hop,
+                            'to_device': next_parent,
+                            'to_socket': next_socket
+                        })
+
                         if getattr(next_parent, 'itemtype', None) != 'PassiveDCEquipment':
-                            # On est arrivé sur un équipement actif ou un terminal, on s'arrête
-                            current_item = next_parent
-                            path_step['to_device'] = current_item
-                            path_step['to_socket'] = next_socket
-                            break 
-                        
-                        # C'est un passif, on le traverse
-                        traversed_passives.append(f"{next_parent.name} (Socket {next_socket.name})")
-                        exit_socket = self.linker.get_next_hop_for_map(next_socket).get('to_socket')
-                        
-                        if not exit_socket:
-                            self.console.print(Panel(f"Arrêt : impossible de trouver le port de sortie sur {next_parent.name}", title="[red]Erreur[/red]"))
-                            current_item = next_parent
+                            # We've reached an active device or a terminal, so we stop the automatic traversal.
+                            current_item = next_parent # This is the new item for the user to interact with
                             break
-                        
-                        current_hop_socket = exit_socket
-                    
-                    # Afficher les notifications de traversée
-                    if traversed_passives:
-                        path_str = " -> ".join(traversed_passives)
-                        self.console.print(Panel(f"Bypass automatique via : {path_str}", title="[dim]Traversée[/dim]"))
-                    
-                    # Mettre à jour l'historique pour le récapitulatif
-                    path_taken.append(path_step)
+                        else:
+                            # It's a passive device, continue traversing automatically
+                            self.console.print(Panel(f"[dim]Traversée automatique via {next_parent.name} (Port {next_socket.name})[/dim]", title="[dim]Traversée Passive[/dim]"))
+
+                            # Find the exit socket from the passive device
+                            hop_result = self.linker.get_next_hop_for_map(next_socket)
+                            exit_socket = hop_result.get('to_socket')
+
+                            if not exit_socket:
+                                self.console.print(Panel(f"Arrêt : impossible de trouver le port de sortie sur {next_parent.name}", title="[red]Erreur[/red]"))
+                                current_item = next_parent # Stay on the passive device if no exit socket
+                                break
+                            
+                            current_socket_for_hop = exit_socket # Continue the loop from the exit socket of the passive device
+
+                    # After the while loop, current_item holds the final active device reached.
                     navigation_history.append(current_item)
                     # --- FIN DE LA NOUVELLE LOGIQUE ---
 
@@ -220,11 +234,5 @@ class MapCommand(BaseCommand):
         
         self.console.print(summary_table)
 
-    def _get_passive_in_socket(self, passive_equip, out_socket):
-        # Cherche le port IN correspondant à un port OUT
-        if " OUT" not in out_socket.name.upper():
-            return None
-        in_name = out_socket.name.upper().replace(" OUT", " IN")
-        sockets_on_passive = getattr(passive_equip, 'sockets', [])
-        return next((s for s in sockets_on_passive if s.name.upper() == in_name), None)
+    
 
