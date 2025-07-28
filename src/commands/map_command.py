@@ -138,35 +138,65 @@ class MapCommand(BaseCommand):
                     self.console.print("[yellow]Vous êtes déjà au point de départ.[/yellow]")
                 continue
 
-            try:
-                idx = int(choice) - 1
-                sockets = getattr(current_item, 'sockets', [])
-                selected_socket = sockets[idx]
-                
-                connection = self.linker.find_connection_for_socket(selected_socket)
-                if not connection:
-                    self.console.print(Panel("[yellow]Ce socket n'est pas connecté.[/yellow]"))
-                    continue
+            else:
+                try:
+                    idx = int(choice) - 1
+                    sockets = getattr(current_item, 'sockets', [])
+                    selected_socket = sockets[idx]
+                    
+                    # --- DÉBUT DE LA NOUVELLE LOGIQUE DE "SOUS-TRACE" ---
+                    
+                    # On stocke le point de départ de ce saut
+                    path_step = {'from_device': current_item, 'from_socket': selected_socket}
+                    
+                    current_hop_socket = selected_socket
+                    traversed_passives = [] # Pour stocker les passifs traversés
 
-                next_socket = connection['other_socket']
-                parent = self.linker.find_parent_for_socket(next_socket)
-                if not parent:
-                    self.console.print(Panel("Arrêt : Parent du socket introuvable. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
-                    return
+                    # Boucle de traversée
+                    while True:
+                        connection = self.linker.find_connection_for_socket(current_hop_socket)
+                        if not connection:
+                            self.console.print(Panel(f"[yellow]Le port {current_hop_socket.name} n'est pas connecté. Fin du saut.[/yellow]"))
+                            current_item = getattr(current_hop_socket, 'parent', current_item)
+                            break 
 
-                # Enregistrer le saut
-                path_taken.append({
-                    "from_device": current_item,
-                    "from_socket": selected_socket,
-                    "to_device": parent,
-                    "to_socket": next_socket
-                })
-                
-                current_item = parent
-                navigation_history.append(current_item)
+                        next_socket = connection['other_socket']
+                        next_parent = self.linker.find_parent_for_socket(next_socket)
 
-            except (ValueError, IndexError):
-                self.console.print(Panel("[bold red]Erreur:[/bold red] Choix invalide.", title="[red]Erreur[/red]"))
+                        if not next_parent:
+                            self.console.print(Panel("Arrêt : Parent du socket introuvable. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
+                            return
+                        
+                        if getattr(next_parent, 'itemtype', None) != 'PassiveDCEquipment':
+                            # On est arrivé sur un équipement actif ou un terminal, on s'arrête
+                            current_item = next_parent
+                            path_step['to_device'] = current_item
+                            path_step['to_socket'] = next_socket
+                            break 
+                        
+                        # C'est un passif, on le traverse
+                        traversed_passives.append(f"{next_parent.name} (Socket {next_socket.name})")
+                        exit_socket = self.linker.get_next_hop_for_map(next_socket).get('to_socket')
+                        
+                        if not exit_socket:
+                            self.console.print(Panel(f"Arrêt : impossible de trouver le port de sortie sur {next_parent.name}", title="[red]Erreur[/red]"))
+                            current_item = next_parent
+                            break
+                        
+                        current_hop_socket = exit_socket
+                    
+                    # Afficher les notifications de traversée
+                    if traversed_passives:
+                        path_str = " -> ".join(traversed_passives)
+                        self.console.print(Panel(f"Bypass automatique via : {path_str}", title="[dim]Traversée[/dim]"))
+                    
+                    # Mettre à jour l'historique pour le récapitulatif
+                    path_taken.append(path_step)
+                    navigation_history.append(current_item)
+                    # --- FIN DE LA NOUVELLE LOGIQUE ---
+
+                except (ValueError, IndexError):
+                    self.console.print(Panel("[bold red]Erreur:[/bold red] Choix invalide.", title="[red]Erreur[/red]"))
 
     def _display_path_summary(self, path):
         if not path:

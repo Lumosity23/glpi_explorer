@@ -61,7 +61,7 @@ class TraceCommand(BaseCommand):
             loc_style = location_colors[location_name]
             
             # --- Logique d'affichage ---
-            hop = linker.get_next_hop(current_socket)
+            hop = linker.get_next_hop_for_trace(current_socket)
             
             via_info = ""
             next_socket_for_loop_check = None

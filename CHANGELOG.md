@@ -1,5 +1,16 @@
 ## [MISSION 21.6] - 2025-07-28
 
+### refactor(linker): Séparation des logiques de trace ascendante et descendante
+
+- Création de méthodes de traversée distinctes pour les équipements passifs (`_get_passive_up_hop` et `_get_passive_down_hop`).
+- La méthode `get_next_hop` a été dupliquée en `get_next_hop_for_trace` (ascendant) et `get_next_hop_for_map` (descendant) pour isoler les logiques.
+- La commande `trace` utilise maintenant la logique ascendante, et `map` utilisera la logique descendante.
+- Cette refonte architecturale empêche les régressions et clarifie l'intention de chaque commande.
+
+Ref: Mission 21.6
+
+## [MISSION 21.6] - 2025-07-28
+
 ### feat(map): Finalisation de la commande map avec historique et récapitulatif
 
 - Correction du bug d'affichage "N/A" pour les connexions du Hub.
