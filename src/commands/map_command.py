@@ -79,15 +79,20 @@ class MapCommand(BaseCommand):
         table.add_column("Connecté à", style="blue")
         
         for i, socket in enumerate(sockets):
-            status = "Libre"
+            status = "[red]Libre[/red]"
             connected_to = "N/A"
 
-            if getattr(socket, 'connection', None):
-                status = "Connecté"
-                conn_socket = socket.connection.get('to_socket')
-                if conn_socket and getattr(conn_socket, 'parent', None):
-                    connected_to = f"{conn_socket.parent.name} (Socket {getattr(conn_socket, 'name', conn_socket.id)})"
-            
+            # On utilise le linker pour trouver la connexion
+            connection = self.linker.find_connection_for_socket(socket)
+            if connection:
+                status = "[green]Connecté[/green]"
+                other_socket = connection['other_socket']
+                other_parent = self.linker.find_parent_for_socket(other_socket)
+                if other_parent:
+                    connected_to = f"{other_parent.name} (Socket {other_socket.name})"
+                else:
+                    connected_to = f"Socket {other_socket.name} (Parent Inconnu)"
+
             table.add_row(
                 str(i + 1),
                 getattr(socket, 'name', str(getattr(socket, 'id', 'N/A'))),
@@ -97,71 +102,93 @@ class MapCommand(BaseCommand):
         
         self.console.print(table)
 
-    def _interactive_map_session(self, current_item):
-        while True:
-            # Traverse automatiquement les équipements passifs
-            while getattr(current_item, 'itemtype', None) == 'PassiveDCEquipment':
-                sockets = getattr(current_item, 'sockets', [])
-                out_socket = next(
-                    (s for s in sockets if " OUT" in getattr(s, 'name', '').upper() and self.linker.find_connection_for_socket(s)),
-                    None
-                )
-                if not out_socket:
-                    self.console.print(Panel(f"[yellow]Aucun port OUT connecté trouvé sur {current_item.name}.[/yellow]", title="[yellow]Fin de Ligne[/yellow]"))
-                    return
-                in_socket = self._get_passive_in_socket(current_item, out_socket)
-                if not in_socket:
-                    self.console.print(Panel(f"[yellow]Impossible de trouver le port IN correspondant à {out_socket.name} sur {current_item.name}.[/yellow]", title="[yellow]Fin de Ligne[/yellow]"))
-                    return
-                connection = self.linker.find_connection_for_socket(in_socket)
-                if not connection:
-                    self.console.print(Panel(f"[yellow]Le port IN {in_socket.name} n'est pas connecté.[/yellow]", title="[yellow]Fin de Ligne[/yellow]"))
-                    return
-                next_socket = connection['other_socket']
-                parent = self.linker.find_parent_for_socket(next_socket)
-                if not parent or parent == current_item:
-                    self.console.print(Panel("Arrêt : Parent du socket introuvable ou boucle détectée. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
-                    return
-                # Affiche la notification unique, maintenant correcte
-                next_device_name = getattr(parent, 'name', '???')
-                self.console.print(
-                    Panel(
-                        f"[cyan]Traverse automatiquement :[/cyan] [bold]{current_item.name}[/bold] via [bold]{out_socket.name}/IN[/bold] → [green]{next_device_name}[/green]",
-                        title="[cyan]Passif traversé[/cyan]"
-                    )
-                )
-                current_item = parent
+    def _interactive_map_session(self, start_item):
+        # --- NOUVEAU : Initialisation de l'historique ---
+        navigation_history = [start_item] # Pile pour le 'back'
+        path_taken = [] # Liste pour le récapitulatif final
 
-            # Ici, current_item est actif : on affiche et on demande à l'utilisateur
+        current_item = start_item
+        while True:
             self._display_map(current_item)
-            sockets = getattr(current_item, 'sockets', [])
-            choice = Prompt.ask(
-                "[bold green]Choisissez un numéro de socket pour explorer (ou 'q' pour quitter, 'b' pour revenir à l'équipement précédent)[/bold green]",
-                choices=[str(i+1) for i in range(len(sockets))] + ['q', 'b']
-            )
+
+            # --- NOUVEAU : Logique de fin de trace ---
+            if getattr(current_item, 'itemtype', None) == 'Computer':
+                self.console.print(Panel("[bold green]Destination terminale atteinte.[/bold green]\nOptions: 'b' pour revenir, 'q' pour quitter et voir le récapitulatif.", title="[green]Fin de Trace[/green]"))
+                choices = ['b', 'q']
+            else:
+                sockets = getattr(current_item, 'sockets', [])
+                choices = [str(i+1) for i in range(len(sockets))] + ['b', 'q']
+
+            choice = Prompt.ask("Votre choix", choices=choices, show_choices=False)
 
             if choice.lower() == 'q':
-                self.console.print(Panel("[bold yellow]Fin de l'exploration.[/bold yellow]", title="[yellow]Session Terminée[/yellow]"))
+                self.console.print(Panel("Fin de l'exploration.", title="Session Terminée"))
+                # --- NOUVEAU : Afficher le récapitulatif ---
+                self._display_path_summary(path_taken)
                 break
+            
             elif choice.lower() == 'b':
-                self.console.print(Panel("[bold yellow]Fonctionnalité 'retour' non implémentée pour l'instant.[/bold yellow]", title="[yellow]Information[/yellow]"))
+                # --- NOUVEAU : Gérer le retour ---
+                if len(navigation_history) > 1:
+                    navigation_history.pop() # Enlever l'actuel
+                    current_item = navigation_history[-1] # Revenir au précédent
+                    if path_taken:
+                        path_taken.pop() # Enlever le dernier saut du récap
+                else:
+                    self.console.print("[yellow]Vous êtes déjà au point de départ.[/yellow]")
                 continue
-            else:
-                try:
-                    idx = int(choice) - 1
-                    selected_socket = sockets[idx]
-                    connection = self.linker.find_connection_for_socket(selected_socket)
-                    if not connection:
-                        self.console.print(Panel("[yellow]Ce socket n'est pas connecté.[/yellow]"))
-                        continue
-                    next_socket = connection['other_socket']
-                    parent = self.linker.find_parent_for_socket(next_socket)
-                    if not parent:
-                        self.console.print(Panel("Arrêt : Parent du socket introuvable. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
-                        return
-                    current_item = parent
-                except (ValueError, IndexError):
-                    self.console.print(Panel("[bold red]Erreur:[/bold red] Choix invalide. Veuillez entrer un numéro valide, 'q' ou 'b'.", title="[red]Erreur[/red]"))
+
+            try:
+                idx = int(choice) - 1
+                sockets = getattr(current_item, 'sockets', [])
+                selected_socket = sockets[idx]
+                
+                connection = self.linker.find_connection_for_socket(selected_socket)
+                if not connection:
+                    self.console.print(Panel("[yellow]Ce socket n'est pas connecté.[/yellow]"))
+                    continue
+
+                next_socket = connection['other_socket']
+                parent = self.linker.find_parent_for_socket(next_socket)
+                if not parent:
+                    self.console.print(Panel("Arrêt : Parent du socket introuvable. La trace s'est perdue.", title="[red]Erreur de Topologie[/red]"))
+                    return
+
+                # Enregistrer le saut
+                path_taken.append({
+                    "from_device": current_item,
+                    "from_socket": selected_socket,
+                    "to_device": parent,
+                    "to_socket": next_socket
+                })
+                
+                current_item = parent
+                navigation_history.append(current_item)
+
+            except (ValueError, IndexError):
+                self.console.print(Panel("[bold red]Erreur:[/bold red] Choix invalide.", title="[red]Erreur[/red]"))
+
+    def _display_path_summary(self, path):
+        if not path:
+            return
+        
+        summary_table = Table(title="Récapitulatif de votre Exploration")
+        summary_table.add_column("Étape", style="cyan")
+        summary_table.add_column("Équipement de Départ", style="green")
+        summary_table.add_column("Port de Sortie", style="yellow")
+        summary_table.add_column("Équipement d'Arrivée", style="green")
+        summary_table.add_column("Port d'Entrée", style="yellow")
+        
+        for i, step in enumerate(path):
+            summary_table.add_row(
+                str(i + 1),
+                f"{step['from_device'].name} ({step['from_device'].itemtype})",
+                step['from_socket'].name,
+                f"{step['to_device'].name} ({step['to_device'].itemtype})",
+                step['to_socket'].name
+            )
+        
+        self.console.print(summary_table)
 
     def _get_passive_in_socket(self, passive_equip, out_socket):
         # Cherche le port IN correspondant à un port OUT

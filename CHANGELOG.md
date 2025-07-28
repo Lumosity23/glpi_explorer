@@ -1,3 +1,25 @@
+## [MISSION 21.6] - 2025-07-28
+
+### feat(map): Finalisation de la commande map avec historique et récapitulatif
+
+- Correction du bug d'affichage "N/A" pour les connexions du Hub.
+- La commande `map` s'arrête maintenant proprement lorsqu'elle atteint un équipement terminal (PC).
+- Implémentation de la commande 'b' (back) pour revenir à l'étape de navigation précédente.
+- Ajout d'un récapitulatif de la navigation qui s'affiche lorsque l'utilisateur quitte la session 'map'.
+
+Ref: Mission 21.6
+
+## [MISSION 21.5] - 2025-07-27
+
+### feat(map): Ajout du bypass automatique des équipements passifs
+
+- La commande `map` a été rendue "intelligente".
+- Lorsqu'une navigation mène à un équipement passif (Patch Panel, Walloutlet), l'outil ne s'arrête plus.
+- Il annonce la traversée et continue automatiquement le chemin jusqu'au prochain équipement actif.
+- L'exploration est maintenant beaucoup plus fluide et ne s'arrête que sur les points de décision réels (Switchs, Hubs, Terminaux).
+
+Ref: Mission 21.5
+
 ## [MISSION 21.4] - 2025-07-27
 
 ### feat(map): Ajout de la traversée automatique des équipements passifs
@@ -1128,7 +1150,8 @@ Rendre l'affichage de la commande `get` adaptatif. Il doit choisir la meilleure 
 
 ### Modifications Apportées
 
-- **`src/commands/get_command.py`**: La méthode `execute` a été refondue pour inclure une logique conditionnelle. Si un équipement a 5 ports ou moins, il conserve l'affichage en une seule table horizontale. S'il a plus de 5 ports, il bascule vers un affichage en deux tables : une pour les informations générales et une seconde dédiée aux ports réseau.
+- **`src/commands/get_command.py`**:
+    - La méthode `execute` a été refondue pour inclure une logique conditionnelle. Si un équipement a 5 ports ou moins, il conserve l'affichage en une seule table horizontale. S'il a plus de 5 ports, il bascule vers un affichage en deux tables : une pour les informations générales et une seconde dédiée aux ports réseau.
 
 ### Justification Technique
 
@@ -1142,7 +1165,8 @@ Refondre radicalement l'affichage de la commande `get` pour présenter les infor
 
 ### Modifications Apportées
 
-- **`src/commands/get_command.py`**: La méthode `execute` a été modifiée pour utiliser une table `rich` horizontale. Les colonnes de base (ID, Nom, Type, etc.) sont créées, puis des colonnes supplémentaires sont ajoutées dynamiquement pour chaque port réseau trouvé. Une seule ligne de données est ensuite ajoutée à la table, contenant toutes les informations de l'équipement.
+- **`src/commands/get_command.py`**:
+    - La méthode `execute` a été modifiée pour utiliser une table `rich` horizontale. Les colonnes de base (ID, Nom, Type, etc.) sont créées, puis des colonnes supplémentaires sont ajoutées dynamiquement pour chaque port réseau trouvé. Une seule ligne de données est ensuite ajoutée à la table, contenant toutes les informations de l'équipement.
 
 ### Justification Technique
 
@@ -1156,7 +1180,8 @@ Refondre l'affichage de la commande `get` pour unifier les informations généra
 
 ### Modifications Apportées
 
-- **`src/commands/get_command.py`**: La méthode `execute` a été entièrement réécrite pour utiliser une seule table `rich` sans en-têtes, fonctionnant comme une table clé-valeur. Les informations générales (ID, Nom, Type, etc.) sont affichées en premier. Une section sépare ensuite les détails des ports réseau, qui sont ajoutés à la même table, avec le nom du port en gras et ses détails (Type, MAC, Vitesse) formatés dans la colonne valeur. Une mention "Connecté à" a été ajoutée en préparation des futures missions.
+- **`src/commands/get_command.py`**:
+    - La méthode `execute` a été entièrement réécrite pour utiliser une seule table `rich` sans en-têtes, fonctionnant comme une table clé-valeur. Les informations générales (ID, Nom, Type, etc.) sont affichées en premier. Une section sépare ensuite les détails des ports réseau, qui sont ajoutés à la même table, avec le nom du port en gras et ses détails (Type, MAC, Vitesse) formatés dans la colonne valeur. Une mention "Connecté à" a été ajoutée en préparation des futures missions.
 
 ### Justification Technique
 
@@ -1170,7 +1195,8 @@ Intégration de l'affichage des ports réseau dans la commande `get` en se basan
 
 ### Modifications Apportées
 
-- **`src/commands/get_command.py`**: Remplacement de l'ancienne logique de recherche de ports (`_devices`) par une nouvelle implémentation qui parcourt la structure de données `_networkports`. La nouvelle table affiche le nom, le type, l'adresse MAC et la vitesse de chaque port trouvé, quel que soit son type (Ethernet, Wifi, etc.).
+- **`src/commands/get_command.py`**:
+    - Remplacement de l'ancienne logique de recherche de ports (`_devices`) par une nouvelle implémentation qui parcourt la structure de données `_networkports`. La nouvelle table affiche le nom, le type, l'adresse MAC et la vitesse de chaque port trouvé, quel que soit son type (Ethernet, Wifi, etc.).
 
 ### Justification Technique
 
@@ -1184,9 +1210,11 @@ Refonte stratégique de la recherche basée sur le listing pour abandonner l'end
 
 ### Modifications Apportées
 
-- **`src/api_client.py`**: Suppression complète de la méthode `search_item` qui utilisait l'endpoint `/search` peu fiable.
+- **`src/api_client.py`**:
+    - Suppression complète de la méthode `search_item` qui utilisait l'endpoint `/search` peu fiable.
 
-- **`src/commands/get_command.py`**: Refonte complète de la logique de recherche pour utiliser la méthode `list_items` avec un range étendu (0-9999), puis filtrer côté client pour trouver l'objet par son nom. Ajout d'une comparaison insensible à la casse pour améliorer l'expérience utilisateur.
+- **`src/commands/get_command.py`**:
+    - Refonte complète de la logique de recherche pour utiliser la méthode `list_items` avec un range étendu (0-9999), puis filtrer côté client pour trouver l'objet par son nom. Ajout d'une comparaison insensible à la casse pour améliorer l'expérience utilisateur.
 
 ### Justification Technique
 
@@ -1200,7 +1228,8 @@ Correction finale des imports dans la classe de base `src/commands/base_command.
 
 ### Modifications Apportées
 
-- **`src/commands/base_command.py`**: Correction des chemins d'importation pour `ApiClient` et `ConfigManager`.
+- **`src/commands/base_command.py`**:
+    - Correction des chemins d'importation pour `ApiClient` et `ConfigManager`.
 
 
 ## [MISSION 4.6] - 2025-07-08 - par Manus
@@ -1211,7 +1240,8 @@ Modification de la logique de chargement des commandes dans `src/shell.py` pour 
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Le bloc `try...except` de la méthode `_load_commands` a été modifié pour imprimer une traceback détaillée (`console.print_exception(show_locals=True)`) et un `Panel` informatif en cas d'échec de chargement d'une commande.
+- **`src/shell.py`**:
+    - Le bloc `try...except` de la méthode `_load_commands` a été modifié pour imprimer une traceback détaillée (`console.print_exception(show_locals=True)`) et un `Panel` informatif en cas d'échec de chargement d'une commande.
 
 ## [MISSION 4.5] - 2025-07-08 - par Manus
 
@@ -1221,13 +1251,17 @@ Correction systématique des chemins d'importation à travers le projet pour ré
 
 ### Modifications Apportées
 
-- **`src/commands/get_command.py`**: Correction de l'import de `ApiClient`.
+- **`src/commands/get_command.py`**:
+    - Correction de l'import de `ApiClient`.
 
-- **`src/commands/list_command.py`**: Correction de l'import de `ApiClient`.
+- **`src/commands/list_command.py`**:
+    - Correction de l'import de `ApiClient`.
 
-- **`src/commands/debug_command.py`**: Correction de l'import de `ApiClient`.
+- **`src/commands/debug_command.py`**:
+    - Correction de l'import de `ApiClient`.
 
-- **`api_diagnostic.py`**: Correction des imports de `ApiClient` et `ConfigManager`.
+- **`api_diagnostic.py`**:
+    - Correction des imports de `ApiClient` et `ConfigManager`.
 
 ## [MISSION 4.4] - 2025-07-08 - par Manus
 
@@ -1237,7 +1271,8 @@ Création d'un script de diagnostic API autonome pour analyser les réponses bru
 
 ### Modifications Apportées
 
-- **`api_diagnostic.py`**: Nouveau script Python autonome à la racine du projet. Il permet de rechercher un objet par type et nom, d'afficher les requêtes de recherche et de récupération de détails, et de présenter la réponse JSON brute des détails.
+- **`api_diagnostic.py`**:
+    - Nouveau script Python autonome à la racine du projet. Il permet de rechercher un objet par type et nom, d'afficher les requêtes de recherche et de récupération de détails, et de présenter la réponse JSON brute des détails.
 
 ## [MISSION 4.3] - 2025-07-08 - par Manus
 
@@ -1247,9 +1282,11 @@ Restauration des types d'objets et amélioration de l'affichage des résultats v
 
 ### Modifications Apportées
 
-- **`src/commands/base_command.py`**: Restauration complète du dictionnaire `TYPE_ALIASES` pour inclure tous les types d'objets interrogeables.
+- **`src/commands/base_command.py`**:
+    - Restauration complète du dictionnaire `TYPE_ALIASES` pour inclure tous les types d'objets interrogeables.
 
-- **`src/commands/list_command.py`**: Modification de l'affichage de la commande `list` pour présenter un message informatif et neutre (plutôt qu'une erreur) lorsque aucun objet n'est trouvé, en changeant le style du `Panel`.
+- **`src/commands/list_command.py`**:
+    - Modification de l'affichage de la commande `list` pour présenter un message informatif et neutre (plutôt qu'une erreur) lorsque aucun objet n'est trouvé, en changeant le style du `Panel`.
 
 ## [MISSION 4.2] - 2025-07-08 - par Manus
 
@@ -1259,11 +1296,14 @@ Correction des bugs post-refactoring et finalisation des alias.
 
 ### Modifications Apportées
 
-- **`src/commands/debug_command.py`**: Correction d'une erreur de syntaxe dans la f-string.
+- **`src/commands/debug_command.py`**:
+    - Correction d'une erreur de syntaxe dans la f-string.
 
-- **`src/commands/base_command.py`**: Mise à jour complète du dictionnaire `TYPE_ALIASES` pour inclure tous les types et alias spécifiés (`sw`, `pp`, `wo`, etc.).
+- **`src/commands/base_command.py`**:
+    - Mise à jour complète du dictionnaire `TYPE_ALIASES` pour inclure tous les types et alias spécifiés (`sw`, `pp`, `wo`, etc.).
 
-- **`src/api_client.py`**: Ajout du paramètre `expand_dropdowns=true` dans la méthode `get_item_details` pour forcer l'affichage des noms lisibles au lieu des ID numériques.
+- **`src/api_client.py`**:
+    - Ajout du paramètre `expand_dropdowns=true` dans la méthode `get_item_details` pour forcer l'affichage des noms lisibles au lieu des ID numériques.
 
 ## [MISSION 4.1] - 2025-07-08 - par Manus
 
@@ -1273,19 +1313,26 @@ Refactoring majeur de l'architecture des commandes pour améliorer la modularit�
 
 ### Modifications Apportées
 
-- **`src/commands/`**: Création d'un nouveau dossier pour les commandes dédiées.
+- **`src/commands/`**:
+    - Création d'un nouveau dossier pour les commandes dédiées.
 
-- **`src/commands/__init__.py`**: Fichier d'initialisation du module.
+- **`src/commands/__init__.py`**:
+    - Fichier d'initialisation du module.
 
-- **`src/commands/base_command.py`**: Introduction d'une classe de base abstraite pour toutes les commandes.
+- **`src/commands/base_command.py`**:
+    - Introduction d'une classe de base abstraite pour toutes les commandes.
 
-- **`src/commands/get_command.py`**: Extraction de la logique de la commande `get` dans son propre fichier.
+- **`src/commands/get_command.py`**:
+    - Extraction de la logique de la commande `get` dans son propre fichier.
 
-- **`src/commands/list_command.py`**: Extraction de la logique de la commande `list` dans son propre fichier.
+- **`src/commands/list_command.py`**:
+    - Extraction de la logique de la commande `list` dans son propre fichier.
 
-- **`src/commands/debug_command.py`**: Extraction de la logique de la commande `debug` dans son propre fichier.
+- **`src/commands/debug_command.py`**:
+    - Extraction de la logique de la commande `debug` dans son propre fichier.
 
-- **`src/shell.py`**: Simplification massive du fichier pour agir comme un dispatcheur dynamique des commandes, chargeant les commandes depuis le dossier `src/commands/`.
+- **`src/shell.py`**:
+    - Simplification massive du fichier pour agir comme un dispatcheur dynamique des commandes, chargeant les commandes depuis le dossier `src/commands/`.
 
 ## [MISSION 3.1] - 2025-07-08 - par Manus
 
@@ -1334,7 +1381,8 @@ Création d'un script de test API autonome pour diagnostiquer les problèmes de 
 
 ### Modifications Apportées
 
-- **`test_api.py`**: Nouveau script Python autonome pour tester la connexion à l'API GLPI, lister des itemtypes et rechercher des objets spécifiques. Le script utilise `rich` pour des logs clairs et ne nécessite aucune interaction utilisateur.
+- **`test_api.py`**:
+    - Nouveau script Python autonome pour tester la connexion à l'API GLPI, lister des itemtypes et rechercher des objets spécifiques. Le script utilise `rich` pour des logs clairs et ne nécessite aucune interaction utilisateur.
 
 ## [MISSION 2.6] - 2025-07-08 - par Manus
 
@@ -1370,9 +1418,11 @@ Amélioration du shell avec historique des commandes.
 
 ### Modifications Apportées
 
-- **`requirements.txt`**: Ajout de la dépendance `prompt-toolkit`.
+- **`requirements.txt`**:
+    - Ajout de la dépendance `prompt-toolkit`.
 
-- **`src/shell.py`**: Remplacement de `rich.console.Console.input()` par `prompt_toolkit.PromptSession` pour offrir un historique des commandes et une meilleure expérience d'édition.
+- **`src/shell.py`**:
+    - Remplacement de `rich.console.Console.input()` par `prompt_toolkit.PromptSession` pour offrir un historique des commandes et une meilleure expérience d'édition.
 
 ## [MISSION 2.3] - 2025-07-05 - par Manus
 
@@ -1382,7 +1432,8 @@ Correction de la logique d'analyse des arguments pour la commande `get` afin de 
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Refonte de la logique de parsing des arguments pour la commande `get`. Utilisation de `split(maxsplit=1)` pour extraire le type et le nom de l'objet, même si le nom contient des espaces. Ajout de validations pour les arguments manquants et les types d'objets inconnus.
+- **`src/shell.py`**:
+    - Refonte de la logique de parsing des arguments pour la commande `get`. Utilisation de `split(maxsplit=1)` pour extraire le type et le nom de l'objet, même si le nom contient des espaces. Ajout de validations pour les arguments manquants et les types d'objets inconnus.
 
 ## [MISSION 2.2.1] - 2025-07-05 - par Manus
 
@@ -1392,7 +1443,8 @@ Correction d'une `SyntaxError` dans `src/shell.py` due à un bloc `try...except`
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Restauration de la structure `try...except` correcte dans la méthode `run()` pour assurer la bonne exécution de l'application. Le bloc `except EOFError:` a été réaligné correctement avec le bloc `try`.
+- **`src/shell.py`**:
+    - Restauration de la structure `try...except` correcte dans la méthode `run()` pour assurer la bonne exécution de l'application. Le bloc `except EOFError:` a été réaligné correctement avec le bloc `try`.
 
 ## [MISSION 2.2] - 2025-07-05 - par Manus
 
@@ -1467,7 +1519,8 @@ Fiabiliser le chargement de la configuration pour gérer les fichiers corrompus 
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Refonte de la logique de démarrage. L'application ne vérifie plus seulement l'existence du fichier de configuration, mais aussi sa validité (présence et contenu des clés `url`, `app_token`, `user_token`). Si la configuration est invalide, l'assistant de configuration est automatiquement relancé. Ajout d'une méthode d'aide privée `_is_config_valid` pour encapsuler cette logique.
+- **`src/shell.py`**:
+    - Refonte de la logique de démarrage. L'application ne vérifie plus seulement l'existence du fichier de configuration, mais aussi sa validité (présence et contenu des clés `url`, `app_token`, `user_token`). Si la configuration est invalide, l'assistant de configuration est automatiquement relancé. Ajout d'une méthode d'aide privée `_is_config_valid` pour encapsuler cette logique.
 
 ## [MISSION 1.3] - 2024-07-05 - par Manus
 
@@ -1477,9 +1530,11 @@ Refactoring du client API pour une gestion correcte et encapsulée du `session_t
 
 ### Modifications Apportées
 
-- **`src/api_client.py`**: Le fichier a été entièrement réécrit pour avoir une seule classe `ApiClient`. La classe gère maintenant son propre `session_token` en interne après une connexion réussie. Les méthodes n'ont plus besoin de recevoir le token en paramètre.
+- **`src/api_client.py`**:
+    - Le fichier a été entièrement réécrit pour avoir une seule classe `ApiClient`. La classe gère maintenant son propre `session_token` en interne après une connexion réussie. Les méthodes n'ont plus besoin de recevoir le token en paramètre.
 
-- **`src/shell.py`**: Mise à jour de toute la logique pour s'adapter au nouveau `ApiClient`. Le `session_token` n'est plus géré par le shell but par le client API. La logique de connexion, de test, d'appel des commandes et de déconnexion a été simplifiée.
+- **`src/shell.py`**:
+    - Mise à jour de toute la logique pour s'adapter au nouveau `ApiClient`. Le `session_token` n'est plus géré par le shell but par le client API. La logique de connexion, de test, d'appel des commandes et de déconnexion a été simplifiée.
 
 ## [MISSION 1.2] - 2024-07-05 - par Manus
 
@@ -1489,9 +1544,11 @@ Fiabiliser le shell contre les entrées vides et améliorer la robustesse de la 
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Ajout d'une vérification pour ignorer les entrées vides, prévenant ainsi le crash `IndexError`. Amélioration de l'affichage des détails pour extraire les noms lisibles du statut et de la localisation.
+- **`src/shell.py`**:
+    - Ajout d'une vérification pour ignorer les entrées vides, prévenant ainsi le crash `IndexError`. Amélioration de l'affichage des détails pour extraire les noms lisibles du statut et de la localisation.
 
-- **`src/api_client.py`**: Modification de la méthode de recherche pour utiliser `searchtype="contains"` au lieu de `"equals"`, rendant la recherche d'objets plus flexible et efficace.
+- **`src/api_client.py`**:
+    - Modification de la méthode de recherche pour utiliser `searchtype="contains"` au lieu de `"equals"`, rendant la recherche d'objets plus flexible et efficace.
 
 ## [CORRECTION] - 2024-07-05 - par Manus
 
@@ -1501,7 +1558,8 @@ Correction des erreurs de syntaxe dans `src/shell.py`.
 
 ### Modifications Apportées
 
-- **`src/shell.py`**: Correction des f-strings non terminées aux lignes 67 et 73 pour résoudre le `SyntaxError: unterminated f-string literal`.
+- **`src/shell.py`**:
+    - Correction des f-strings non terminées aux lignes 67 et 73 pour résoudre le `SyntaxError: unterminated f-string literal`.
 
 ## [MISSION 1.1] - 2024-07-04 - par Manus
 
@@ -1511,9 +1569,11 @@ Implémenter la première commande fonctionnelle `get <nom_objet>` pour recherch
 
 ### Modifications Apportées
 
-- **`src/api_client.py`**: Ajout des méthodes `search_item_by_name` et `get_item_details` pour interagir avec les endpoints de recherche et de récupération d'items de GLPI, en se basant sur la documentation de l'API fournie.
+- **`src/api_client.py`**:
+    - Ajout des méthodes `search_item_by_name` et `get_item_details` pour interagir avec les endpoints de recherche et de récupération d'items de GLPI, en se basant sur la documentation de l'API fournie.
 
-- **`src/shell.py`**: Mise à jour de la boucle principale pour analyser les commandes utilisateur. Implémentation de la logique pour la commande `get`, incluant la recherche, la récupération des détails et l'affichage formaté des résultats dans un `Panel` et une `Table` `rich`.
+- **`src/shell.py`**:
+    - Mise à jour de la boucle principale pour analyser les commandes utilisateur. Implémentation de la logique pour la commande `get`, incluant la recherche, la récupération des détails et l'affichage formaté des résultats dans un `Panel` et une `Table` `rich`.
 
 ## [MISSION 0.3.1] - 2024-07-04 - par Manus
 
@@ -1532,13 +1592,17 @@ Correction et fiabilisation de la connexion API et du processus de configuration
 Remplacer la configuration par fichier .env par un processus de configuration interactif et persistant au premier lancement de l'application.
 ### Modifications Apportées
 
-- **`requirements.txt`**: Suppression de `python-dotenv`.
+- **`requirements.txt`**:
+    - Suppression de `python-dotenv`.
 
-- **`src/config_manager.py`**: Création du module pour gérer la lecture, l'écriture et la collecte interactive des informations de configuration dans `~/.config/glpi-explorer/config.json`.
+- **`src/config_manager.py`**:
+    - Création du module pour gérer la lecture, l'écriture et la collecte interactive des informations de configuration dans `~/.config/glpi-explorer/config.json`.
 
-- **`src/api_client.py`**: Mise à jour de la classe `ApiClient` pour qu'elle soit initialisée avec un dictionnaire de configuration et pour qu'elle retourne des informations plus détaillées sur l'échec/succès de la connexion.
+- **`src/api_client.py`**:
+    - Mise à jour de la classe `ApiClient` pour qu'elle soit initialisée avec un dictionnaire de configuration et pour qu'elle retourne des informations plus détaillées sur l'échec/succès de la connexion.
 
-- **`src/shell.py`**: Refonte majeure de la logique de démarrage pour gérer le flux de configuration : vérifier si la configuration existe, lancer l'assistant interactif si nécessaire, tester et sauvegarder la configuration, puis se connecter à l'API.
+- **`src/shell.py`**:
+    - Refonte majeure de la logique de démarrage pour gérer le flux de configuration : vérifier si la configuration existe, lancer l'assistant interactif si nécessaire, tester et sauvegarder la configuration, puis se connecter à l'API.
 
 ## [MISSION 0.2] - 2024-05-24 - par Manus
 
@@ -1548,15 +1612,20 @@ Intégrer la logique de connexion à l'API REST de GLPI, en utilisant un fichier
 
 ### Modifications Apportées
 
-- **`.env.example`**: Création d'un fichier d'exemple pour les variables de configuration de l'API.
+- **`.env.example`**:
+    - Création d'un fichier d'exemple pour les variables de configuration de l'API.
 
-- **`requirements.txt`**: Ajout de la dépendance `requests`.
+- **`requirements.txt`**:
+    - Ajout de la dépendance `requests`.
 
-- **`src/config.py`**: Création du module pour charger et valider la configuration depuis le fichier `.env`.
+- **`src/config.py`**:
+    - Création du module pour charger et valider la configuration depuis le fichier `.env`.
 
-- **`src/api_client.py`**: Implémentation de la classe `ApiClient` avec les méthodes `connect()` et `close_session()`.
+- **`src/api_client.py`**:
+    - Implémentation de la classe `ApiClient` avec les méthodes `connect()` et `close_session()`.
 
-- **`src/shell.py`**: Mise à jour du shell pour initier la connexion au démarrage, gérer les échecs et fermer la session en quittant.
+- **`src/shell.py`**:
+    - Mise à jour du shell pour initier la connexion au démarrage, gérer les échecs et fermer la session en quittant.
 
 ## [MISSION 0.1] - 2024-05-24 - par Manus
 
@@ -1566,12 +1635,17 @@ Mise en place du socle de l'application CLI interactive, de sa structure de fich
 
 ### Modifications Apportées
 
-- **`glpi-explorer/`**: Création de l'arborescence initiale du projet.
+- **`glpi-explorer/`**:
+    - Création de l'arborescence initiale du projet.
 
-- **`requirements.txt`**: Ajout des dépendances `rich` et `python-dotenv`.
+- **`requirements.txt`**:
+    - Ajout des dépendances `rich` et `python-dotenv`.
 
-- **`.gitignore`**: Configuration initiale pour les projets Python.
+- **`.gitignore`**:
+    - Configuration initiale pour les projets Python.
 
-- **`main.py`**: Création du point d'entrée qui lance le shell interactif.
+- **`main.py`**:
+    - Création du point d'entrée qui lance le shell interactif.
 
-- **`src/shell.py`**: Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).
+- **`src/shell.py`**:
+    - Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).
