@@ -159,19 +159,36 @@ class ApiClient:
             return None
 
     def create_item(self, itemtype, data):
-        """Crée un ou plusieurs items dans GLPI."""
+        """Crée un seul item."""
+        return self.create_items(itemtype, [data], batch_size=1)
+
+    def create_items(self, itemtype, data_list, batch_size=100):
+        """Crée plusieurs items en les envoyant par lots."""
         if not self.session_token: return None
         
-        payload = {'input': data}
-        headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
+        all_responses = []
+        # Utiliser la console de l'ApiClient s'il en a une
+        console = getattr(self, 'console', Console())
+
+        for i in range(0, len(data_list), batch_size):
+            batch = data_list[i:i + batch_size]
+            payload = {'input': batch}
+            headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
+            
+            try:
+                response = requests.post(f"{self.base_url}/{itemtype}/", headers=headers, json=payload)
+                response.raise_for_status()
+                json_response = response.json()
+                # Gérer le cas où la réponse est un dictionnaire avec un message d'erreur
+                if isinstance(json_response, dict) and 'message' in json_response:
+                     console.log(f"[bold red]Erreur de l'API GLPI pour {itemtype}: {json_response['message']}[/bold red]")
+                     continue # On passe au lot suivant
+                all_responses.extend(json_response)
+            except requests.exceptions.RequestException as e:
+                console.log(f"[bold red]Erreur réseau lors de la création d'un lot de {itemtype}: {e}[/bold red]")
+                continue # On continue avec le lot suivant
         
-        try:
-            response = requests.post(f"{self.base_url}/{itemtype}/", headers=headers, json=payload)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            self.console.print(f"[red]Erreur lors de la création de {itemtype}: {e}[/red]")
-            return None
+        return all_responses
 
 
 

@@ -1,3 +1,14 @@
+## [MISSION 22.3] - 2025-08-01
+
+### fix(testing): Correction de NameError dans le script de génération de données
+
+- Déplacement de la logique de création par lots dans une nouvelle méthode `create_items` au sein de la classe `ApiClient`.
+- Le script `stress_test_data_generator.py` a été simplifié pour utiliser cette nouvelle méthode centralisée.
+- Résolution du `NameError: name 'requests' is not defined`.
+- La création d'objets est maintenant plus robuste et gère mieux les erreurs de l'API.
+
+Ref: Mission 22.3
+
 ## [MISSION 22.1] - 2025-08-01
 
 ### feat(testing): Ajout d'un script de génération de données de test de charge
@@ -1680,4 +1691,4 @@ Mise en place du socle de l'application CLI interactive, de sa structure de fich
     - Création du point d'entrée qui lance le shell interactif.
 
 - **`src/shell.py`**:
-    - Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).
+    - Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).").
