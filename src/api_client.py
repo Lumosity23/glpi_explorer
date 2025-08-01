@@ -158,6 +158,21 @@ class ApiClient:
             print(f"Erreur lors de la récupération du câble pour le socket {socket_id}: {e}")
             return None
 
+    def create_item(self, itemtype, data):
+        """Crée un ou plusieurs items dans GLPI."""
+        if not self.session_token: return None
+        
+        payload = {'input': data}
+        headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
+        
+        try:
+            response = requests.post(f"{self.base_url}/{itemtype}/", headers=headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            self.console.print(f"[red]Erreur lors de la création de {itemtype}: {e}[/red]")
+            return None
+
 
 
 

@@ -192,7 +192,7 @@ class MapCommand(BaseCommand):
                             break
                         else:
                             # It's a passive device, continue traversing automatically
-                            self.console.print(Panel(f"[dim]Traversée automatique via {next_parent.name} (Port {next_socket.name})[/dim]", title="[dim]Traversée Passive[/dim]"))
+                            self.console.print(Panel(f"[dim]Traversée automatique via {next_parent.name} ({next_socket.name}/IN) => {next_parent.name} [/dim]", title="[dim]Traversée Passive[/dim]"))
 
                             # Find the exit socket from the passive device
                             hop_result = self.linker.get_next_hop_for_map(next_socket)

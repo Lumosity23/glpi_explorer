@@ -1,3 +1,13 @@
+## [MISSION 22.1] - 2025-08-01
+
+### feat(testing): Ajout d'un script de génération de données de test de charge
+
+- Création de `stress_test_data_generator.py` pour peupler une instance GLPI avec un grand nombre d'équipements.
+- Le script permet de simuler un parc de grande taille afin de tester la performance et la scalabilité de l'application.
+- Ajout d'une méthode `create_item` au `ApiClient` pour supporter la création d'objets en masse via l'API.
+
+Ref: Mission 22.1
+
 ## [MISSION 21.7] - 2025-07-28
 
 ### feat(map): Amélioration de la traversée des équipements passifs et affichage
