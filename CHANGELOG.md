@@ -1,3 +1,13 @@
+## [MISSION 23.3] - 2025-08-02
+
+### fix(trace): Correction de la logique de traversée des équipements passifs
+
+- La méthode `get_next_hop` dans le TopologyLinker a été corrigée pour prioriser la traversée (IN->OUT) des équipements passifs avant de chercher une nouvelle connexion physique.
+- Cette modification résout le bug où la trace bouclait sur elle-même au lieu de traverser les Patch Panels et Walloutlets.
+- L'affichage de la trace a été adapté pour refléter cette nouvelle logique.
+
+Ref: Mission 23.3
+
 ## [MISSION 23.2] - 2025-08-02
 
 ### test(provisioning): Mise à jour du script de provisioning

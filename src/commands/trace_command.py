@@ -53,52 +53,29 @@ class TraceCommand(BaseCommand):
             visited_sockets.add(current_socket.id)
             parent = linker.find_parent_for_socket(current_socket)
             
-            # --- Attribution des couleurs ---
-            location_name = getattr(parent, 'locations_id', 'N/A')
-            if location_name not in location_colors:
-                location_colors[location_name] = colors[color_index % len(colors)]
-                color_index += 1
-            loc_style = location_colors[location_name]
+            hop = linker.get_next_hop(current_socket)
             
-            # --- Logique d'affichage ---
-            hop = linker.get_next_hop_for_trace(current_socket)
+            if not hop or hop['type'] == 'end':
+                trace_table.add_row(str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN') if hop else 'FIN'}[/yellow]")
+                break
             
-            via_info = ""
-            next_socket_for_loop_check = None
-
-            if hop and hop['type'] == 'connection':
+            if hop['type'] == 'connection':
                 next_socket = hop['next_socket']
                 next_parent = linker.find_parent_for_socket(next_socket)
-                cable_name = getattr(hop['via_cable'], 'name', 'N/A')
-                via_info = f"[green]{cable_name}[/green] -> [{loc_style}]{getattr(next_parent, 'name', 'N/A')}[/{loc_style}]"
-                next_socket_for_loop_check = next_socket
-            elif hop and hop['type'] == 'traversal':
-                via_info = f"([italic {loc_style}]Traversée de {getattr(hop['via_device'], 'name', 'N/A')}[/italic {loc_style}])"
-                next_socket_for_loop_check = hop['to_socket']
-            else:
-                via_info = f"[bold yellow]{hop.get('reason', 'FIN DE TRACE') if hop else 'FIN DE TRACE'}[/bold yellow]"
-
-            trace_table.add_row(
-                str(step),
-                f"[{loc_style}]{location_name}[/{loc_style}]",
-                f"[{loc_style}]{getattr(parent, 'name', 'N/A')}[/{loc_style}]",
-                current_socket.name,
-                via_info
-            )
-
-            # --- GESTION DE LA FIN DE TRACE ---
-            if not hop or hop['type'] == 'end':
-                break # On s'arrête proprement
+                trace_table.add_row(
+                    str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'), current_socket.name,
+                    f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
+                )
+                current_socket = next_socket
             
-            if next_socket_for_loop_check and next_socket_for_loop_check.id in visited_sockets:
-                trace_table.add_row("", "", "", "", "[bold red]BOUCLE DÉTECTÉE -> FIN[/bold red]")
-                break
-
-            if hop['type'] == 'connection':
-                current_socket = hop['next_socket']
             elif hop['type'] == 'traversal':
-                current_socket = hop['to_socket']
+                trace_table.add_row(
+                    str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'),
+                    f"{current_socket.name} -> {hop['to'].name}",
+                    f"([italic blue]Interne[/italic blue])"
+                )
+                current_socket = hop['to']
             
             step += 1
-                
+            
         self.console.print(trace_table)
