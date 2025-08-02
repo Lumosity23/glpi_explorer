@@ -1,3 +1,13 @@
+## [MISSION 22.9] - 2025-08-02
+
+### fix(api): Conformité du payload POST pour la création d'items
+
+- La méthode `create_items` a été corrigée pour envelopper les données dans la clé "input" requise par l'API GLPI.
+- La méthode `create_item` a été simplifiée pour utiliser `create_items`.
+- Cette modification résout l'erreur `400 Bad Request` qui survenait lors de la tentative de création de nouveaux objets.
+
+Ref: Mission 22.9
+
 ## [MISSION 22.3] - 2025-08-01
 
 ### fix(testing): Correction de NameError dans le script de génération de données

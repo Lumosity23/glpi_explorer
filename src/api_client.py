@@ -1,5 +1,6 @@
 import requests
 import json
+from rich.console import Console
 
 class ApiClient:
     def __init__(self, config):
@@ -159,36 +160,51 @@ class ApiClient:
             return None
 
     def create_item(self, itemtype, data):
-        """Crée un seul item."""
-        return self.create_items(itemtype, [data], batch_size=1)
+        """Crée un seul item dans GLPI."""
+        # Cette méthode est maintenant un simple alias pour create_items
+        return self.create_items(itemtype, [data])
 
-    def create_items(self, itemtype, data_list, batch_size=100):
-        """Crée plusieurs items en les envoyant par lots."""
+    def create_items(self, itemtype, data_list):
+        """Crée plusieurs items en les envoyant en un seul lot."""
+        if not self.session_token or not data_list:
+            return None
+        
+        console = getattr(self, 'console', Console())
+        
+        # --- DÉBUT DE LA CORRECTION ---
+        # Le payload doit TOUJOURS être {'input': [LISTE_D_OBJETS]}
+        payload = {'input': data_list}
+        # --- FIN DE LA CORRECTION ---
+        
+        headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
+        
+        try:
+            url = f"{self.base_url.rstrip('/')}/{itemtype}/"
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status() # Lèvera une exception pour les erreurs 4xx/5xx
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            console.log(f"[bold red]Erreur lors de la création d'un lot de {itemtype}: {e}[/bold red]")
+            return None
+
+    def update_item(self, itemtype, item_id, data):
+        """Met à jour un item existant dans GLPI."""
         if not self.session_token: return None
         
-        all_responses = []
-        # Utiliser la console de l'ApiClient s'il en a une
-        console = getattr(self, 'console', Console())
-
-        for i in range(0, len(data_list), batch_size):
-            batch = data_list[i:i + batch_size]
-            payload = {'input': batch}
-            headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
-            
-            try:
-                response = requests.post(f"{self.base_url}/{itemtype}/", headers=headers, json=payload)
-                response.raise_for_status()
-                json_response = response.json()
-                # Gérer le cas où la réponse est un dictionnaire avec un message d'erreur
-                if isinstance(json_response, dict) and 'message' in json_response:
-                     console.log(f"[bold red]Erreur de l'API GLPI pour {itemtype}: {json_response['message']}[/bold red]")
-                     continue # On passe au lot suivant
-                all_responses.extend(json_response)
-            except requests.exceptions.RequestException as e:
-                console.log(f"[bold red]Erreur réseau lors de la création d'un lot de {itemtype}: {e}[/bold red]")
-                continue # On continue avec le lot suivant
+        payload = {'input': data}
+        headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
         
-        return all_responses
+        try:
+            url = f"{self.base_url.rstrip('/')}/{itemtype}/{item_id}"
+            response = requests.put(url, headers=headers, json=payload)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            console = getattr(self, 'console', Console())
+            console.print(f"[bold red]Erreur lors de la mise à jour de {itemtype} (ID:{item_id}): {e}[/bold red]")
+            if response:
+                console.print(f"[bold red]Réponse de l'API : {response.text}[/bold red]")
+            return None
 
 
 
