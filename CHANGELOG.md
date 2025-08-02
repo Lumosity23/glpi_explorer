@@ -1,5 +1,17 @@
 ## [MISSION 22.9] - 2025-08-02
 
+### fix(api): Conformité stricte du payload POST avec la documentation GLPI
+
+- Les méthodes `create_item` (pour un seul objet) et `create_items` (pour plusieurs) ont été corrigées pour générer un payload JSON qui correspond exactement à la documentation de l'API.
+- `create_item` envoie maintenant `{"input": {...}}` (objet).
+- `create_items` envoie maintenant `{"input": [{...}]}` (liste).
+- Correction de la logique de parsing de la réponse dans `poc_creation.py`.
+- Cette modification résout définitivement l'erreur `400 Bad Request`.
+
+Ref: Mission 22.9
+
+## [MISSION 22.9] - 2025-08-02
+
 ### fix(api): Conformité du payload POST pour la création d'items
 
 - La méthode `create_items` a été corrigée pour envelopper les données dans la clé "input" requise par l'API GLPI.
