@@ -1,227 +1,72 @@
-import requests
-import json
+# src/api_client.py
+import glpi_api
 from rich.console import Console
 
 class ApiClient:
     def __init__(self, config):
         self.config = config
-        self.base_url = config.get("url")
-        self.app_token = config.get("app_token")
-        self.user_token = config.get("user_token")
-        self.session_token = None
+        self.glpi = None
+        self.console = Console()
 
     def connect(self):
-        headers = {
-            "Authorization": f"user_token {self.user_token}",
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
         try:
-            response = requests.get(f"{self.base_url}/initSession", headers=headers)
-            response.raise_for_status()
-            session_token = response.json().get("session_token")
-            if session_token:
-                self.session_token = session_token
-                return True
-            return False
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur de connexion: {e}")
+            self.glpi = glpi_api.GLPI(
+                url=self.config['url'],
+                apptoken=self.config['app_token'],
+                auth=self.config['user_token']
+            )
+            # La connexion est implicite, on fait un petit appel pour la valider
+            self.glpi.get_my_profiles() 
+            return True
+        except glpi_api.GLPIError as err:
+            self.console.log(f"[bold red]Erreur de connexion GLPI: {err}[/bold red]")
             return False
 
     def close_session(self):
-        if not self.session_token:
-            return
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-        }
-        try:
-            requests.get(f"{self.base_url}/killSession", headers=headers)
-        except requests.exceptions.RequestException as e:
-            self.console.print(f"[red]Erreur lors de la déconnexion: {e}[/red]")
+        if self.glpi:
+            try:
+                self.glpi.kill_session()
+            except glpi_api.GLPIError:
+                pass # La session est peut-être déjà morte, on ignore
 
-    def get_sub_items(self, full_href):
-        """Fait une requête GET sur une URL complète fournie par un lien HATEOAS."""
-        if not self.session_token:
-            return []
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token
-        }
+    def list_items(self, itemtype, item_range="0-9999", only_id=False):
+        """Récupère une liste d'items. 'only_id' n'est plus pertinent de la même manière."""
         try:
-            response = requests.get(full_href, headers=headers)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
+            # get_all_items gère la pagination, mais pour le cache on prend tout
+            # Note : il faudra peut-être gérer la pagination manuellement si get_all_items a une limite
+            return self.glpi.get_all_items(itemtype, range=item_range)
+        except glpi_api.GLPIError as err:
+            self.console.log(f"[bold red]Erreur lors du listing de {itemtype}: {err}[/bold red]")
             return []
 
     def get_item_details(self, itemtype, item_id):
-        if not self.session_token:
-            return None
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
+        """Récupère les détails complets d'un item."""
         try:
-            params = {
-                "expand_dropdowns": "true",
-            }
-            # Only request network port information for relevant item types
-            if itemtype in ["Computer", "NetworkEquipment", "Peripheral", "Phone", "Printer"]:
-                params["with_networkports"] = "true"
-
-            response = requests.get(f"{self.base_url}/{itemtype}/{item_id}", headers=headers, params=params)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la récupération des détails: {e}")
+            # La bibliothèque gère 'with_networkports' comme des kwargs
+            return self.glpi.get_item(itemtype, item_id, with_networkports=True)
+        except glpi_api.GLPIError as err:
+            self.console.log(f"[bold red]Erreur lors de la récupération de {itemtype}/{item_id}: {err}[/bold red]")
             return None
 
-
-
-
-
-    def list_items(self, itemtype, item_range="0-9999", only_id=True):
-        if not self.session_token:
-            return []
-
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
-
-        params = {
-            "range": item_range,
-            "expand_dropdowns": "true",
-            "only_id": "true" if only_id else "false"
-        }
+    def create_items(self, itemtype, data_list):
+        """Crée un ou plusieurs items."""
         try:
-            response = requests.get(f"{self.base_url}/{itemtype}/", headers=headers, params=params)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la récupération de la liste: {e}")
-            return []
-
-    def get_cable_on_port(self, port_id):
-        if not self.session_token:
-            return None
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
-        try:
-            response = requests.get(f"{self.base_url}/NetworkPort/{port_id}/Cable", headers=headers)
-            response.raise_for_status()
-            cables = response.json()
-            if cables and len(cables) > 0:
-                return cables[0] # Return the first cable found
-            return None
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la récupération du câble pour le port {port_id}: {e}")
-            return None
-
-    def get_socket_details(self, socket_id):
-        if not self.session_token:
-            return None
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
-        try:
-            response = requests.get(f"{self.base_url}/Glpi\\Socket/{socket_id}", headers=headers)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la récupération des détails du socket {socket_id}: {e}")
-            return None
-
-    def get_cable_on_socket(self, socket_id):
-        if not self.session_token:
-            return None
-        headers = {
-            "Session-Token": self.session_token,
-            "App-Token": self.app_token,
-            "Content-Type": "application/json"
-        }
-        try:
-            response = requests.get(f"{self.base_url}/Glpi\\Socket/{socket_id}/Cable", headers=headers)
-            response.raise_for_status()
-            cables = response.json()
-            if cables and len(cables) > 0:
-                return cables[0] # Return the first cable found
-            return None
-        except requests.exceptions.RequestException as e:
-            print(f"Erreur lors de la récupération du câble pour le socket {socket_id}: {e}")
+            # La méthode add prend des dictionnaires en *args
+            return self.glpi.add(itemtype, *data_list)
+        except glpi_api.GLPIError as err:
+            self.console.log(f"[bold red]Erreur lors de la création de {itemtype}: {err}[/bold red]")
             return None
 
     def create_item(self, itemtype, data):
-    """Crée UN SEUL item dans GLPI."""
-    if not self.session_token: return None
-    
-    console = getattr(self, 'console', Console())
-    
-    # --- DÉBUT DE LA CORRECTION ---
-    # Pour un seul item, la valeur de 'input' est un OBJET
-    payload = {'input': data}
-    # --- FIN DE LA CORRECTION ---
-    
-    headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
-    
-    try:
-        url = f"{self.base_url.rstrip('/')}/{itemtype}/"
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        console.log(f"[bold red]Erreur lors de la création de {itemtype} ({data.get('name')}): {e}[/bold red]")
-        return None
-
-def create_items(self, itemtype, data_list):
-    """Crée PLUSIEURS items dans GLPI en un seul appel."""
-    if not self.session_token or not data_list: return None
-    
-    console = getattr(self, 'console', Console())
-    
-    # --- DÉBUT DE LA CORRECTION ---
-    # Pour plusieurs items, la valeur de 'input' est une LISTE D'OBJETS
-    payload = {'input': data_list}
-    # --- FIN DE LA CORRECTION ---
-    
-    headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
-    
-    try:
-        url = f"{self.base_url.rstrip('/')}/{itemtype}/"
-        response = requests.post(url, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        console.log(f"[bold red]Erreur lors de la création du lot de {itemtype}: {e}[/bold red]")
-        return None
+        """Crée un seul item."""
+        return self.create_items(itemtype, [data])
 
     def update_item(self, itemtype, item_id, data):
-        """Met à jour un item existant dans GLPI."""
-        if not self.session_token: return None
-        
-        payload = {'input': data}
-        headers = { 'Session-Token': self.session_token, 'Content-Type': 'application/json' }
-        
+        """Met à jour un item."""
         try:
-            url = f"{self.base_url.rstrip('/')}/{itemtype}/{item_id}"
-            response = requests.put(url, headers=headers, json=payload)
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException as e:
-            console = getattr(self, 'console', Console())
-            console.print(f"[bold red]Erreur lors de la mise à jour de {itemtype} (ID:{item_id}): {e}[/bold red]")
-            if response:
-                console.print(f"[bold red]Réponse de l'API : {response.text}[/bold red]")
+            # La méthode update attend l'id dans le dictionnaire
+            data_with_id = {'id': item_id, **data}
+            return self.glpi.update(itemtype, data_with_id)
+        except glpi_api.GLPIError as err:
+            self.console.log(f"[bold red]Erreur lors de la mise à jour de {itemtype}/{item_id}: {err}[/bold red]")
             return None
-
-
-
-

@@ -1,3 +1,15 @@
+## [MISSION 23.1] - 2025-08-02
+
+### refactor(api)!: Refonte de l'ApiClient pour utiliser la bibliothèque python-glpi-api
+
+- Remplacement complet de la logique de requêtes HTTP manuelles par des appels à la bibliothèque `glpi-api`.
+- Simplification drastique du code dans `ApiClient` pour la connexion, la lecture, la création et la mise à jour d'objets.
+- Cette modification augmente la fiabilité et la maintenabilité de la couche d'accès aux données.
+
+BREAKING CHANGE: La structure interne et les méthodes de l'ApiClient ont été modifiées pour correspondre à la nouvelle bibliothèque.
+
+Ref: Mission 23.1
+
 ## [MISSION 22.9] - 2025-08-02
 
 ### fix(api): Conformité stricte du payload POST avec la documentation GLPI
