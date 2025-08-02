@@ -1,3 +1,13 @@
+## [MISSION 23.2] - 2025-08-02
+
+### test(provisioning): Mise à jour du script de provisioning
+
+- Le script `provision_lab.py` (anciennement `poc_creation.py`) a été mis à jour pour utiliser les méthodes du nouvel `ApiClient` basé sur `python-glpi-api`.
+- La logique de parsing des réponses a été adaptée au format de la nouvelle bibliothèque.
+- Ce script valide que notre nouvelle couche d'accès aux données est capable d'effectuer des opérations de création et de mise à jour complexes.
+
+Ref: Mission 23.2
+
 ## [MISSION 23.1] - 2025-08-02
 
 ### refactor(api)!: Refonte de l'ApiClient pour utiliser la bibliothèque python-glpi-api
