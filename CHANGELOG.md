@@ -1,3 +1,13 @@
+## [MISSION 21.4] - 2025-08-03
+
+### fix(trace): Correction d'un bug d'affichage et résolution des noms de localisation
+
+- Résolution d'une `NotRenderableError` due au passage d'un entier (`locations_id`) à la table `rich`.
+- La commande `trace` résout maintenant l'ID de la localisation pour afficher son nom lisible, en utilisant le cache des `Location`.
+- L'affichage de la commande `trace` est maintenant stable et plus informatif.
+
+Ref: Mission 21.4
+
 ## [MISSION 23.3] - 2025-08-02
 
 ### fix(trace): Correction de la logique de traversée des équipements passifs
@@ -381,7 +391,7 @@ Ref: Mission 15.6
 ## [MISSION 15.5] - 2025-07-18
 
 ### Changed
-- **feat(trace)::** Finalisation de la commande trace
+- **feat(trace):** Finalisation de la commande trace
   - Implémentation complète de la logique de traversée des Hubs (IN -> OUT) dans le TopologyLinker.
   - Simplification de l'affichage des traversées internes pour une meilleure lisibilité.
   - Correction de la logique de la boucle pour un affichage propre du premier et du dernier hop, et pour gérer les fins de trace.
@@ -403,7 +413,7 @@ Ref: Mission 15.4
 ## [MISSION 15.3] - 2025-07-18
 
 ### Changed
-- **feat(trace)::** Ajout de la logique de traversée des Hubs et corrections
+- **feat(trace):** Ajout de la logique de traversée des Hubs et corrections
   - Le `TopologyLinker` gère maintenant la logique de concentration des Hubs (IN -> OUT).
   - La commande `trace` a été ajustée pour mieux gérer l'affichage du premier et du dernier hop.
   - Correction de bugs mineurs qui causaient l'affichage de "Parent Inconnu" et de câbles manquants.
@@ -516,7 +526,7 @@ Ref: Mission 13.10
 ## [MISSION 13.10] - 2025-07-16
 
 ### Changed
-- **feat(trace)::** Implémentation fonctionnelle de la commande trace.
+- **feat(trace):** Implémentation fonctionnelle de la commande trace.
   - La commande `trace` a été corrigée pour utiliser le bon attribut (`.ports`) des objets du cache.
   - La logique de navigation complexe a été centralisée dans une nouvelle méthode `build_path_from_item` du `TopologyLinker`.
   - La commande `trace` est maintenant fonctionnelle et capable de suivre une connexion physique de base.
@@ -1580,7 +1590,7 @@ Refonte de la commande `get` pour exiger la spécification du type d'objet, simp
 - **`src/api_client.py`**:
   - Renommage de la méthode `search_item_by_name` en `search_item`.
   - Modification de la signature de `search_item` pour accepter `itemtype` et `item_name`.
-  - Suppression de la boucle interne qui itérait sur différents types d'objets ; la méthode effectue désormais une seule requête sur l' `itemtype` fourni.
+  - Suppression de la boucle interne qui itérait sur différents types d'objets ; la méthode effectue désormais une seule requête sur l'`itemtype` fourni.
   - La méthode `search_item` retourne maintenant uniquement l'ID de l'item trouvé, ou `None`.
 
 ## [MISSION 1.6] - 2024-07-05 - par Manus
@@ -1745,4 +1755,4 @@ Mise en place du socle de l'application CLI interactive, de sa structure de fich
     - Création du point d'entrée qui lance le shell interactif.
 
 - **`src/shell.py`**:
-    - Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).").
+    - Implémentation de la classe `GLPIExplorerShell` avec une boucle de commande, un message de bienvenue, un prompt stylisé et la logique pour quitter (`exit`/`quit`).

@@ -1,7 +1,7 @@
 from datetime import datetime
 import pickle
 import types
-from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.panel import Panel
 from rich.console import Console, Group
 from rich.text import Text
@@ -20,9 +20,11 @@ class TopologyCache:
         self.cables = {}
         self.sockets = {}
         self.network_ports = {}
+        self.locations = {}
         self.equipment_to_sockets_map = {}
         self.changelog = []
         self.console = None
+        self.linker = None
 
     def __getstate__(self):
         """Exclut les attributs non sérialisables de la sauvegarde pickle."""
@@ -82,6 +84,7 @@ class TopologyCache:
         self._load_cables(progress_bar, main_task, live, panel, display_group)
         self._load_sockets(progress_bar, main_task, live, panel, display_group)
         self._load_network_ports(progress_bar, main_task, live, panel, display_group)
+        self._load_locations(progress_bar, main_task, live, panel, display_group)
         
         # --- Finalisation ---
         if use_live_display:
@@ -117,7 +120,7 @@ class TopologyCache:
             'NetworkEquipment': {k: v for k, v in self.network_equipments.items()},
             'PassiveDCEquipment': {k: v for k, v in self.passive_devices.items()},
             'Cable': {k: v for k, v in self.cables.items()},
-            'Glpi\\Socket': {k: v for k, v in self.sockets.items()},
+            'Glpi\Socket': {k: v for k, v in self.sockets.items()},
             'NetworkPort': {k: v for k, v in self.network_ports.items()},
         }
 
@@ -227,7 +230,7 @@ class TopologyCache:
         for cable in self.cables.values():
             socket_ids = []
             for link in getattr(cable, 'links', []):
-                if link.get('rel') == 'Glpi\\Socket':
+                if link.get('rel') == 'Glpi\Socket':
                     try:
                         socket_ids.append(int(link['href'].split('/')[-1]))
                     except (ValueError, IndexError):
@@ -368,7 +371,7 @@ class TopologyCache:
                 display_group.renderables.append(Align.center(status_text))
             live.update(panel)
 
-        id_list = self.api_client.list_items('Glpi\\Socket', item_range="0-9999", only_id=True)
+        id_list = self.api_client.list_items('Glpi\Socket', item_range="0-9999", only_id=True)
         if not id_list:
             if use_live_display: progress.advance(main_task_id)
             return
@@ -377,9 +380,9 @@ class TopologyCache:
         for item_ref in id_list:
             item_id = item_ref.get('id')
             if item_id:
-                details = self.api_client.get_item_details('Glpi\\Socket', item_id)
+                details = self.api_client.get_item_details('Glpi\Socket', item_id)
                 if details:
-                    details['itemtype'] = 'Glpi\\Socket'
+                    details['itemtype'] = 'Glpi\Socket'
                     self.sockets[item_id] = types.SimpleNamespace(**details)
             if use_live_display: progress.advance(sub_task)
         if use_live_display:
@@ -457,3 +460,101 @@ class TopologyCache:
             except Exception:
                 return None
         return None
+
+    def get_item_by_id(self, item_id):
+        """Recherche un item par son ID dans toutes les catégories."""
+        all_items = {
+            **self.computers,
+            **self.network_equipments,
+            **self.passive_devices,
+            **self.cables,
+            **self.sockets,
+            **self.network_ports
+        }
+        return all_items.get(item_id)
+
+    def get_item_by_name(self, name):
+        """Recherche un item par son nom dans toutes les catégories."""
+        all_items = {
+            **self.computers,
+            **self.network_equipments,
+            **self.passive_devices,
+            **self.cables,
+            **self.sockets,
+            **self.network_ports
+        }
+        for item in all_items.values():
+            if hasattr(item, 'name') and item.name == name:
+                return item
+        return None
+
+    def get_all_items(self):
+        """Retourne un dictionnaire de tous les items, toutes catégories confondues."""
+        return {
+            **self.computers,
+            **self.network_equipments,
+            **self.passive_devices,
+            **self.cables,
+            **self.sockets,
+            **self.network_ports
+        }
+        
+    def get_linker(self):
+        """Retourne l'instance du linker."""
+        return self.linker
+
+    def _load_locations(self, progress, main_task_id, live, panel, display_group):
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des localisations...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
+        id_list = self.api_client.list_items('Location', only_id=True)
+        if not id_list:
+            if use_live_display: progress.advance(main_task_id)
+            return
+
+        sub_task = progress.add_task("Localisations", total=len(id_list)) if use_live_display else None
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('Location', item_id)
+                if details:
+                    details['itemtype'] = 'Location'
+                    self.locations[item_id] = types.SimpleNamespace(**details)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)
+
+    def _load_locations(self, progress, main_task_id, live, panel, display_group):
+        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
+        if use_live_display:
+            status_text = Text.from_markup("[cyan]Chargement des localisations...[/cyan]", justify="center")
+            if len(display_group.renderables) > 1:
+                display_group.renderables[1] = Align.center(status_text)
+            else:
+                display_group.renderables.append(Align.center(status_text))
+            live.update(panel)
+
+        id_list = self.api_client.list_items('Location', only_id=True)
+        if not id_list:
+            if use_live_display: progress.advance(main_task_id)
+            return
+
+        sub_task = progress.add_task("Localisations", total=len(id_list)) if use_live_display else None
+        for item_ref in id_list:
+            item_id = item_ref.get('id')
+            if item_id:
+                details = self.api_client.get_item_details('Location', item_id)
+                if details:
+                    details['itemtype'] = 'Location'
+                    self.locations[item_id] = types.SimpleNamespace(**details)
+            if use_live_display: progress.advance(sub_task)
+        if use_live_display:
+            progress.remove_task(sub_task)
+            progress.advance(main_task_id)

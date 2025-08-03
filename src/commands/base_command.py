@@ -113,7 +113,7 @@ class BaseCommand:
                 Panel(general_info_table, title=f"[bold blue]Détails du Câble {getattr(details, 'name', 'N/A')}[/bold blue]", box=box.MINIMAL),
                 Panel(endpoints_table, title="[bold blue]Points de Connexion[/bold blue]", box=box.MINIMAL)
             )
-        else:
+        else: # Pour tous les équipements non-câbles
             table = Table(title=f"Détails de {getattr(details, 'name', 'N/A')}", expand=True)
             table.add_column("ID")
             table.add_column("Nom")
@@ -124,7 +124,20 @@ class BaseCommand:
             table.add_column("Vitesse", style="green")
             table.add_column("Adresse MAC", style="yellow")
 
-            all_ports = getattr(details, "ports", [])
+            # --- DÉBUT DE LA CORRECTION DE LA LOGIQUE DES PORTS ---
+            all_ports = []
+            raw_ports_data = getattr(details, "_networkports", {})
+            if raw_ports_data:
+                for port_list in raw_ports_data.values():
+                    all_ports.extend(port_list)
+            # --- FIN DE LA CORRECTION ---
+            
+            # --- DÉBUT DE LA CORRECTION DE LA LOCALISATION ---
+            location_id = getattr(details, "locations_id", "N/A")
+            location_name = location_id # Par défaut, on affiche l'ID
+            if isinstance(location_id, int) and self.cache.locations.get(location_id):
+                location_name = self.cache.locations[location_id].name
+            # --- FIN DE LA CORRECTION ---
 
             if not all_ports:
                 table.add_row(
@@ -132,29 +145,28 @@ class BaseCommand:
                     getattr(details, "name", "N/A"),
                     glpi_itemtype,
                     str(getattr(details, "states_id", "N/A")),
-                    str(getattr(details, "locations_id", "N/A")),
-                    "N/A",
-                    "N/A",
-                    "N/A",
+                    str(location_name), # Utiliser le nom résolu
+                    "N/A", "N/A", "N/A",
                 )
             else:
-                for i, port in enumerate(all_ports):
+                for i, port_data in enumerate(all_ports):
+                    port = types.SimpleNamespace(**port_data) # Convertir le dict en objet
                     if i == 0:
                         table.add_row(
                             str(getattr(details, "id", "N/A")),
                             getattr(details, "name", "N/A"),
                             glpi_itemtype,
                             str(getattr(details, "states_id", "N/A")),
-                            str(getattr(details, "locations_id", "N/A")),
+                            str(location_name), # Utiliser le nom résolu
                             getattr(port, "name", "N/A"),
-                            f'{getattr(port, "speed", "N/A")} Mbps' if getattr(port, "speed", "N/A") != "N/A" else "N/A",
+                            f'{getattr(port, "speed", "N/A")} Mbps',
                             getattr(port, "mac", "N/A"),
                         )
                     else:
                         table.add_row(
                             "", "", "", "", "",
                             getattr(port, "name", "N/A"),
-                            f'{getattr(port, "speed", "N/A")} Mbps' if getattr(port, "speed", "N/A") != "N/A" else "N/A",
+                            f'{getattr(port, "speed", "N/A")} Mbps',
                             getattr(port, "mac", "N/A"),
                         )
             return table

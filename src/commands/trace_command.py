@@ -53,24 +53,35 @@ class TraceCommand(BaseCommand):
             visited_sockets.add(current_socket.id)
             parent = linker.find_parent_for_socket(current_socket)
             
+            # --- DÉBUT DE LA CORRECTION ---
+            location_name = "N/A"
+            if parent:
+                location_id = getattr(parent, 'locations_id', None)
+                # On cherche le nom de la localisation dans le cache
+                if location_id and location_id in self.cache.locations:
+                    location_name = self.cache.locations[location_id].name
+                elif isinstance(location_id, str): # Au cas où l'API retourne le nom
+                    location_name = location_id
+            # --- FIN DE LA CORRECTION ---
+
             hop = linker.get_next_hop(current_socket)
             
             if not hop or hop['type'] == 'end':
-                trace_table.add_row(str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN') if hop else 'FIN'}[/yellow]")
+                trace_table.add_row(str(step), location_name, getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN') if hop else 'FIN'}[/yellow]")
                 break
             
             if hop['type'] == 'connection':
                 next_socket = hop['next_socket']
                 next_parent = linker.find_parent_for_socket(next_socket)
                 trace_table.add_row(
-                    str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'), current_socket.name,
+                    str(step), location_name, getattr(parent, 'name', 'N/A'), current_socket.name,
                     f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
                 )
                 current_socket = next_socket
             
             elif hop['type'] == 'traversal':
                 trace_table.add_row(
-                    str(step), getattr(parent, 'locations_id', 'N/A'), getattr(parent, 'name', 'N/A'),
+                    str(step), location_name, getattr(parent, 'name', 'N/A'),
                     f"{current_socket.name} -> {hop['to'].name}",
                     f"([italic blue]Interne[/italic blue])"
                 )
