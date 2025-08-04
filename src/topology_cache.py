@@ -73,7 +73,7 @@ class TopologyCache:
                 BarColumn(),
                 TextColumn("[progress.percentage]{task.percentage:>3.0f}%"),
             )
-            main_task = progress_bar.add_task("Chargement de la topologie...", total=6)
+            main_task = progress_bar.add_task("Chargement de la topologie...", total=7)
             display_group.renderables.append(progress_bar)
             live.update(panel)
 
@@ -502,34 +502,6 @@ class TopologyCache:
     def get_linker(self):
         """Retourne l'instance du linker."""
         return self.linker
-
-    def _load_locations(self, progress, main_task_id, live, panel, display_group):
-        use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])
-        if use_live_display:
-            status_text = Text.from_markup("[cyan]Chargement des localisations...[/cyan]", justify="center")
-            if len(display_group.renderables) > 1:
-                display_group.renderables[1] = Align.center(status_text)
-            else:
-                display_group.renderables.append(Align.center(status_text))
-            live.update(panel)
-
-        id_list = self.api_client.list_items('Location', only_id=True)
-        if not id_list:
-            if use_live_display: progress.advance(main_task_id)
-            return
-
-        sub_task = progress.add_task("Localisations", total=len(id_list)) if use_live_display else None
-        for item_ref in id_list:
-            item_id = item_ref.get('id')
-            if item_id:
-                details = self.api_client.get_item_details('Location', item_id)
-                if details:
-                    details['itemtype'] = 'Location'
-                    self.locations[item_id] = types.SimpleNamespace(**details)
-            if use_live_display: progress.advance(sub_task)
-        if use_live_display:
-            progress.remove_task(sub_task)
-            progress.advance(main_task_id)
 
     def _load_locations(self, progress, main_task_id, live, panel, display_group):
         use_live_display = all(v is not None for v in [progress, main_task_id, live, panel, display_group])

@@ -46,47 +46,71 @@ class TraceCommand(BaseCommand):
         
         # --- NOUVELLE LOGIQUE DE COULEURS ---
         location_colors = {}
+        device_type_colors = {}
         colors = ["cyan", "magenta", "yellow", "green", "blue", "red"]
+        device_colors = ["white", "bright_red", "bright_green", "bright_blue", "bright_magenta", "bright_yellow"]
         color_index = 0
+        device_color_index = 0
 
         while current_socket and current_socket.id not in visited_sockets:
             visited_sockets.add(current_socket.id)
             parent = linker.find_parent_for_socket(current_socket)
-            
-            # --- DÉBUT DE LA CORRECTION ---
+
+            # --- Localisation color ---
             location_name = "N/A"
             if parent:
                 location_id = getattr(parent, 'locations_id', None)
-                # On cherche le nom de la localisation dans le cache
                 if location_id and location_id in self.cache.locations:
                     location_name = self.cache.locations[location_id].name
-                elif isinstance(location_id, str): # Au cas où l'API retourne le nom
+                elif isinstance(location_id, str):
                     location_name = location_id
-            # --- FIN DE LA CORRECTION ---
+
+            if location_name not in location_colors:
+                location_colors[location_name] = colors[color_index % len(colors)]
+                color_index += 1
+            loc_color = location_colors[location_name]
+
+            # --- Device type color ---
+            device_type = getattr(parent, 'type', 'default')
+            if device_type not in device_type_colors:
+                device_type_colors[device_type] = device_colors[device_color_index % len(device_colors)]
+                device_color_index += 1
+            dev_color = device_type_colors[device_type]
 
             hop = linker.get_next_hop(current_socket)
-            
+
             if not hop or hop['type'] == 'end':
-                trace_table.add_row(str(step), location_name, getattr(parent, 'name', 'N/A'), current_socket.name, f"[yellow]{hop.get('reason', 'FIN') if hop else 'FIN'}[/yellow]")
+                trace_table.add_row(
+                    str(step),
+                    f"[{loc_color}]{location_name}[/{loc_color}]",
+                    f"[{dev_color}]{getattr(parent, 'name', 'N/A')}[/{dev_color}]",
+                    current_socket.name,
+                    f"[yellow]{hop.get('reason', 'FIN') if hop else 'FIN'}[/yellow]"
+                )
                 break
-            
+
             if hop['type'] == 'connection':
                 next_socket = hop['next_socket']
                 next_parent = linker.find_parent_for_socket(next_socket)
                 trace_table.add_row(
-                    str(step), location_name, getattr(parent, 'name', 'N/A'), current_socket.name,
+                    str(step),
+                    f"[{loc_color}]{location_name}[/{loc_color}]",
+                    f"[{dev_color}]{getattr(parent, 'name', 'N/A')}[/{dev_color}]",
+                    current_socket.name,
                     f"[green]{getattr(hop['via_cable'], 'name', 'N/A')}[/green] -> [cyan]{getattr(next_parent, 'name', 'N/A')}[/cyan]"
                 )
                 current_socket = next_socket
-            
+
             elif hop['type'] == 'traversal':
                 trace_table.add_row(
-                    str(step), location_name, getattr(parent, 'name', 'N/A'),
+                    str(step),
+                    f"[{loc_color}]{location_name}[/{loc_color}]",
+                    f"[{dev_color}]{getattr(parent, 'name', 'N/A')}[/{dev_color}]",
                     f"{current_socket.name} -> {hop['to'].name}",
                     f"([italic blue]Interne[/italic blue])"
                 )
                 current_socket = hop['to']
-            
+
             step += 1
             
         self.console.print(trace_table)

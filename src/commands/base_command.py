@@ -40,7 +40,7 @@ class BaseCommand:
     def get_target_dict(self, glpi_itemtype: str) -> dict:
         if glpi_itemtype == 'Computer': return self.cache.computers
         elif glpi_itemtype == 'NetworkEquipment': return self.cache.network_equipments
-        elif glpi_itemtype == 'PassiveDCEquipment': return self.cache.passive_dc_equipments
+        elif glpi_itemtype == 'PassiveDCEquipment': return self.cache.passive_devices
         elif glpi_itemtype == 'Cable': return self.cache.cables
         elif glpi_itemtype == 'Glpi\\Socket': return self.cache.sockets
         elif glpi_itemtype == 'NetworkPort': return self.cache.network_ports
@@ -55,6 +55,18 @@ class BaseCommand:
 
     def get_item_type_from_alias(self, alias: str) -> str:
         return self.TYPE_ALIASES.get(alias.lower())
+
+    def _get_color_for_string(self, text: str) -> str:
+        """Generates a consistent color for a given string."""
+        if not text or text == "N/A":
+            return "white"
+        # Simple hash-based color selection from a predefined list
+        colors = [
+            "bright_red", "bright_green", "bright_yellow", "bright_blue", 
+            "bright_magenta", "bright_cyan", "red", "green", "yellow", "blue",
+            "magenta", "cyan"
+        ]
+        return colors[abs(hash(text)) % len(colors)]
 
     def _display_error(self, message: str):
         self.console.print(Panel(Text(message, style="bold red"), title="[red]Erreur[/red]"))
@@ -132,20 +144,32 @@ class BaseCommand:
                     all_ports.extend(port_list)
             # --- FIN DE LA CORRECTION ---
             
-            # --- DÉBUT DE LA CORRECTION DE LA LOCALISATION ---
+            # --- DÉBUT DE LA CORRECTION DE LA LOCALISATION ET DU STATUT ---
             location_id = getattr(details, "locations_id", "N/A")
-            location_name = location_id # Par défaut, on affiche l'ID
+            location_name = "N/A"
             if isinstance(location_id, int) and self.cache.locations.get(location_id):
                 location_name = self.cache.locations[location_id].name
+            elif location_id != "N/A":
+                location_name = str(location_id)
+
+            state_id = getattr(details, "states_id", "N/A")
+            state_name = "N/A"
+            if isinstance(state_id, int) and hasattr(self.cache, 'states') and self.cache.states.get(state_id):
+                state_name = self.cache.states[state_id].name
+            elif state_id != "N/A":
+                state_name = str(state_id)
+
+            type_color = self._get_color_for_string(glpi_itemtype)
+            location_color = self._get_color_for_string(location_name)
             # --- FIN DE LA CORRECTION ---
 
             if not all_ports:
                 table.add_row(
                     str(getattr(details, "id", "N/A")),
                     getattr(details, "name", "N/A"),
-                    glpi_itemtype,
-                    str(getattr(details, "states_id", "N/A")),
-                    str(location_name), # Utiliser le nom résolu
+                    f"[{type_color}]{glpi_itemtype}[/]",
+                    state_name,
+                    f"[{location_color}]{location_name}[/]",
                     "N/A", "N/A", "N/A",
                 )
             else:
@@ -155,9 +179,9 @@ class BaseCommand:
                         table.add_row(
                             str(getattr(details, "id", "N/A")),
                             getattr(details, "name", "N/A"),
-                            glpi_itemtype,
-                            str(getattr(details, "states_id", "N/A")),
-                            str(location_name), # Utiliser le nom résolu
+                            f"[{type_color}]{glpi_itemtype}[/]",
+                            state_name,
+                            f"[{location_color}]{location_name}[/]",
                             getattr(port, "name", "N/A"),
                             f'{getattr(port, "speed", "N/A")} Mbps',
                             getattr(port, "mac", "N/A"),

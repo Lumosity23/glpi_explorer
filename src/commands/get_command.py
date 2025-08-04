@@ -60,25 +60,6 @@ class GetCommand(BaseCommand):
         except (ValueError, IndexError):
             self.console.print("[red]Usage: get step <numero>[/red]")
 
-    def get_help_message(self):
-        return {
-            "description": "Récupère et affiche les détails d'un objet GLPI spécifique ou d'un port.",
-            "usage": "get <type> <nom_objet> | get port <nom_port> on <nom_equipement>"
-        }
-
-    def execute(self, args):
-        if not args:
-            self.console.print(Panel("[bold red]Erreur:[/bold red] La commande 'get' nécessite des arguments.\nUsage: get <type> <nom_objet> | get port <nom_port> on <nom_equipement>", title="[red]Utilisation[/red]"))
-            return
-
-        parts = args.split(maxsplit=1)
-        command_type = parts[0].lower()
-
-        if command_type == "port":
-            self._get_port_details(parts[1] if len(parts) > 1 else "")
-        else:
-            self._get_item_details(args)
-
     def _get_item_details(self, args):
         try:
             user_type_alias, item_name = args.split(maxsplit=1)

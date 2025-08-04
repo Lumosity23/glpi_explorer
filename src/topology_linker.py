@@ -106,7 +106,7 @@ class TopologyLinker:
         return next((s for s in sockets if s.name.upper() == out_name), None)
 
     def get_next_hop(self, current_socket):
-        """Calcule le prochain saut logique, en gérant la traversée des passifs."""
+        """Calcule le prochain saut logique, en gérant la traversée des passifs et des hubs."""
         
         parent = self.find_parent_for_socket(current_socket)
         
@@ -117,6 +117,13 @@ class TopologyLinker:
                 out_socket = self._get_passive_out_socket(parent, current_socket)
                 if out_socket:
                     return {'type': 'traversal', 'from': current_socket, 'to': out_socket, 'via': parent}
+
+        # --- NOUVEAU BLOC : CAS 1.5: On est sur un Hub et on doit le traverser ---
+        if parent and getattr(parent, 'itemtype', None) == 'NetworkEquipment' and 'HB' in getattr(parent, 'name', '').upper():
+            # On vient d'arriver sur un port IN, on cherche le port OUT du Hub.
+            out_socket = self._get_hub_out_socket(parent)
+            if out_socket and out_socket.id != current_socket.id: # S'assurer qu'on ne boucle pas sur le même port
+                return {'type': 'traversal', 'from': current_socket, 'to': out_socket, 'via': parent}
         
         # --- CAS 2: Si pas de traversée, on cherche une connexion physique via un câble ---
         connection = self.find_connection_for_socket(current_socket)
