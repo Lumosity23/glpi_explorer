@@ -1,3 +1,24 @@
+## [MISSION 25.4] - 2025-08-04
+
+### feat(presentation): Finalisation de la landing page
+
+- Complétion des sections "Les Défis" et "La Vision Future" de la page de présentation web.
+- Le contenu est basé sur le `README.md` du projet et inclut une image de la maquette de l'éditeur visuel.
+- La page de présentation est maintenant complète et prête à être utilisée.
+
+Ref: Mission 25.4
+
+## [MISSION 25.3] - 2025-08-04
+
+### feat(presentation): Création d'une landing page statique
+
+- Création d'une page de présentation web statique (`index.html`, `style.css`, `script.js`) pour le projet GLPI Explorer.
+- La page est conçue avec une esthétique inspirée de la bibliothèque `rich` et présente le projet en quatre sections navigables.
+- Le contenu inclut un logo ASCII, un diagramme de flux, des exemples de commandes réels, les défis actuels et la vision future du projet.
+- Les anciens scripts de présentation CLI (`CLI_presentation.py`, `presentation.py`) ont été supprimés.
+
+Ref: Mission 25.3
+
 ## [MISSION 21.4] - 2025-08-03
 
 ### fix(trace): Correction d'un bug d'affichage et résolution des noms de localisation

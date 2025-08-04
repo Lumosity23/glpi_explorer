@@ -61,9 +61,11 @@ class TraceCommand(BaseCommand):
             if parent:
                 location_id = getattr(parent, 'locations_id', None)
                 if location_id and location_id in self.cache.locations:
-                    location_name = self.cache.locations[location_id].name
-                elif isinstance(location_id, str):
-                    location_name = location_id
+                    # On récupère le nom complet de la localisation
+                    location_obj = self.cache.locations[location_id]
+                    location_name = getattr(location_obj, 'name', str(location_id))
+                elif location_id:
+                    location_name = str(location_id)
 
             if location_name not in location_colors:
                 location_colors[location_name] = colors[color_index % len(colors)]

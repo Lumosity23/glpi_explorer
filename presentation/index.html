@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLPI Explorer</title>
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --text-light: #dcdcdc;
+            --cyan: #61afef;      /* Softer Blue */
+            --magenta: #c678dd;   /* Softer Purple */
+            --yellow: #e5c07b;    /* Softer Gold */
+            --green: #98c379;     /* Softer Green */
+            --panel-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--bg-dark);
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(30, 30, 30, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--cyan);
+            text-decoration: none;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: var(--text-light);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        nav a:hover, nav a.active {
+            color: var(--cyan);
+        }
+
+        section {
+            min-height: 100vh;
+            padding: 6rem 2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .panel {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--panel-border);
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--cyan);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: var(--magenta);
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 0.5rem;
+        }
+
+        .ascii-logo {
+            font-family: monospace;
+            white-space: pre;
+            text-align: center;
+            color: var(--green);
+            margin-bottom: 2rem;
+            font-size: 0.8rem;
+        }
+
+        .flow-diagram {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 2rem 0;
+            gap: 2rem;
+        }
+
+        .flow-box {
+            padding: 1rem;
+            border: 1px solid var(--panel-border);
+            border-radius: 5px;
+            text-align: center;
+            position: relative;
+        }
+
+        .flow-box:not(:last-child)::after {
+            content: '→';
+            position: absolute;
+            right: -1.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--magenta);
+        }
+
+        .code-block {
+            background-color: #111;
+            border: 1px solid var(--panel-border);
+            border-radius: 5px;
+            padding: 1rem;
+            margin-top: 1rem;
+            overflow-x: auto;
+        }
+
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .goal {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background-color: rgba(0, 255, 255, 0.1);
+            border-left: 3px solid var(--cyan);
+        }
+
+        .features-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .features-list li {
+            margin-bottom: 1rem;
+        }
+
+        .features-list strong {
+            color: var(--yellow);
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <a href="#" class="logo">GLPI Explorer</a>
+        <nav>
+            <ul>
+                <li><a href="#concept" class="nav-link active">Le Concept</a></li>
+                <li><a href="#commands" class="nav-link">Les Commandes</a></li>
+                <li><a href="#challenges" class="nav-link">Les Défis</a></li>
+                <li><a href="#vision" class="nav-link">La Vision Future</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section id="concept">
+        <div class="panel">
+            <h1>GLPI Explorer : De l'Inventaire Statique à l'Analyse Dynamique</h1>
+            <pre class="ascii-logo">
+ ██████╗ ██╗     ██████╗ ██╗    ███████╗██╗  ██╗██████╗ ██╗      ██████╗ ██████╗ ███████╗██████╗ 
+██╔════╝ ██║     ██╔══██╗██║    ██╔════╝╚██╗██╔╝██╔══██╗██║     ██╔═══██╗██╔══██╗██╔════╝██╔══██╗
+██║  ███╗██║     ██████╔╝██║    █████╗   ╚███╔╝ ██████╔╝██║     ██║   ██║██████╔╝█████╗  ██████╔╝
+██║   ██║██║     ██╔═══╝ ██║    ██╔══╝   ██╔██╗ ██╔═══╝ ██║     ██║   ██║██╔══██╗██╔══╝  ██╔══██╗
+╚██████╔╝███████╗██║     ██║    ███████╗██╔╝ ██╗██║     ███████╗╚██████╔╝██║  ██║███████╗██║  ██║
+ ╚═════╝ ╚══════╝╚═╝     ╚═╝    ╚══════╝╚═╝  ╚═╝╚═╝     ╚══════╝ ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝
+            </pre>
+            <div class="flow-diagram">
+                <div class="flow-box">API GLPI</div>
+                <div class="flow-box">Cache Intelligent Local</div>
+                <div class="flow-box">Interface CLI</div>
+            </div>
+            <p>
+                GLPI Explorer résout le problème de lenteur des requêtes dans les grands inventaires GLPI 
+                en introduisant un cache intelligent local qui agit comme un double numérique 
+                de votre infrastructure. Cette approche transforme GLPI d'un simple outil d'inventaire statique en une plateforme dynamique 
+                pour explorer et comprendre votre infrastructure réseau.
+            </p>
+        </div>
+    </section>
+
+    <section id="commands">
+        <div class="panel">
+            <h1>Un Langage Intuitif pour Explorer le Réseau</h1>
+            <h2>Exemple 1 : `ls pc`</h2>
+            <div class="code-block"><pre>
+(glpi-explorer)> ls pc
+╭─────────────────────╮
+│ Liste des Computer  │
+│  ID │ Nom │ Statut  │
+│ ────┼─────┼──────── │
+│  4  │ PC3 │ 0       │
+│  6  │ PC4 │ 1       │
+│  7  │ PC1 │ 1       │
+│  8  │ PC2 │ 1       │
+╰─────────────────────╯
+            </pre></div>
+            <h2>Exemple 2 : `get pc pc1`</h2>
+            <div class="code-block"><pre>
+(glpi-explorer)> get pc pc1
+                                                                    Détails de PC1                                                                     
+┏━━━━━━━┳━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ID    ┃ Nom    ┃ Type           ┃ Statut      ┃ Localisation          ┃ Nom du Port        ┃ Vitesse         ┃ Adresse MAC             ┃
+┡━━━━━━━╇━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ 7     │ PC1    │ Computer       │ 1           │ room machine          │ NW rear port PC1   │ 1000 Mbps       │ 8d:6a:5f:6d:39:0c       │
+└───────┴────────┴────────────────┴─────────────┴───────────────────────┴────────────────────┴─────────────────┴─────────────────────────┘
+            </pre></div>
+            <h2>Exemple 3 : `trace pc pc1`</h2>
+            <div class="code-block"><pre>
+(glpi-explorer)> tr pc pc1
+                                                         Trace depuis PC1                                                                    
+┏━━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  Étape ┃ Localisation   ┃ Équipement       ┃ Port                                                     ┃ Via                              ┃
+┡━━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│      1 │ room machine   │ PC1              │ rear port PC1                                            │ C-PC1 -> HB ethernet             │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      2 │ room machine   │ HB ethernet      │ HB ethernet port 0 IN -> HB ethernet port 5 OUT          │ (Interne)                        │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      3 │ room machine   │ HB ethernet      │ HB ethernet port 5 OUT                                   │ C-HB ethernet -> WO machine room │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      4 │ room machine   │ WO machine room  │ WO machine room port 0 IN -> WO machine room port 0 OUT  │ (Interne)                        │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      5 │ room machine   │ WO machine room  │ WO machine room port 0 OUT                               │ C-WO port 1 -> PP 1              │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      6 │ data center    │ PP 1             │ PP 1 port 01 IN -> PP 1 port 01 OUT                      │ (Interne)                        │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      7 │ data center    │ PP 1             │ PP 1 port 01 OUT                                         │ C-PP port 1 -> SW reseaux        │
+├────────┼────────────────┼──────────────────┼──────────────────────────────────────────────────────────┼──────────────────────────────────┤
+│      8 │ data center    │ SW reseaux       │ SW reseaux port 0                                        │ C-PP port 1 -> PP 1              │
+└────────┴────────────────┴──────────────────┴──────────────────────────────────────────────────────────┴──────────────────────────────────┘
+            </pre></div>
+            <h2>Exemple 4 : `refresh` & `changes`</h2>
+            <div class="code-block"><pre>
+(glpi-explorer)|Δ1> changes
+                                                                 Changements Détectés                                                                  
+┏━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Action                  ┃ Type             ┃ ID    ┃ Nom     ┃ Date Modif. (GLPI)                  ┃ Détails de la Modification          ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ MODIFICATION            │ Computer         │ 4     │ PC3     │ 2025-08-04 12:16:55                 │ states_id: 0 -> 1                   │
+└─────────────────────────┴──────────────────┴───────┴─────────┴─────────────────────────────────────┴─────────────────────────────────────┘
+╭───────────────────────────────────────────────────────────────────── Nettoyage ──────────────────────────────────────────────────────────╮
+│ Journal des changements effacé.                                                                                                          │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+            </pre></div>
+        </div>
+    </section>
+
+    <section id="challenges">
+        <div class="panel">
+            <h1>Le Défi Actuel : Le Passage à l'Échelle</h1>
+            <p>Sur des parcs de grande taille (+10 000 objets), le chargement initial du cache est trop long, ce qui impacte l'ergonomie. Notre priorité est l'optimisation.</p>
+            <h2>Plan d'Optimisation</h2>
+            <ul class="features-list">
+                <li>Chargement "Paresseux" (Lazy Loading)</li>
+                <li>Optimisation des Requêtes API (parallélisation)</li>
+                <li>Format de Cache Binaire plus performant</li>
+            </ul>
+            <div class="goal">
+                Objectif : Un temps de démarrage inférieur à 30 secondes, même sur l'infrastructure complète.
+            </div>
+        </div>
+    </section>
+
+    <section id="vision">
+        <div class="panel">
+            <h1>Le Futur : Un Écosystème Complet de Gestion Réseau</h1>
+            <h2>Feuille de Route des Fonctionnalités</h2>
+            <ul class="features-list">
+                <li><strong>Audit & Conformité (`checkup`) :</strong> Auditer le parc pour détecter les anomalies (câbles orphelins, erreurs de nomenclature, etc.).</li>
+                <li><strong>Mode "Constructeur" (`create`, `connect`) :</strong> Créer et câbler de nouveaux équipements directement depuis le CLI.</li>
+                <li><strong>Éditeur Visuel (`network-map`) :</strong> Une interface web pour visualiser et éditer la topologie en glisser-déposer.</li>
+            </ul>
+            <h2>Maquette de l'Éditeur Visuel network-map</h2>
+            <img src="img/network_map_mockup.png" alt="Maquette de l'éditeur Network Map" style="width: 100%; max-width: 800px; border-radius: 5px; margin-top: 1rem;">
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('section');
+
+            // Smooth scroll
+            navLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelector(link.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                });
+            });
+
+            // Active link highlighting on scroll
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href') === `#${current}`) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

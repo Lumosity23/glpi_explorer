@@ -425,7 +425,8 @@ class TopologyCache:
             'passive_devices': self.passive_devices,
             'cables': self.cables,
             'sockets': self.sockets,
-            'network_ports': self.network_ports
+            'network_ports': self.network_ports,
+            'locations': self.locations
         }
         try:
             cache_dir = os.path.dirname(self.cache_file)
@@ -452,6 +453,7 @@ class TopologyCache:
                 new_cache.cables = saved_data.get('cables', {})
                 new_cache.sockets = saved_data.get('sockets', {})
                 new_cache.network_ports = saved_data.get('network_ports', {})
+                new_cache.locations = saved_data.get('locations', {})
                 
                 # Rebuild the topology graph after loading from disk
                 new_cache._build_topology_graph()
